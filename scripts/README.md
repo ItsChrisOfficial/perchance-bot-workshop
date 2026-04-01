@@ -33,6 +33,19 @@ Automation for repeatable repository tasks such as validation, transformation, e
 - May consume reusable logic from `shared/`
 - Should be reflected in docs when scripts become workflow-critical
 
+## Perchance export validator
+
+- Script: `scripts/validate-perchance-export.js`
+- Validates a Perchance export JSON against repository import-safety requirements.
+- Fails with actionable errors and non-zero exit code when checks fail.
+
+### Local usage
+
+- Validate one export file:
+  - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
+- Validate canonical fixture in this repo:
+  - `node scripts/validate-perchance-export.js tests/fixtures/valid/canonical-valid.json`
+
 ## Naming rules
 
 - Use explicit kebab-case script names.

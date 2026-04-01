@@ -1,0 +1,115 @@
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [
+      {
+        "name": "characters",
+        "schema": "++id,modelName,fitMessagesInContextMethod,uuid,creationTime,lastMessageTime,folderPath",
+        "rowCount": 1
+      },
+      {
+        "name": "threads",
+        "schema": "++id,name,characterId,creationTime,lastMessageTime,lastViewTime,folderPath",
+        "rowCount": 0
+      },
+      {
+        "name": "messages",
+        "schema": "++id,threadId,characterId,creationTime,order",
+        "rowCount": 0
+      },
+      {
+        "name": "misc",
+        "schema": "key",
+        "rowCount": 0
+      },
+      {
+        "name": "summaries",
+        "schema": "hash,threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "memories",
+        "schema": "++id,[summaryHash+threadId],[characterId+status],[threadId+status],[threadId+index],threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "textEmbeddingCache",
+        "schema": "++id,textHash,&[textHash+modelName]",
+        "rowCount": 0
+      },
+      {
+        "name": "textCompressionCache",
+        "schema": "++id,uncompressedTextHash,&[uncompressedTextHash+modelName+tokenLimit]",
+        "rowCount": 0
+      }
+    ],
+    "data": [
+      {
+        "tableName": "characters",
+        "inbound": true,
+        "rows": [
+          {
+            "name": "Validator Fixture",
+            "roleInstruction": "Be helpful.",
+            "customCode": "(() => { const x = 1; return x; })();",
+            "initialMessages": [
+              {
+                "author": "system",
+                "content": "Boot",
+                "hiddenFrom": [],
+                "expectsReply": false
+              }
+            ],
+            "shortcutButtons": [
+              {
+                "name": "Reset",
+                "message": "/reset",
+                "autoSend": false,
+                "clearAfterSend": true,
+                "insertionType": "replace"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "threads",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "messages",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "misc",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "summaries",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "memories",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textEmbeddingCache",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textCompressionCache",
+        "inbound": true,
+        "rows": []
+      }
+    ]
+  }
+}

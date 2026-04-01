@@ -30,6 +30,15 @@ Before changing bot exports or workflow docs, read:
 4. Move finished bots to `bots/completed/` when they are release-ready.
 5. Move superseded material to `archive/` when it should no longer drive active work.
 
+## Validation and test commands
+
+- Validate a Perchance export JSON:
+  - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
+- Validate repository canonical fixture:
+  - `node scripts/validate-perchance-export.js tests/fixtures/valid/canonical-valid.json`
+- Run validator tests:
+  - `python -m unittest tests/test-validate-perchance-export.py`
+
 ## How the repo works as a system
 
 - `bots/` holds lifecycle state (template -> active build -> completed output)
