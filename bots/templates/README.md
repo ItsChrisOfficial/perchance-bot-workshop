@@ -2,35 +2,47 @@
 
 ## Purpose
 
-Reusable starter layouts for creating new bots.
+Canonical starter assets for new Perchance bot builds, including import-safe export templates.
+
+## Who should use this folder
+
+- Contributors starting a new bot
+- Agents generating a new bot export baseline
 
 ## What belongs here
 
-- Bot folder templates
-- Starter exports and skeleton docs
+- Starter export JSON templates
+- Reusable bot scaffolding intended for new builds
+- Template-level README guidance for bot creation
 
 ## What does not belong here
 
-- Production bot outputs
-- In-progress experiments
+- Active bot iterations (use `bots/in-progress/`)
+- Finalized delivery bots (use `bots/completed/`)
+- One-off experimental drafts
+
+## When to use it
+
+- At bot kickoff, before any custom behavior is implemented
+- When you need a known-good export envelope baseline
+
+## How it interacts with the rest of the repo
+
+- Feeds new work into `bots/in-progress/`
+- Must align with `docs/PERCHANCE_IMPORT_VERIFICATION.md`
+- Template and lifecycle changes must be reflected in `BOT_CATALOG.md`
+
+## Canonical template in this repo
+
+- `perchance_empty_customcode_template.json` is the baseline template for safe export structure.
 
 ## Naming rules
 
 - Template folders should be descriptive and kebab-case.
 - Keep templates generic and reusable.
 
-## Agent workflow rules
+## Common mistakes to avoid
 
-- Start from templates when creating new bots.
-- Keep templates minimal and framework-agnostic.
-- Update `BOT_CATALOG.md` when new templates are added.
-
-## Standard bot folder template
-
-Each bot folder should include:
-
-- `README.md` - bot purpose and usage
-- `bot.export.json` - primary bot export (or equivalent)
-- `assets/` - bot-local assets only
-- `docs/` - bot-specific notes
-- `tests/` - bot-specific validation notes/tests
+- Replacing the canonical Perchance export envelope with a bare character object
+- Treating templates as active working bot folders
+- Embedding project-specific temporary logic into templates
