@@ -57,6 +57,8 @@ bots/completed/<bot-name>/
 
 `RELEASE.md` should include promotion date, validator/test pass state, and any narrow usage notes.
 
+To standardize release notes, copy `bots/completed/RELEASE_TEMPLATE.md` into each bot folder as `RELEASE.md` and fill it before/at promotion.
+
 ## Versioning rules (completed)
 
 - First completed release should be `v1.0.0` unless project context requires otherwise.

@@ -15,6 +15,11 @@ Current repository layout and quick reference.
 - `tests/` - validator tests and fixtures
 - `tools/` - tooling notes/support
 
+## Notable workflow templates
+
+- `.github/pull_request_template.md` - repository PR checklist template aligned with contribution/release gates
+- `bots/completed/RELEASE_TEMPLATE.md` - completed-bot release note/checklist template to copy as per-bot `RELEASE.md`
+
 ## Validation quick reference
 
 - Standard: `docs/PERCHANCE_IMPORT_VERIFICATION.md` (**mandatory** for export JSON/`customCode` changes)
