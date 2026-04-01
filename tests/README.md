@@ -32,6 +32,7 @@ Verification assets for checking repository workflows and output correctness.
 - invalid seeded message author
 - invalid shortcut insertionType
 - malformed customCode JavaScript
+- customCode with wrong type (non-string)
 
 ### Local usage
 
@@ -65,3 +66,8 @@ Verification assets for checking repository workflows and output correctness.
 - Treating tests as optional when changing validation-sensitive workflows
 - Keeping fixtures without documenting what they verify
 - Placing production artifacts in test directories
+
+### Fixture note: `customcode-not-string.json`
+
+This fixture is intentionally broken for one reason only: `characters.rows[0].customCode` is a number instead of a string.
+It exists to prove the validator fails typed-contract violations cleanly without depending on unrelated structural failures.

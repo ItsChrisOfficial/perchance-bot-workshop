@@ -61,10 +61,9 @@ No bot entries currently tracked under `bots/in-progress/`.
 
 ## Completed bots
 
-No bot entries currently tracked under `bots/completed/`.
-
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
+| Reference Minimal Helper | completed | `bots/completed/reference-minimal-helper/` | Known-good minimal importable export reference with small valid customCode | ready | passed | Validator and unittest passed on 2026-04-01; use as completed baseline example |
 
 ## Update rules (contributors and agents)
 
