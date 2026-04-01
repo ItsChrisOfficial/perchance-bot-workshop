@@ -3,6 +3,14 @@
 Operational inventory for bot assets across lifecycle states.  
 Use this file to track where each bot lives, what it is for, and whether it is ready to move forward.
 
+## Lifecycle contract
+
+- `templates`: reusable starters only, not active bot work.
+- `in-progress`: active build/iteration state; must not be treated as released.
+- `completed`: release-ready state only; promotion requires documented verification pass.
+
+Promotion to `completed` is a release action, not a filing action.
+
 ## Entry fields (required)
 
 Every catalog entry must include:
@@ -14,6 +22,21 @@ Every catalog entry must include:
 - **status**: current work status (for example: `ready`, `draft`, `active`, `blocked`, `archived`)
 - **verification state**: import/validation status (for example: `not-run`, `in-progress`, `passed`, `failed`)
 - **notes**: short operational context (handoff notes, constraints, next action)
+
+## Field value conventions
+
+- `status` recommended values:
+  - `draft` (early construction)
+  - `active` (current development)
+  - `blocked` (waiting on dependency/decision)
+  - `ready-for-promotion-review` (candidate prepared, pending release gate confirmation)
+  - `ready` (completed and released)
+- `verification state` recommended values:
+  - `not-run`
+  - `in-progress`
+  - `passed`
+  - `failed`
+- `notes` should capture latest validation context (for example: which command passed/failed and next action).
 
 ## Entry format (example)
 
@@ -54,3 +77,26 @@ No bot entries currently tracked under `bots/completed/`.
 4. Keep `status` and `verification state` current after each meaningful workflow step.
 5. Keep notes short and operational; remove stale notes when state changes.
 6. For single-bot work, maintain one row per bot asset to keep ownership and state unambiguous.
+
+## Promotion metadata requirements (`in-progress` -> `completed`)
+
+When promoting a bot, update catalog rows in the same PR:
+
+1. Move `lifecycle state` to `completed`.
+2. Update `path` to `bots/completed/<bot-name>/...`.
+3. Set `status` to `ready` only after release criteria are satisfied.
+4. Set `verification state` to `passed` only after:
+   - `node scripts/validate-perchance-export.js <absolute/path-to-export.json>` passes
+   - `python -m unittest tests/test-validate-perchance-export.py` passes
+5. Update `notes` with concise validation evidence and promotion context.
+
+Use your platform's absolute path style when running validator commands.
+
+If validation is incomplete, keep the bot in `in-progress` and do not mark `ready`.
+
+## Common catalog mistakes to avoid
+
+- Marking `verification state: passed` without running required validation commands
+- Moving path/lifecycle state without updating status and notes
+- Leaving stale `in-progress` rows after promotion
+- Tracking multiple ambiguous rows for one bot without clear ownership/version context
