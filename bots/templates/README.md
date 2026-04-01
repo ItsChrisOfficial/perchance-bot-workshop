@@ -32,9 +32,16 @@ Canonical starter assets for new Perchance bot builds, including import-safe exp
 - Must align with `docs/PERCHANCE_IMPORT_VERIFICATION.md`
 - Template and lifecycle changes must be reflected in `BOT_CATALOG.md`
 
-## Canonical template in this repo
+## Templates in this repo
 
-- `perchance_empty_customcode_template.json` is the baseline template for safe export structure.
+- `perchance-empty-minimal.json` is the default production-safe baseline for new bot builds.
+- `perchance-empty-annotated.json` is the teaching/reference variant with schema guidance labeled as non-runtime notes.
+- `perchance_empty_customcode_template.json` is retained as a legacy baseline reference.
+
+## Default selection guidance
+
+- Use `perchance-empty-minimal.json` by default when starting new bot exports.
+- Use `perchance-empty-annotated.json` only when you need embedded schema/runtime guidance during authoring or onboarding.
 
 ## Naming rules
 

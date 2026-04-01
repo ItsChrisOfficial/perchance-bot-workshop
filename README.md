@@ -27,6 +27,11 @@ Read in this order:
 5. Promote to `bots/completed/<bot-name>/` only when release-ready.
 6. Update indexes (`REPO_MAP.md`, `BOT_CATALOG.md`, and `SNIPPETS_INDEX.md` when relevant).
 
+## Template defaults
+
+- Default starter: `bots/templates/perchance-empty-minimal.json`
+- Teaching/reference starter: `bots/templates/perchance-empty-annotated.json` (guidance is non-runtime)
+
 ## Validation commands
 
 - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
