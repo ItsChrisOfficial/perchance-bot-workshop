@@ -86,9 +86,11 @@ When promoting a bot, update catalog rows in the same PR:
 2. Update `path` to `bots/completed/<bot-name>/...`.
 3. Set `status` to `ready` only after release criteria are satisfied.
 4. Set `verification state` to `passed` only after:
-   - `node scripts/validate-perchance-export.js <absolute/path/to/export.json>` passes
+   - `node scripts/validate-perchance-export.js <absolute/path-to-export.json>` passes
    - `python -m unittest tests/test-validate-perchance-export.py` passes
 5. Update `notes` with concise validation evidence and promotion context.
+
+Use your platform's absolute path style when running validator commands.
 
 If validation is incomplete, keep the bot in `in-progress` and do not mark `ready`.
 

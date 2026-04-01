@@ -45,13 +45,13 @@ Promotion from `bots/in-progress/` is allowed only when all are true:
 
 - One folder per bot in kebab-case.
 - Keep final export names explicit and versioned.
-- Use predictable file naming: `<bot-name>__vMAJOR.MINOR.PATCH.json`.
+- Use predictable file naming: `<bot-name>-vMAJOR.MINOR.PATCH.json`.
 
 ## Recommended folder structure
 
 ```text
 bots/completed/<bot-name>/
-├── <bot-name>__v1.0.0.json
+├── <bot-name>-v1.0.0.json
 └── RELEASE.md
 ```
 

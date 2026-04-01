@@ -54,7 +54,7 @@ Optional files must stay scoped to the bot folder and be removed or finalized be
 
 ```text
 bots/in-progress/<bot-name>/
-├── <bot-name>__v0.1.0-draft.json
+├── <bot-name>-v0.1.0-draft.json
 ├── STATUS.md
 └── notes/                  (optional, bot-specific)
 ```
@@ -64,8 +64,8 @@ Keep structure small and explicit; one bot folder should not contain unrelated e
 ## Versioning rules (in-progress)
 
 - Use semantic-style bot artifact versions in filenames when practical:
-  - `<bot-name>__vMAJOR.MINOR.PATCH-<stage>.json`
-  - example: `travel-guide-bot__v0.3.0-rc1.json`
+  - `<bot-name>-vMAJOR.MINOR.PATCH-<stage>.json`
+  - example: `travel-guide-bot-v0.3.0-rc1.json`
 - Use pre-release stages during active work: `draft`, `alpha`, `beta`, `rcN`.
 - Increment version when behavior, structure, or release readiness changes meaningfully.
 - Do not use ambiguous suffixes like `final`, `latest`, `new`, `fixed2`.
