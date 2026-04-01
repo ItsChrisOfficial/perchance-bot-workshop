@@ -22,6 +22,7 @@ Promotion from `bots/in-progress/` is allowed only when all are true:
 
 ## What belongs here
 
+- Completed reference examples that are intentionally minimal but fully importable
 - Completed bot folders and final export artifacts
 - Final bot-specific docs/notes with validation evidence and release state
 - Release-ready artifacts that passed import-safety checks
@@ -76,6 +77,11 @@ To standardize release notes, copy `bots/completed/RELEASE_TEMPLATE.md` into eac
 - Should remain aligned with import verification standards in `docs/`
 - Bot lifecycle changes must be reflected in `BOT_CATALOG.md`
 - Promotion should also update any affected lifecycle README metadata and notes in the same PR
+
+## Reference example
+
+- `bots/completed/reference-minimal-helper/reference-minimal-helper-v1.0.0.json` is a known-good, minimal, fully importable example with a small valid `customCode` block.
+- Use it when you need a completed-bot baseline that is realistic but intentionally compact.
 
 ## Common mistakes to avoid
 

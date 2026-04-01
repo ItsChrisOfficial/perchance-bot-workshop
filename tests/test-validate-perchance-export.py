@@ -13,6 +13,7 @@ INVALID_FIXTURES = {
     "invalid-message-author": "invalid-message-author.json",
     "invalid-shortcut-insertion-type": "invalid-shortcut-insertion-type.json",
     "malformed-customcode": "malformed-customcode.json",
+    "customcode-not-string": "customcode-not-string.json",
 }
 
 
