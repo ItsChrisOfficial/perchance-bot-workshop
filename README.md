@@ -1,26 +1,66 @@
 # perchance-bot-workshop
 
-Agent-first workspace for developing and maintaining Perchance bots, reusable snippets, and shared bot assets.
+Repository for building, editing, validating, organizing, and exporting **Perchance Advanced AI Character Chat** bots as import-safe JSON artifacts.
 
-## Workspace layout
+## Mission
 
-- `.github/` - Copilot and path-specific instructions
-- `agents/` - guidance for agent workflows
-- `archive/` - retired material
-- `bots/` - completed, in-progress, and template bot work
-- `docs/` - architecture, standards, and workflows
-- `scripts/` - automation scripts
-- `shared/` - prompts, utilities, schemas
-- `snippets/` - reusable snippets by category/language
-- `tests/` - test-related files
-- `tools/` - tooling notes/helpers
+This project exists to produce bot exports that are:
 
-## Working rules
+- structurally valid for Perchance import
+- operationally consistent across contributors and agents
+- organized by lifecycle so work is easy to find and maintain
 
-1. Put files in the right subtree; avoid root dumps.
-2. Use explicit kebab-case names.
-3. Keep changes small and readable.
-4. Reuse shared assets instead of copying code.
-5. Update `REPO_MAP.md`, `BOT_CATALOG.md`, and `SNIPPETS_INDEX.md` as needed.
+## Read these first
 
-See `AGENTS.md` for full agent operating rules.
+Before changing bot exports or workflow docs, read:
+
+1. `docs/PERCHANCE_IMPORT_VERIFICATION.md` (release gate for import safety)
+2. `.github/copilot-instructions.md` (hard rules for Perchance export tasks)
+3. `AGENTS.md` (repository operating rules for agents)
+4. `PROJECT_RULES.md` (placement and naming rules)
+5. `REPO_MAP.md` (current structure and index files)
+6. `CONTRIBUTING.md` (contribution workflow)
+
+## End-to-end workflow
+
+1. Start from canonical template assets in `bots/templates/`  
+   (`bots/templates/perchance_empty_customcode_template.json`).
+2. Build active bots in `bots/in-progress/` using shared assets and snippets where useful.
+3. Validate structure and behavior against `docs/PERCHANCE_IMPORT_VERIFICATION.md`.
+4. Move finished bots to `bots/completed/` when they are release-ready.
+5. Move superseded material to `archive/` when it should no longer drive active work.
+
+## How the repo works as a system
+
+- `bots/` holds lifecycle state (template -> active build -> completed output)
+- `docs/` defines standards and verification process
+- `scripts/` and `tools/` support repeatable validation/maintenance workflows
+- `tests/` holds checks and fixtures used to verify output correctness
+- `shared/` stores reusable cross-bot assets
+- `snippets/` stores small reusable fragments and examples
+- `agents/` stores agent-facing guidance and operational notes
+- `archive/` stores historical or retired assets
+
+## Placement rules
+
+- Do not dump working files in the repository root.
+- Use one bot folder per bot under the correct lifecycle directory.
+- Keep names predictable and kebab-case.
+- Put reusable assets in `shared/`, not in individual bot folders.
+- Put small copy/paste fragments in `snippets/`, not `shared/`.
+
+## Required index updates
+
+Update these when relevant:
+
+- `REPO_MAP.md` for structural changes
+- `BOT_CATALOG.md` for bot/template lifecycle changes
+- `SNIPPETS_INDEX.md` for snippet additions/removals
+
+## Common mistakes to avoid
+
+- Shipping a bot as a bare character object instead of full export envelope
+- Editing bot JSON without checking import verification rules first
+- Mixing active bot work into `bots/completed/` too early
+- Copying shared helpers into bot folders instead of reusing `shared/`
+- Leaving folder purpose unclear by adding files to the wrong workspace

@@ -2,24 +2,44 @@
 
 ## Purpose
 
-Repository-level test assets and testing notes.
+Verification assets for checking repository workflows and output correctness.
+
+## Who should use this folder
+
+- Contributors validating bot-export quality
+- Maintainers defining repeatable checks for repository workflows
+- Agents implementing or updating test logic/fixtures
 
 ## What belongs here
 
 - Integration or validation test files
 - Test fixtures and test documentation
+- Checks that support import-safety and workflow correctness
 
 ## What does not belong here
 
 - Production bot exports
 - Shared runtime utilities
+- Ad hoc experiments not tied to a repeatable check
+
+## When to use it
+
+- When adding or updating automated/manual checks for repo workflows
+- When creating fixtures for validation of export structure or related behavior
 
 ## Naming rules
 
 - Use clear test-oriented names.
 - Mirror target area names where practical.
 
-## Agent workflow rules
+## How it interacts with the rest of the repo
 
-- Keep tests close to the behavior they validate.
-- Document required test steps when automation is unavailable.
+- Verifies outcomes from work in `bots/`, `scripts/`, and `tools/`
+- Should align with release standards in `docs/PERCHANCE_IMPORT_VERIFICATION.md`
+- May rely on fixtures derived from templates or completed examples
+
+## Common mistakes to avoid
+
+- Treating tests as optional when changing validation-sensitive workflows
+- Keeping fixtures without documenting what they verify
+- Placing production artifacts in test directories
