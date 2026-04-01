@@ -25,7 +25,9 @@ Every catalog entry must include:
 
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
-| Perchance Empty CustomCode Template | templates | `bots/templates/perchance_empty_customcode_template.json` | Canonical single-character export envelope starter for new bot builds | ready | passed (baseline template) | Source template referenced by root `README.md` workflow |
+| Perchance Empty Minimal Template | templates | `bots/templates/perchance-empty-minimal.json` | Default minimal production-safe single-character export envelope starter | ready | passed (validated) | Use by default for new bot builds to minimize non-runtime placeholder material |
+| Perchance Empty Annotated Template | templates | `bots/templates/perchance-empty-annotated.json` | Import-safe teaching template with embedded schema guidance | ready | passed (validated) | Guidance is labeled non-runtime and stored as documentation-only customData |
+| Perchance Empty CustomCode Template | templates | `bots/templates/perchance_empty_customcode_template.json` | Legacy canonical single-character export envelope starter | ready | passed (baseline template) | Retained for backward compatibility with earlier workflows |
 
 ## In-progress bots
 
