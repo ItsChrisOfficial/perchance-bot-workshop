@@ -1,38 +1,37 @@
 # AGENTS
 
-## Repository purpose
+Automation rules for coding agents and repo automation.
 
-A structured workspace for building, testing, documenting, and maintaining Perchance bots and reusable assets.
+## Scope
 
-## Required folder conventions
+This file governs **how agents operate**. For placement conventions, follow `PROJECT_RULES.md`.
 
-- `bots/`: bot lifecycle work (`completed`, `in-progress`, `templates`)
-- `snippets/`: reusable code/content fragments grouped by domain/language
-- `shared/`: cross-bot prompts, utilities, and schemas
-- `docs/`: architecture notes, standards, and workflows
-- `scripts/`: repeatable repo automation tasks
-- `archive/`: retired historical material only
+## Mandatory reads before agent edits
 
-## Placement rules
+1. `PROJECT_RULES.md`
+2. `REPO_MAP.md`
+3. `CONTRIBUTING.md`
+4. `docs/PERCHANCE_IMPORT_VERIFICATION.md` (**mandatory** for export JSON or `customCode` tasks)
 
-- New bot work starts in `bots/in-progress/`.
-- Production-ready bots move to `bots/completed/`.
-- Starter examples belong in `bots/templates/`.
-- Shared reusable logic belongs in `shared/utilities/`.
-- Shared prompt assets belong in `shared/prompts/`.
-- Do not dump files into the repository root.
+## Agent execution contract
 
-## Index update rules
+- Make minimal, scoped diffs.
+- Reuse shared assets instead of duplicating helpers.
+- Keep filenames/folders kebab-case and predictable.
+- If structure changes, update required indexes in the same change.
+- Do not mark bot work complete without required validation.
 
-After adding or moving assets, update:
+## Validation gate for bot export tasks
 
-- `REPO_MAP.md`
-- `BOT_CATALOG.md` for bot changes
-- `SNIPPETS_INDEX.md` for snippet changes
-- affected subtree `README.md`
+If a change touches Perchance export JSON or `customCode`, agents must:
+1. Treat `docs/PERCHANCE_IMPORT_VERIFICATION.md` as a release gate.
+2. Run `node scripts/validate-perchance-export.js <file>` on changed exports.
+3. Run `python -m unittest tests/test-validate-perchance-export.py` before finalizing.
+4. Keep canonical envelope/table integrity unless task explicitly requires compatibility changes.
 
-## Consistency rules
+## Automation mistakes to avoid
 
-- Prefer literal, predictable kebab-case names.
-- Keep files small and focused.
-- Prefer minimal diffs and preserve architecture unless intentionally refactoring.
+- Returning snippets when task asks for finished export artifact.
+- Moving bots to `completed` before validation.
+- Updating bot/snippet files without index updates.
+- Creating duplicate utility logic under bot folders instead of shared locations.

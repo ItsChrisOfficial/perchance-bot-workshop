@@ -1,26 +1,41 @@
-# Contributing
+# CONTRIBUTING
 
-## Purpose
+Human contribution workflow and pull request expectations.
 
-Provide a predictable contribution flow for humans and AI agents.
+## Before you start
 
-## Workflow
+1. Read `README.md` for repo workflow.
+2. Read `PROJECT_RULES.md` for placement constraints.
+3. If touching export JSON or `customCode`, read `docs/PERCHANCE_IMPORT_VERIFICATION.md` (**mandatory**).
 
-1. Place work in the correct subtree.
-2. Keep changes small and scoped.
-3. Update indexes and README files when adding major files/folders.
-4. Avoid duplicate helpers; reuse `shared/` assets.
-5. Move bot work through lifecycle folders (`in-progress` -> `completed`).
+## Contribution workflow
 
-## Naming
+1. Put files in the correct workspace/folder.
+2. Keep changes small and single-purpose.
+3. Reuse shared assets; avoid duplicate helpers.
+4. Run required validation commands.
+5. Update required indexes/docs in the same PR.
+6. If a bot is release-ready, promote from `bots/in-progress/` to `bots/completed/`.
 
-- Prefer kebab-case for folders and files.
-- Use explicit names describing purpose.
+## Required validation
 
-## Pull request checklist
+When export JSON or `customCode` changes:
+- `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
+- `python -m unittest tests/test-validate-perchance-export.py`
 
-- [ ] Files are in the correct folders
-- [ ] Relevant README files updated
-- [ ] `REPO_MAP.md` updated for structural changes
-- [ ] `BOT_CATALOG.md` updated for bot changes
+## PR checklist
+
+- [ ] Files are placed in correct folders per `PROJECT_RULES.md`
+- [ ] `docs/PERCHANCE_IMPORT_VERIFICATION.md` was followed for export/`customCode` changes
+- [ ] Validation commands were run and passed (when required)
+- [ ] `REPO_MAP.md` updated for structure changes
+- [ ] `BOT_CATALOG.md` updated for bot add/move/retire
 - [ ] `SNIPPETS_INDEX.md` updated for snippet changes
+- [ ] Relevant subtree `README.md` updated when folder usage changed
+- [ ] Bot promotion to `completed` only done after validation and readiness
+
+## Common placement errors to avoid
+
+- Creating new bot work directly in `bots/completed/`
+- Leaving reusable helper logic in a single bot folder
+- Adding new assets at repo root instead of the correct workspace
