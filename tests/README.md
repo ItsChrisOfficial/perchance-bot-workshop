@@ -16,6 +16,28 @@ Verification assets for checking repository workflows and output correctness.
 - Test fixtures and test documentation
 - Checks that support import-safety and workflow correctness
 
+## Perchance export validation tests
+
+- Test file: `tests/test-validate-perchance-export.py`
+- Fixture roots:
+  - `tests/fixtures/valid/`
+  - `tests/fixtures/invalid/`
+
+### Covered fixture cases
+
+- valid canonical export
+- broken JSON
+- missing canonical table
+- rowCount mismatch
+- invalid seeded message author
+- invalid shortcut insertionType
+- malformed customCode JavaScript
+
+### Local usage
+
+- Run validation tests:
+  - `python -m unittest /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/tests/test-validate-perchance-export.py`
+
 ## What does not belong here
 
 - Production bot exports

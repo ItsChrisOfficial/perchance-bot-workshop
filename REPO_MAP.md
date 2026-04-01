@@ -13,6 +13,14 @@
 - `tests/` - Test assets and test-specific docs
 - `tools/` - Tooling notes and support files
 
+## Notable validation assets
+
+- `scripts/validate-perchance-export.js` - canonical Perchance export validator
+- `tests/test-validate-perchance-export.py` - validator test suite
+- `tests/fixtures/valid/canonical-valid.json` - known-good canonical fixture
+- `tests/fixtures/invalid/` - intentionally broken fixtures for negative validation cases
+- `.github/workflows/ci.yml` - CI workflow that runs validator checks and tests on push/PR
+
 ## Index files
 
 - `BOT_CATALOG.md` - catalog of bot assets
