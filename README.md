@@ -33,11 +33,11 @@ Before changing bot exports or workflow docs, read:
 ## Validation and test commands
 
 - Validate a Perchance export JSON:
-  - `node /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/scripts/validate-perchance-export.js /absolute/path/to/export.json`
+  - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
 - Validate repository canonical fixture:
-  - `node /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/scripts/validate-perchance-export.js /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/tests/fixtures/valid/canonical-valid.json`
+  - `node scripts/validate-perchance-export.js tests/fixtures/valid/canonical-valid.json`
 - Run validator tests:
-  - `python -m unittest /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/tests/test-validate-perchance-export.py`
+  - `python -m unittest tests/test-validate-perchance-export.py`
 
 ## How the repo works as a system
 

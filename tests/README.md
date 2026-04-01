@@ -36,7 +36,7 @@ Verification assets for checking repository workflows and output correctness.
 ### Local usage
 
 - Run validation tests:
-  - `python -m unittest /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/tests/test-validate-perchance-export.py`
+  - `python -m unittest tests/test-validate-perchance-export.py`
 
 ## What does not belong here
 

@@ -42,9 +42,9 @@ Automation for repeatable repository tasks such as validation, transformation, e
 ### Local usage
 
 - Validate one export file:
-  - `node /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/scripts/validate-perchance-export.js /absolute/path/to/export.json`
+  - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
 - Validate canonical fixture in this repo:
-  - `node /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/scripts/validate-perchance-export.js /home/runner/work/perchance-bot-workshop/perchance-bot-workshop/tests/fixtures/valid/canonical-valid.json`
+  - `node scripts/validate-perchance-export.js tests/fixtures/valid/canonical-valid.json`
 
 ## Naming rules
 
