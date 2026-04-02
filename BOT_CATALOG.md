@@ -64,6 +64,11 @@ No bot entries currently tracked under `bots/in-progress/`.
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
 | Reference Minimal Helper | completed | `bots/completed/reference-minimal-helper/` | Known-good minimal importable export reference with small valid customCode | ready | passed | Validator and unittest passed on 2026-04-01; use as completed baseline example |
+| Reference Minimal Utility Bot | completed | `bots/completed/reference-minimal-utility-bot/` | Clean low-friction utility bot — simplest high-quality reference example | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates clean roleInstruction/reminder, lightweight slash handling, minimal safe customCode |
+| State-Driven Companion Bot | completed | `bots/completed/reference-state-driven-companion-bot/` | Personality bot with persistent thread state, mode switching, and companion level progression | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates customData state management, dynamic reminder injection, mode-driven behavior |
+| UI-Heavy Interactive Builder Bot | completed | `bots/completed/reference-ui-builder-bot/` | Interactive project builder with floating side panel — strongest embedded-UI example | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates iframe UI rendering, DOM creation, init guards, command-driven workflow |
+| Scene-and-Lore Adventure Bot | completed | `bots/completed/reference-scene-lore-adventure-bot/` | Narrative adventure bot with scene progression, lore discovery, and hidden context injection | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates scene transitions, inventory/quest tracking, hidden system messages, dynamic context |
+| Image-Oriented Creative Director Bot | completed | `bots/completed/reference-image-director-bot/` | Art direction bot with runtime image prompt manipulation and style presets | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates imagePromptPrefix/Suffix runtime updates, style presets, prompt history tracking |
 
 ## Update rules (contributors and agents)
 
