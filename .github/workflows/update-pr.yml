@@ -1,0 +1,25 @@
+name: Update PR for bots changes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "bots/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-pr:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep PR body in sync via gh pr edit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          current_body="$(gh pr view "$PR_NUMBER" --json body --jq '.body')"
+          gh pr edit "$PR_NUMBER" --body "$current_body"
