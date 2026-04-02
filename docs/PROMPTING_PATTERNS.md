@@ -268,7 +268,7 @@ oc.thread.messages.push({
 ```
 [AI]: (Internal thought: Before responding, I should consider what the user is really asking and whether my answer is consistent with established facts.)
 ```
-**Risks:** Self-talk text is visible to the AI as context. If too verbose, it eats context window. The parenthetical format may occasionally leak into visible responses — use `ai-response-postprocessor.js` to strip leaked internal thoughts.  
+**Risks:** Self-talk text is visible to the AI as context. If too verbose, it consumes context window. The parenthetical format may occasionally leak into visible responses — use `ai-response-postprocessor.js` to strip leaked internal thoughts.  
 **Compatible snippets:** `ai-response-postprocessor.js`
 
 ---
