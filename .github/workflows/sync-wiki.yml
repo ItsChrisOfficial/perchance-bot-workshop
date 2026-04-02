@@ -25,8 +25,16 @@ jobs:
 
       - name: Sync wiki content
         run: |
+          set -euo pipefail
+
           # Remove old wiki content (except .git)
           find .wiki -mindepth 1 -not -path '.wiki/.git' -not -path '.wiki/.git/*' -delete
+
+          # Verify source exists and is non-empty
+          if [ ! -d wiki ] || [ -z "$(ls -A wiki)" ]; then
+            echo "::error::wiki/ directory is missing or empty"
+            exit 1
+          fi
 
           # Copy wiki source files into the wiki checkout
           cp -a wiki/. .wiki/
