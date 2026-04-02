@@ -27,6 +27,7 @@ Current repository layout and quick reference.
 - Validator: `scripts/validate-perchance-export.js`
 - Validator tests: `tests/test-validate-perchance-export.py`
 - CI: `.github/workflows/ci.yml`
+- Wiki sync: `.github/workflows/sync-wiki.yml` (pushes `wiki/` contents to GitHub Wiki on main-branch changes)
 
 ## Governance quick reference
 
