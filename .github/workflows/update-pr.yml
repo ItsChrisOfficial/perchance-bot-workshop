@@ -22,14 +22,15 @@ jobs:
         run: |
           set -euo pipefail
           marker="<!-- bots-folder-pr-sync -->"
+          note=$'### 🤖 Bots folder automation\nThis PR touched `bots/**`, so automation confirmed PR-edit permissions are available (`contents: write`, `pull-requests: write`).\n'"${marker}"
           current_body="$(gh pr view "$PR_NUMBER" --json body --jq '.body // \"\"')"
           if printf '%s' "$current_body" | grep -Fq "$marker"; then
             echo "PR body already contains bots sync marker."
           else
             if [ -n "$current_body" ]; then
-              updated_body="${current_body}"$'\n\n'"${marker}"
+              updated_body="${current_body}"$'\n\n'"${note}"
             else
-              updated_body="${marker}"
+              updated_body="${note}"
             fi
             gh pr edit "$PR_NUMBER" --body "$updated_body"
           fi
