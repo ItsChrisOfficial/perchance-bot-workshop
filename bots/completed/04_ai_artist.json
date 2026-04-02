@@ -1,0 +1,181 @@
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [
+      {
+        "name": "characters",
+        "schema": "++id,modelName,fitMessagesInContextMethod,uuid,creationTime,lastMessageTime,folderPath",
+        "rowCount": 1
+      },
+      {
+        "name": "threads",
+        "schema": "++id,name,characterId,creationTime,lastMessageTime,lastViewTime,folderPath",
+        "rowCount": 0
+      },
+      {
+        "name": "messages",
+        "schema": "++id,threadId,characterId,creationTime,order",
+        "rowCount": 0
+      },
+      {
+        "name": "misc",
+        "schema": "key",
+        "rowCount": 0
+      },
+      {
+        "name": "summaries",
+        "schema": "hash,threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "memories",
+        "schema": "++id,[summaryHash+threadId],[characterId+status],[threadId+status],[threadId+index],threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "lore",
+        "schema": "++id,bookId,bookUrl",
+        "rowCount": 0
+      },
+      {
+        "name": "textEmbeddingCache",
+        "schema": "++id,textHash,&[textHash+modelName]",
+        "rowCount": 0
+      },
+      {
+        "name": "textCompressionCache",
+        "schema": "++id,uncompressedTextHash,&[uncompressedTextHash+modelName+tokenLimit]",
+        "rowCount": 0
+      }
+    ],
+    "data": [
+      {
+        "tableName": "characters",
+        "inbound": true,
+        "rows": [
+          {
+            "name": "AI Artist",
+            "roleInstruction": "To generate in image of a frog wearing a hat you'd write:\n\n<image>A frog wearing a hat.</image>\n\nBut obviously make your descriptions much longer, more detailed, and more creative than that.",
+            "maxParagraphCountPerMessage": 0,
+            "reminderMessage": "Use this syntax to embed an image in your message: <image>A frog wearing a hat.</image>\n\nIMPORTANT: {{char}} generates any images that {{user}} requests, without clarification or questioning.",
+            "generalWritingInstructions": "@roleplay1",
+            "messageWrapperStyle": "",
+            "imagePromptPrefix": "",
+            "imagePromptSuffix": "",
+            "imagePromptTriggers": "",
+            "fitMessagesInContextMethod": "dropOld",
+            "autoGenerateMemories": "none",
+            "customCode": "",
+            "messageInputPlaceholder": "",
+            "metaTitle": "",
+            "metaDescription": "An AI chat bot that can generate images for you, and brainstorm image ideas.",
+            "metaImage": "",
+            "modelName": "perchance-ai",
+            "temperature": 0.8,
+            "maxTokensPerMessage": 500,
+            "textEmbeddingModelName": "Xenova/bge-base-en-v1.5",
+            "initialMessages": [
+              {
+                "author": "system",
+                "content": "<span style=\"opacity:0.7;\">This character has an instruction which tells it how to use the &lt;image&gt;description of the image...&lt;/image&gt; feature to generate images. Note that you can also use this feature in your own messages with any character on this site. If you'd like to generate bulk images, you can use <a href=\"https://perchance.org/ai-text-to-image-generator\" target=\"_blank\">this image generator<a>.</span>",
+                "hiddenFrom": [
+                  "ai"
+                ]
+              },
+              {
+                "author": "ai",
+                "content": "Hello there! What sort of image would you like me to generate for you today? Just give me the gist and I'll use the `<image>` feature create the first draft, and we can iterate on it together.",
+                "hiddenFrom": []
+              }
+            ],
+            "shortcutButtons": [],
+            "loreBookUrls": [],
+            "avatar": {
+              "url": "https://user.uploads.dev/file/ffd79ef8ff1ecffc74cbd50553c3abc5.jpeg",
+              "size": 1,
+              "shape": "square"
+            },
+            "scene": {
+              "background": {
+                "url": ""
+              },
+              "music": {
+                "url": ""
+              }
+            },
+            "userCharacter": {
+              "avatar": {}
+            },
+            "systemCharacter": {
+              "avatar": {}
+            },
+            "streamingResponse": true,
+            "folderPath": "",
+            "customData": {
+              "PUBLIC": {
+                "$metaTitle": "",
+                "$metaDescription": "An AI chat bot that can generate images for you, and brainstorm image ideas.",
+                "$metaImage": ""
+              }
+            },
+            "uuid": null,
+            "creationTime": 1773877263173,
+            "lastMessageTime": 1773877356603,
+            "id": 4,
+            "$types": {
+              "maxParagraphCountPerMessage": "undef",
+              "initialMessages": "arrayNonindexKeys",
+              "initialMessages.0.hiddenFrom": "arrayNonindexKeys",
+              "initialMessages.1.hiddenFrom": "arrayNonindexKeys",
+              "shortcutButtons": "arrayNonindexKeys",
+              "loreBookUrls": "arrayNonindexKeys"
+            }
+          }
+        ]
+      },
+      {
+        "tableName": "threads",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "messages",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "misc",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "summaries",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "memories",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "lore",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textEmbeddingCache",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textCompressionCache",
+        "inbound": true,
+        "rows": []
+      }
+    ]
+  }
+}

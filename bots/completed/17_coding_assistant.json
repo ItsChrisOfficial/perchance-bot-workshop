@@ -1,0 +1,165 @@
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [
+      {
+        "name": "characters",
+        "schema": "++id,modelName,fitMessagesInContextMethod,uuid,creationTime,lastMessageTime,folderPath",
+        "rowCount": 1
+      },
+      {
+        "name": "threads",
+        "schema": "++id,name,characterId,creationTime,lastMessageTime,lastViewTime,folderPath",
+        "rowCount": 0
+      },
+      {
+        "name": "messages",
+        "schema": "++id,threadId,characterId,creationTime,order",
+        "rowCount": 0
+      },
+      {
+        "name": "misc",
+        "schema": "key",
+        "rowCount": 0
+      },
+      {
+        "name": "summaries",
+        "schema": "hash,threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "memories",
+        "schema": "++id,[summaryHash+threadId],[characterId+status],[threadId+status],[threadId+index],threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "lore",
+        "schema": "++id,bookId,bookUrl",
+        "rowCount": 0
+      },
+      {
+        "name": "textEmbeddingCache",
+        "schema": "++id,textHash,&[textHash+modelName]",
+        "rowCount": 0
+      },
+      {
+        "name": "textCompressionCache",
+        "schema": "++id,uncompressedTextHash,&[uncompressedTextHash+modelName+tokenLimit]",
+        "rowCount": 0
+      }
+    ],
+    "data": [
+      {
+        "tableName": "characters",
+        "inbound": true,
+        "rows": [
+          {
+            "name": "Coding Assistant",
+            "roleInstruction": "The coding assistant helps the user to write code, answer coding questions, and debug their code. All code MUST be enclosed within triple backticks since responses will be displayed with markdown formatting.",
+            "maxParagraphCountPerMessage": 0,
+            "reminderMessage": "",
+            "generalWritingInstructions": "@roleplay1",
+            "messageWrapperStyle": "",
+            "imagePromptPrefix": "",
+            "imagePromptSuffix": "",
+            "imagePromptTriggers": "",
+            "fitMessagesInContextMethod": "dropOld",
+            "autoGenerateMemories": "none",
+            "customCode": "",
+            "messageInputPlaceholder": "",
+            "metaTitle": "",
+            "metaDescription": "",
+            "metaImage": "",
+            "modelName": "perchance-ai",
+            "temperature": 0.8,
+            "maxTokensPerMessage": 500,
+            "textEmbeddingModelName": "Xenova/bge-base-en-v1.5",
+            "initialMessages": [
+              {
+                "author": "ai",
+                "content": "Hi! How can I help?"
+              }
+            ],
+            "shortcutButtons": [],
+            "loreBookUrls": [],
+            "avatar": {
+              "url": "https://user.uploads.dev/file/5ecdf46b00d4e21a9b680ca46baef45e.jpeg",
+              "size": 1,
+              "shape": "square"
+            },
+            "scene": {
+              "background": {
+                "url": ""
+              },
+              "music": {
+                "url": ""
+              }
+            },
+            "userCharacter": {
+              "avatar": {}
+            },
+            "systemCharacter": {
+              "avatar": {}
+            },
+            "streamingResponse": true,
+            "folderPath": "",
+            "customData": {},
+            "uuid": null,
+            "creationTime": 1773963852112,
+            "lastMessageTime": 1773963852112,
+            "id": 17,
+            "$types": {
+              "maxParagraphCountPerMessage": "undef",
+              "initialMessages": "arrayNonindexKeys",
+              "shortcutButtons": "arrayNonindexKeys",
+              "loreBookUrls": "arrayNonindexKeys"
+            }
+          }
+        ]
+      },
+      {
+        "tableName": "threads",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "messages",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "misc",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "summaries",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "memories",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "lore",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textEmbeddingCache",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textCompressionCache",
+        "inbound": true,
+        "rows": []
+      }
+    ]
+  }
+}
