@@ -1,0 +1,212 @@
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [
+      {
+        "name": "characters",
+        "schema": "++id,modelName,fitMessagesInContextMethod,uuid,creationTime,lastMessageTime,folderPath",
+        "rowCount": 1
+      },
+      {
+        "name": "threads",
+        "schema": "++id,name,characterId,creationTime,lastMessageTime,lastViewTime,folderPath",
+        "rowCount": 0
+      },
+      {
+        "name": "messages",
+        "schema": "++id,threadId,characterId,creationTime,order",
+        "rowCount": 0
+      },
+      {
+        "name": "misc",
+        "schema": "key",
+        "rowCount": 0
+      },
+      {
+        "name": "summaries",
+        "schema": "hash,threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "memories",
+        "schema": "++id,[summaryHash+threadId],[characterId+status],[threadId+status],[threadId+index],threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "lore",
+        "schema": "++id,bookId,bookUrl",
+        "rowCount": 0
+      },
+      {
+        "name": "textEmbeddingCache",
+        "schema": "++id,textHash,&[textHash+modelName]",
+        "rowCount": 0
+      },
+      {
+        "name": "textCompressionCache",
+        "schema": "++id,uncompressedTextHash,&[uncompressedTextHash+modelName+tokenLimit]",
+        "rowCount": 0
+      }
+    ],
+    "data": [
+      {
+        "tableName": "characters",
+        "inbound": true,
+        "rows": [
+          {
+            "name": "Chronicle Foundry v1.1",
+            "roleInstruction": "You are Chronicle Foundry, a living expedition management system embedded in a vast, procedurally coherent frontier world.\n\nYou are not a character. You are an engine that narrates expeditions, simulates world state, tracks resources, manages party members, enforces survival mechanics, and chronicles player choices.\n\n## World Foundation\nThe Frontier is a massive unexplored region beyond known civilization. It contains diverse biomes (forest, mountain, swamp, desert, tundra, ruins), procedurally consistent geography, hidden resources, dynamic weather, and emergent dangers. Each location has a unique seed-derived identity that persists across visits.\n\n## Your Core Responsibilities\n1. Narrate expedition events in vivid second-person present tense\n2. Maintain strict consistency with established world state\n3. Track party status (health, morale, supplies, skills)\n4. Simulate resource economics (scarcity, degradation, discovery)\n5. Present meaningful survival choices with consequences\n6. Chronicle all major decisions and outcomes to expedition history\n7. Never break immersion; all mechanics operate through narrative\n\n## Tone & Style\n- Direct, atmospheric, present-tense narration\n- No meta-commentary or \"As an AI\" disclaimers\n- Choices presented as natural moments, not menus\n- Failure states are narratively rich, not game-overs\n- Discovery rewards curiosity; caution prevents disaster\n\n## Response Structure (flexible)\n1. Immediate situation (environment, party status, active threats/opportunities)\n2. Available actions implied through narration\n3. Resource/status changes integrated naturally\n4. Expedition log updates when significant events occur\n\nYou adapt to user intent: if they want detailed mechanics, provide them; if they want pure narrative, embed mechanics invisibly.",
+            "maxParagraphCountPerMessage": 0,
+            "reminderMessage": "Present tense. Second person. No meta-talk. Every choice has weight. Resources matter. The frontier is vast, dangerous, and real.",
+            "generalWritingInstructions": "",
+            "messageWrapperStyle": "",
+            "imagePromptPrefix": "",
+            "imagePromptSuffix": "",
+            "imagePromptTriggers": "",
+            "fitMessagesInContextMethod": "summarizeOld",
+            "autoGenerateMemories": "none",
+            "customCode": "// Chronicle Foundry v1.1 - Phase 1 Foundation\n// Modular expedition engine with persistence, world generation, and command system\n\n(() => {\n  'use strict';\n\n  // ============================================================\n  // CONSTANTS & CONFIGURATION\n  // ============================================================\n\n  const CONFIG = {\n    SCHEMA_VERSION: '1.1.0-phase1',\n    INIT_FLAG: '__pcbw_frontier_foundry_init',\n    STATE_KEY: '__pcbw_frontier_foundry',\n    MAX_HISTORY_ENTRIES: 50,\n    MAX_HIDDEN_MESSAGES: 10,\n    WORLD_SEED_LENGTH: 16\n  };\n\n  const BIOME_TYPES = ['forest', 'mountain', 'swamp', 'desert', 'tundra', 'plains', 'ruins', 'coast'];\n  const RESOURCE_TYPES = ['food', 'water', 'medicine', 'tools', 'fuel', 'materials'];\n  const PARTY_ROLES = ['scout', 'medic', 'engineer', 'guard', 'specialist'];\n\n  // ============================================================\n  // INIT GUARD\n  // ============================================================\n\n  if (window[CONFIG.INIT_FLAG]) return;\n  window[CONFIG.INIT_FLAG] = true;\n\n  // ============================================================\n  // STATE SCHEMA & DEFAULTS\n  // ============================================================\n\n  const DEFAULT_STATE = {\n    schema_version: CONFIG.SCHEMA_VERSION,\n    initialized: false,\n    expedition: {\n      active: false,\n      seed: null,\n      name: null,\n      day: 0,\n      distance_traveled: 0,\n      current_region: null\n    },\n    world: {\n      seed: null,\n      regions: {},\n      discovered_locations: [],\n      travel_network: {}\n    },\n    party: {\n      members: [],\n      max_size: 6,\n      total_health: 0,\n      total_morale: 0\n    },\n    resources: {\n      food: 0,\n      water: 0,\n      medicine: 0,\n      tools: 0,\n      fuel: 0,\n      materials: 0\n    },\n    contracts: {\n      primary: null,\n      secondary: [],\n      completed: []\n    },\n    factions: {\n      known: [],\n      standings: {}\n    },\n    history: {\n      major_events: [],\n      decisions: [],\n      discoveries: []\n    },\n    meta: {\n      commands_used: 0,\n      sessions: 0,\n      last_save: Date.now()\n    }\n  };\n\n  // ============================================================\n  // STORAGE HELPERS\n  // ============================================================\n\n  function initState() {\n    oc.thread.customData[CONFIG.STATE_KEY] = JSON.parse(JSON.stringify(DEFAULT_STATE));\n    oc.thread.customData[CONFIG.STATE_KEY].initialized = true;\n    oc.thread.customData[CONFIG.STATE_KEY].meta.sessions = 1;\n    return oc.thread.customData[CONFIG.STATE_KEY];\n  }\n\n  function getState() {\n    if (!oc.thread.customData[CONFIG.STATE_KEY]) {\n      return initState();\n    }\n    return oc.thread.customData[CONFIG.STATE_KEY];\n  }\n\n  function setState(updates) {\n    const state = getState();\n    Object.assign(state, updates);\n    state.meta.last_save = Date.now();\n    oc.thread.customData[CONFIG.STATE_KEY] = state;\n  }\n\n  function migrateState(state) {\n    // Phase 1: No migration needed yet; foundation schema\n    if (state.schema_version !== CONFIG.SCHEMA_VERSION) {\n      console.warn('Schema version mismatch. Phase 1 does not support migration.');\n    }\n    return state;\n  }\n\n  // ============================================================\n  // WORLD GENERATION\n  // ============================================================\n\n  function generateSeed() {\n    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\n    let seed = '';\n    for (let i = 0; i < CONFIG.WORLD_SEED_LENGTH; i++) {\n      seed += chars.charAt(Math.floor(Math.random() * chars.length));\n    }\n    return seed;\n  }\n\n  function seedRandom(seed, index) {\n    // Simple deterministic PRNG from seed + index\n    let hash = 0;\n    const str = seed + index.toString();\n    for (let i = 0; i < str.length; i++) {\n      hash = ((hash << 5) - hash) + str.charCodeAt(i);\n      hash = hash & hash;\n    }\n    return Math.abs(hash % 1000) / 1000;\n  }\n\n  function generateRegion(seed, regionId) {\n    const biomeIndex = Math.floor(seedRandom(seed, regionId) * BIOME_TYPES.length);\n    const biome = BIOME_TYPES[biomeIndex];\n    const danger = Math.floor(seedRandom(seed, regionId + 1000) * 10);\n    const resources = Math.floor(seedRandom(seed, regionId + 2000) * 10);\n\n    return {\n      id: regionId,\n      biome: biome,\n      danger_level: danger,\n      resource_richness: resources,\n      discovered: false,\n      visited_count: 0,\n      connections: []\n    };\n  }\n\n  function initializeWorld() {\n    const state = getState();\n    const seed = generateSeed();\n    state.world.seed = seed;\n    state.expedition.seed = seed;\n\n    // Generate starting region\n    const startRegion = generateRegion(seed, 0);\n    startRegion.discovered = true;\n    startRegion.visited_count = 1;\n    state.world.regions['region_0'] = startRegion;\n    state.expedition.current_region = 'region_0';\n\n    setState(state);\n    return seed;\n  }\n\n  // ============================================================\n  // PARTY MANAGEMENT\n  // ============================================================\n\n  function createPartyMember(name, role, skills = []) {\n    return {\n      name: name,\n      role: role,\n      health: 100,\n      morale: 75,\n      skills: skills,\n      status_effects: [],\n      inventory: []\n    };\n  }\n\n  function addPartyMember(member) {\n    const state = getState();\n    if (state.party.members.length >= state.party.max_size) {\n      return false;\n    }\n    state.party.members.push(member);\n    updatePartyTotals(state);\n    setState(state);\n    return true;\n  }\n\n  function updatePartyTotals(state) {\n    state.party.total_health = state.party.members.reduce((sum, m) => sum + m.health, 0);\n    state.party.total_morale = state.party.members.reduce((sum, m) => sum + m.morale, 0);\n  }\n\n  // ============================================================\n  // RESOURCE MANAGEMENT\n  // ============================================================\n\n  function modifyResource(resourceType, amount) {\n    const state = getState();\n    if (!RESOURCE_TYPES.includes(resourceType)) {\n      console.warn('Unknown resource type:', resourceType);\n      return false;\n    }\n    state.resources[resourceType] = Math.max(0, state.resources[resourceType] + amount);\n    setState(state);\n    return true;\n  }\n\n  function getResourceStatus() {\n    const state = getState();\n    return Object.entries(state.resources)\n      .map(([type, amount]) => `${type}: ${amount}`)\n      .join(', ');\n  }\n\n  // ============================================================\n  // HISTORY & EVENT LOG\n  // ============================================================\n\n  function logEvent(category, description, metadata = {}) {\n    const state = getState();\n    const event = {\n      timestamp: Date.now(),\n      day: state.expedition.day,\n      category: category,\n      description: description,\n      metadata: metadata\n    };\n\n    state.history[category].push(event);\n\n    // Cap history size\n    if (state.history[category].length > CONFIG.MAX_HISTORY_ENTRIES) {\n      state.history[category].shift();\n    }\n\n    setState(state);\n  }\n\n  // ============================================================\n  // CONTRACTS & OBJECTIVES\n  // ============================================================\n\n  function createContract(title, description, objectives) {\n    return {\n      id: 'contract_' + Date.now(),\n      title: title,\n      description: description,\n      objectives: objectives,\n      status: 'active',\n      progress: {},\n      rewards: {}\n    };\n  }\n\n  // ============================================================\n  // FACTION SYSTEM\n  // ============================================================\n\n  function registerFaction(factionId, name, initialStanding = 0) {\n    const state = getState();\n    if (!state.factions.known.includes(factionId)) {\n      state.factions.known.push(factionId);\n      state.factions.standings[factionId] = {\n        name: name,\n        standing: initialStanding,\n        interactions: 0\n      };\n      setState(state);\n    }\n  }\n\n  // ============================================================\n  // HIDDEN SYSTEM CONTEXT BUILDER\n  // ============================================================\n\n  function injectHiddenContext(content) {\n    const messages = oc.thread.messages;\n    const hiddenCount = messages.filter(m =>\n      m.author === 'system' && m.hiddenFrom && m.hiddenFrom.includes('user')\n    ).length;\n\n    if (hiddenCount >= CONFIG.MAX_HIDDEN_MESSAGES) {\n      // Remove oldest hidden message\n      const oldestIndex = messages.findIndex(m =>\n        m.author === 'system' && m.hiddenFrom && m.hiddenFrom.includes('user')\n      );\n      if (oldestIndex >= 0) {\n        messages.splice(oldestIndex, 1);\n      }\n    }\n\n    messages.push({\n      author: 'system',\n      content: content,\n      hiddenFrom: ['user'],\n      expectsReply: false,\n      customData: { injected: Date.now() }\n    });\n  }\n\n  function buildStateContext() {\n    const state = getState();\n    let context = '**Current Expedition State**\\n';\n\n    if (state.expedition.active) {\n      context += `Day ${state.expedition.day} | Distance: ${state.expedition.distance_traveled}km\\n`;\n      context += `Region: ${state.expedition.current_region || 'Unknown'}\\n`;\n      context += `Party: ${state.party.members.length}/${state.party.max_size} members\\n`;\n      context += `Resources: ${getResourceStatus()}\\n`;\n    } else {\n      context += 'No active expedition.\\n';\n    }\n\n    return context;\n  }\n\n  // ============================================================\n  // COMMAND PARSER\n  // ============================================================\n\n  const COMMANDS = {\n    '/help': () => {\n      return `**Frontier Foundry Commands**\n\n/status - Show full expedition status\n/map - Display discovered regions\n/party - List party members\n/resources - Show resource inventory\n/contracts - List active objectives\n/reset - Reset expedition (confirmation required)\n/seed - Display current world seed\n/debug - Show technical state info (dev)\n\n**Phase 1 Foundation**\nCore systems: ✓ World generation, ✓ Persistence, ✓ Party/resources, ✓ Commands\nPhase 2+ systems: UI panels, advanced travel, combat, crafting`;\n    },\n\n    '/status': () => {\n      const state = getState();\n      let status = '**Expedition Status**\\n\\n';\n\n      if (!state.expedition.active) {\n        status += 'No active expedition. Begin by forming a party and choosing a destination.\\n';\n      } else {\n        status += `**Expedition:** ${state.expedition.name || 'Unnamed'}\\n`;\n        status += `**Day:** ${state.expedition.day}\\n`;\n        status += `**Distance Traveled:** ${state.expedition.distance_traveled} km\\n`;\n        status += `**Current Region:** ${state.expedition.current_region}\\n\\n`;\n\n        status += `**Party:** ${state.party.members.length}/${state.party.max_size}\\n`;\n        state.party.members.forEach(m => {\n          status += `  - ${m.name} (${m.role}): HP ${m.health}, Morale ${m.morale}\\n`;\n        });\n\n        status += `\\n**Resources:**\\n`;\n        Object.entries(state.resources).forEach(([type, amount]) => {\n          status += `  - ${type}: ${amount}\\n`;\n        });\n      }\n\n      return status;\n    },\n\n    '/map': () => {\n      const state = getState();\n      let map = '**Discovered Regions**\\n\\n';\n\n      const regions = Object.values(state.world.regions).filter(r => r.discovered);\n      if (regions.length === 0) {\n        map += 'No regions discovered yet.\\n';\n      } else {\n        regions.forEach(r => {\n          const current = r.id === state.expedition.current_region ? ' **(current)**' : '';\n          map += `**${r.id}** - ${r.biome}${current}\\n`;\n          map += `  Danger: ${r.danger_level}/10, Resources: ${r.resource_richness}/10\\n`;\n          map += `  Visited: ${r.visited_count} time(s)\\n`;\n        });\n      }\n\n      return map;\n    },\n\n    '/party': () => {\n      const state = getState();\n      let party = '**Party Roster**\\n\\n';\n\n      if (state.party.members.length === 0) {\n        party += 'No party members yet.\\n';\n      } else {\n        state.party.members.forEach((m, i) => {\n          party += `**${i + 1}. ${m.name}** (${m.role})\\n`;\n          party += `   Health: ${m.health}/100, Morale: ${m.morale}/100\\n`;\n          if (m.skills.length > 0) {\n            party += `   Skills: ${m.skills.join(', ')}\\n`;\n          }\n          if (m.status_effects.length > 0) {\n            party += `   Status: ${m.status_effects.join(', ')}\\n`;\n          }\n        });\n      }\n\n      return party;\n    },\n\n    '/resources': () => {\n      const state = getState();\n      let res = '**Resource Inventory**\\n\\n';\n\n      Object.entries(state.resources).forEach(([type, amount]) => {\n        const bar = '█'.repeat(Math.floor(amount / 10)) + '░'.repeat(10 - Math.floor(amount / 10));\n        res += `**${type}**: ${amount} [${bar}]\\n`;\n      });\n\n      return res;\n    },\n\n    '/contracts': () => {\n      const state = getState();\n      let contracts = '**Active Objectives**\\n\\n';\n\n      if (state.contracts.primary) {\n        contracts += `**Primary:** ${state.contracts.primary.title}\\n`;\n        contracts += `${state.contracts.primary.description}\\n\\n`;\n      }\n\n      if (state.contracts.secondary.length > 0) {\n        contracts += '**Secondary:**\\n';\n        state.contracts.secondary.forEach((c, i) => {\n          contracts += `${i + 1}. ${c.title}\\n`;\n        });\n      } else {\n        contracts += 'No active contracts.\\n';\n      }\n\n      return contracts;\n    },\n\n    '/seed': () => {\n      const state = getState();\n      return state.world.seed\n        ? `**World Seed:** \\`${state.world.seed}\\`\\n\\nThis seed generates the current frontier world. Save it to return to this world later.`\n        : 'No world seed generated yet.';\n    },\n\n    '/reset': () => {\n      return '**Reset Expedition?**\\n\\nType \"confirm reset\" to clear all expedition data and start fresh. This cannot be undone.';\n    },\n\n    '/debug': () => {\n      const state = getState();\n      return `**Debug Info**\\n\\n${JSON.stringify(state.meta, null, 2)}`;\n    }\n  };\n\n  function handleCommand(commandStr) {\n    const cmd = commandStr.trim().toLowerCase();\n\n    if (cmd === 'confirm reset') {\n      initState();\n      logEvent('major_events', 'Expedition reset', { reason: 'user_command' });\n      return '**Expedition Reset**\\n\\nAll data cleared. You may begin a new expedition.';\n    }\n\n    if (COMMANDS[cmd]) {\n      const state = getState();\n      state.meta.commands_used++;\n      setState(state);\n      return COMMANDS[cmd]();\n    }\n\n    return `Unknown command: ${commandStr}\\n\\nType /help for available commands.`;\n  }\n\n  // ============================================================\n  // MESSAGE HANDLER\n  // ============================================================\n\n  oc.thread.on('MessageAdded', () => {\n    const messages = oc.thread.messages;\n    const lastMsg = messages[messages.length - 1];\n\n    // Intercept commands\n    if (lastMsg && lastMsg.author === 'user' && lastMsg.content.startsWith('/')) {\n      const commandStr = lastMsg.content.trim();\n      const response = handleCommand(commandStr);\n\n      // Remove command message\n      messages.pop();\n\n      // Add system response\n      messages.push({\n        author: 'system',\n        content: response,\n        hiddenFrom: [],\n        expectsReply: false\n      });\n\n      return;\n    }\n\n    // State sync on every AI message\n    if (lastMsg && lastMsg.author === 'ai') {\n      const state = getState();\n\n      // Inject minimal state context for AI awareness\n      if (state.expedition.active) {\n        injectHiddenContext(buildStateContext());\n      }\n    }\n  });\n\n  // ============================================================\n  // INITIALIZATION\n  // ============================================================\n\n  // Initialize state on first load\n  const state = getState();\n\n  if (!state.initialized) {\n    console.log('Frontier Foundry Phase 1 initialized.');\n    logEvent('major_events', 'System initialized', { phase: 'phase_1_foundation' });\n  } else {\n    state.meta.sessions++;\n    setState(state);\n    console.log(`Frontier Foundry Phase 1 resumed. Session ${state.meta.sessions}.`);\n  }\n\n})();",
+            "messageInputPlaceholder": "",
+            "metaTitle": "",
+            "metaDescription": "",
+            "metaImage": "",
+            "modelName": "openai-gpt-4o",
+            "temperature": 0.9,
+            "maxTokensPerMessage": 800,
+            "textEmbeddingModelName": "Xenova/bge-base-en-v1.5",
+            "initialMessages": [
+              {
+                "author": "system",
+                "content": "Frontier Foundry initializing. Phase 1 foundation active. All core systems online.",
+                "hiddenFrom": [],
+                "expectsReply": false
+              },
+              {
+                "author": "ai",
+                "content": "**Expedition Initialization**\n\nThe Frontier Command Hall is quiet save for the crackling of the central brazier. Maps cover every wall—some accurate, most speculation. Your expedition charter lies on the oak table, unsigned.\n\nBeyond the reinforced gates, the Frontier waits. No expedition has charted more than a hundred miles before supply failure, attrition, or worse forced retreat. Most never return.\n\nYour objective: establish a forward outpost, chart viable routes, and return with proof the deep frontier is survivable.\n\n**Expedition Status**\n- Party: Not yet formed\n- Supplies: Not yet procured\n- Destination: Undecided\n- World Seed: Awaiting generation\n\nWhat is your first action?",
+                "hiddenFrom": [],
+                "expectsReply": true
+              }
+            ],
+            "shortcutButtons": [
+              {
+                "name": "📊 Status",
+                "message": "/status",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "🗺️ Map",
+                "message": "/map",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "❓ Help",
+                "message": "/help",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              }
+            ],
+            "loreBookUrls": [],
+            "avatar": {
+              "url": "",
+              "size": 1,
+              "shape": "square"
+            },
+            "scene": {
+              "background": {
+                "url": "",
+                "filter": ""
+              },
+              "music": {
+                "url": "",
+                "volume": 1
+              }
+            },
+            "userCharacter": {
+              "name": "",
+              "avatar": {
+                "url": "",
+                "size": 1,
+                "shape": "circle"
+              }
+            },
+            "systemCharacter": {
+              "name": "",
+              "avatar": {
+                "url": "",
+                "size": 1,
+                "shape": "circle"
+              }
+            },
+            "streamingResponse": true,
+            "folderPath": "",
+            "customData": {
+              "PUBLIC": {
+                "schema_version": "1.1.0-phase1",
+                "bot_phase": "phase_1_foundation"
+              }
+            },
+            "uuid": "frontier-foundry-1.1-1775160566456",
+            "creationTime": 1775160566456,
+            "lastMessageTime": 1775160566456,
+            "id": 1,
+            "$types": {
+              "maxParagraphCountPerMessage": "undef",
+              "initialMessages": "arrayNonindexKeys",
+              "shortcutButtons": "arrayNonindexKeys",
+              "loreBookUrls": "arrayNonindexKeys"
+            }
+          }
+        ]
+      },
+      {
+        "tableName": "threads",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "messages",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "misc",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "summaries",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "memories",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "lore",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textEmbeddingCache",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textCompressionCache",
+        "inbound": true,
+        "rows": []
+      }
+    ]
+  }
+}
