@@ -3,8 +3,10 @@ name: Update PR (non-main branches)
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
     branches-ignore:
       - main
+  create:
 
 permissions:
   contents: write
@@ -12,18 +14,31 @@ permissions:
 
 jobs:
   update-pr:
-    if: ${{ !github.event.pull_request.draft }}
+    if: >-
+      ${{
+        (github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.ref != 'main')) &&
+        (github.event_name != 'push' || github.ref_name != 'main') &&
+        (github.event_name != 'create' || (github.event.ref_type == 'branch' && github.event.ref != 'main'))
+      }}
     runs-on: ubuntu-latest
     steps:
       - name: Keep PR body in sync via gh pr edit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref || github.ref_name || github.event.ref }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           marker="<!-- non-main-pr-sync -->"
-          note=$'### 🤖 PR automation\nThis PR targets a non-`main` branch, so automation confirmed PR-edit permissions are available (`contents: write`, `pull-requests: write`).\n'"${marker}"
+          note=$'### 🤖 PR automation\nThis PR maps to a non-`main` branch, so automation confirmed PR-edit permissions are available (`contents: write`, `pull-requests: write`).\n'"${marker}"
+          if [ -z "${PR_NUMBER:-}" ]; then
+            PR_NUMBER="$(gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')"
+          fi
+          if [ -z "${PR_NUMBER:-}" ]; then
+            echo "No open PR found for branch '$BRANCH_NAME'; nothing to edit."
+            exit 0
+          fi
           current_body="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json body --jq '.body // \"\"')"
           if printf '%s' "$current_body" | grep -Fq "$marker"; then
             echo "PR body already contains bots sync marker."
