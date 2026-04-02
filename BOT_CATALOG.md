@@ -69,6 +69,7 @@ No bot entries currently tracked under `bots/in-progress/`.
 | UI-Heavy Interactive Builder Bot | completed | `bots/completed/reference-ui-builder-bot/` | Interactive project builder with floating side panel — strongest embedded-UI example | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates iframe UI rendering, DOM creation, init guards, command-driven workflow |
 | Scene-and-Lore Adventure Bot | completed | `bots/completed/reference-scene-lore-adventure-bot/` | Narrative adventure bot with scene progression, lore discovery, and hidden context injection | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates scene transitions, inventory/quest tracking, hidden system messages, dynamic context |
 | Image-Oriented Creative Director Bot | completed | `bots/completed/reference-image-director-bot/` | Art direction bot with runtime image prompt manipulation and style presets | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates imagePromptPrefix/Suffix runtime updates, style presets, prompt history tracking |
+| Chronicle Foundry: Living Expedition Engine | completed | `bots/completed/reference-chronicle-foundry/` | Stress-test reference bot combining persistent simulation, rich iframe operations UI, narrative orchestration, and image prompt workflow | ready | passed | Validator and unittest passed on 2026-04-02; includes full multi-system expedition engine with save/restore, debug inspection, and command-safe orchestration |
 
 ## Update rules (contributors and agents)
 
