@@ -81,9 +81,7 @@
               {
                 "author": "system",
                 "content": "Phase 2 boot: usable expedition engine with real iframe operations UI, stateful screens, travel/camp/event progression, and snapshot baseline is enabled.",
-                "hiddenFrom": [
-                  "user"
-                ],
+                "hiddenFrom": [],
                 "expectsReply": false
               },
               {
