@@ -37,6 +37,24 @@ Read in this order:
 - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`
 - `python -m unittest tests/test-validate-perchance-export.py`
 
+## Reference docs
+
+When building or reviewing a bot, these reference docs provide fast lookup and decision support:
+
+| Need | Go to |
+|---|---|
+| What is possible in customCode? | `docs/CUSTOM_CODE_CAPABILITY_MATRIX.md` |
+| Which snippet should I use? | `docs/SNIPPET_SELECTION_GUIDE.md` |
+| How do I combine snippets? | `docs/REUSABLE_PATTERN_RECIPES.md` |
+| What are the export JSON fields? | `docs/EXPORT_FIELD_REFERENCE.md` |
+| What prompting approach should I use? | `docs/PROMPTING_PATTERNS.md` |
+| How do I style messages and UI? | `docs/STYLING_RECIPES.md` |
+| What usually goes wrong? | `docs/COMMON_FAILURE_MODES.md` |
+| Am I ready to merge? | `docs/CUSTOM_CODE_IMPLEMENTATION_CHECKLIST.md` |
+| How do I plan a new bot? | `docs/BOT_DESIGN_BRIEF_TEMPLATE.md` |
+| Should I use Pyodide? | `docs/PYODIDE_COMPATIBILITY_NOTES.md` |
+| How do I file an issue? | `docs/ISSUE_INTAKE_TEMPLATES.md` |
+
 ## Quick guardrails
 
 - Do not ship bare character JSON; keep full export envelope.
