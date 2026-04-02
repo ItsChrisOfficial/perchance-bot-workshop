@@ -18,12 +18,13 @@ jobs:
       - name: Keep PR body in sync via gh pr edit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           marker="<!-- bots-folder-pr-sync -->"
           note=$'### 🤖 Bots folder automation\nThis PR touched `bots/**`, so automation confirmed PR-edit permissions are available (`contents: write`, `pull-requests: write`).\n'"${marker}"
-          current_body="$(gh pr view "$PR_NUMBER" --json body --jq '.body // \"\"')"
+          current_body="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json body --jq '.body // \"\"')"
           if printf '%s' "$current_body" | grep -Fq "$marker"; then
             echo "PR body already contains bots sync marker."
           else
@@ -32,5 +33,5 @@ jobs:
             else
               updated_body="${note}"
             fi
-            gh pr edit "$PR_NUMBER" --body "$updated_body"
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --body "$updated_body"
           fi
