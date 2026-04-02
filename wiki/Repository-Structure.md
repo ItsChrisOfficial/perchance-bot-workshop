@@ -14,7 +14,7 @@ perchance-bot-workshop/
 │   ├── in-progress/      #   Active bot development
 │   └── completed/        #   Release-ready validated bots
 ├── docs/                 # Standards and verification docs
-│   └── Code_Documentation/  # Perchance platform reference docs
+│   └── Code_Documentation/  # Perchance platform reference docs (legacy name)
 ├── scripts/              # Automation scripts (validation, transforms)
 ├── shared/               # Shared prompts, utilities, schemas
 ├── snippets/             # Small reusable fragments and examples

@@ -18,7 +18,7 @@ Templates are canonical starter assets — import-safe export envelopes with pla
 |---|---|---|
 | `perchance-empty-minimal.json` | Default minimal production-safe starter | **Always use this** for new bot builds |
 | `perchance-empty-annotated.json` | Teaching template with embedded schema guidance | When learning the export format |
-| `perchance_empty_customcode_template.json` | Legacy baseline | Backward compatibility only |
+| `perchance_empty_customcode_template.json` | Legacy baseline (pre-dates kebab-case convention) | Backward compatibility only |
 
 ### Rules
 

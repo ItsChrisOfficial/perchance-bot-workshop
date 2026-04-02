@@ -91,15 +91,15 @@ The test suite uses fixtures in `tests/fixtures/`:
 
 Each fixture is intentionally broken for one specific reason:
 
-| Fixture | What it tests |
+| Fixture file | What it tests |
 |---|---|
-| Broken JSON | JSON parse failure |
-| Missing canonical table | Incomplete table set |
-| rowCount mismatch | Table/data inconsistency |
-| Invalid message author | Bad author enum value |
-| Invalid shortcut insertionType | Bad insertionType enum value |
-| Malformed customCode JavaScript | JS syntax failure |
-| customCode wrong type | Non-string customCode field |
+| `broken-json.json` | JSON parse failure |
+| `missing-table.json` | Incomplete canonical table set |
+| `rowcount-mismatch.json` | `rowCount` / `rows.length` inconsistency |
+| `invalid-message-author.json` | Invalid `author` enum value in seeded message |
+| `invalid-shortcut-insertion-type.json` | Invalid `insertionType` enum value in shortcut button |
+| `malformed-customcode.json` | JavaScript syntax failure in `customCode` |
+| `customcode-not-string.json` | `customCode` stored as non-string type |
 
 ## CI Integration
 
