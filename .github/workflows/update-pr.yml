@@ -1,10 +1,10 @@
-name: Update PR for bots changes
+name: Update PR (non-main branches)
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "bots/**"
+    branches-ignore:
+      - main
 
 permissions:
   contents: write
@@ -22,8 +22,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          marker="<!-- bots-folder-pr-sync -->"
-          note=$'### 🤖 Bots folder automation\nThis PR touched `bots/**`, so automation confirmed PR-edit permissions are available (`contents: write`, `pull-requests: write`).\n'"${marker}"
+          marker="<!-- non-main-pr-sync -->"
+          note=$'### 🤖 PR automation\nThis PR targets a non-`main` branch, so automation confirmed PR-edit permissions are available (`contents: write`, `pull-requests: write`).\n'"${marker}"
           current_body="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json body --jq '.body // \"\"')"
           if printf '%s' "$current_body" | grep -Fq "$marker"; then
             echo "PR body already contains bots sync marker."
