@@ -13,6 +13,20 @@ This file governs **how agents operate**. For placement conventions, follow `PRO
 3. `CONTRIBUTING.md`
 4. `docs/PERCHANCE_IMPORT_VERIFICATION.md` (**mandatory** for export JSON or `customCode` tasks)
 
+## Decision and reference docs for customCode tasks
+
+Before implementing customCode-heavy changes, agents should consult:
+
+- `docs/CUSTOM_CODE_CAPABILITY_MATRIX.md` — check whether the requested capability is realistic in Perchance customCode
+- `docs/SNIPPET_SELECTION_GUIDE.md` — identify which existing snippets to start from
+- `docs/REUSABLE_PATTERN_RECIPES.md` — see how snippets compose into bot designs
+- `docs/COMMON_FAILURE_MODES.md` — avoid known pitfalls (duplicate listeners, namespace collisions, reminder overwrites)
+- `docs/EXPORT_FIELD_REFERENCE.md` — fast lookup for export JSON field types, locations, and scopes
+- `docs/PROMPTING_PATTERNS.md` — select appropriate prompting approach (instruction vs reminder vs hidden system message)
+- `docs/STYLING_RECIPES.md` — copy-ready CSS for message styling and iframe UI
+- `docs/CUSTOM_CODE_IMPLEMENTATION_CHECKLIST.md` — walk through before marking work complete
+- `docs/PYODIDE_COMPATIBILITY_NOTES.md` — consult before adding Pyodide-dependent functionality
+
 ## Agent execution contract
 
 - Make minimal, scoped diffs.
@@ -35,3 +49,5 @@ If a change touches Perchance export JSON or `customCode`, agents must:
 - Moving bots to `completed` before validation.
 - Updating bot/snippet files without index updates.
 - Creating duplicate utility logic under bot folders instead of shared locations.
+- Implementing customCode without checking `docs/CUSTOM_CODE_CAPABILITY_MATRIX.md` for feasibility.
+- Composing multiple snippets without checking `docs/COMMON_FAILURE_MODES.md` for conflicts (especially FM-09, FM-14, FM-17, FM-30–32).

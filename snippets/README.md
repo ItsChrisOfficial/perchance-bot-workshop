@@ -60,6 +60,17 @@ All snippets in `custom-code/` follow these rules:
 - **Error-handled** — try/catch on all external calls
 - **Documented** — header comment with purpose, realism note, behavior, and caveats
 
+## Choosing and composing snippets
+
+Before picking snippets, consult these reference docs:
+
+- **`docs/SNIPPET_SELECTION_GUIDE.md`** — 30 task-oriented scenarios mapping goals to specific snippet files. Start here if you know what you want to build but not which snippet to use.
+- **`docs/REUSABLE_PATTERN_RECIPES.md`** — 12 recipes showing how to combine multiple snippets into complete bot designs (e.g., state-driven companion, scene-switching RPG, debug aid). Includes load order, conflicts, and state considerations.
+- **`docs/CUSTOM_CODE_CAPABILITY_MATRIX.md`** — Check whether your desired capability is realistic in Perchance customCode before committing to a snippet.
+- **`docs/PROMPTING_PATTERNS.md`** — Prompting patterns that work alongside prompting snippets (hidden injection, style enforcement, reminder routing).
+- **`docs/STYLING_RECIPES.md`** — Copy-ready CSS for message wrapperStyle and iframe UI panels used by UI snippets.
+- **`docs/COMMON_FAILURE_MODES.md`** — What goes wrong when composing snippets (duplicate listeners, namespace collisions, ownership conflicts).
+
 ## How it interacts with the rest of the repo
 
 - Supports work in `bots/`, `scripts/`, and `tools/` as a fragment library

@@ -93,6 +93,20 @@ Every snippet entry must include:
 | Stream Monitor | `snippets/custom-code/ai-response/ai-response-stream-monitor.js` | custom-code-ai-response | Monitor streaming AI messages in real-time | yes | UI | Heavy processing may degrade performance |
 | Pyodide Runner (Guarded) | `snippets/custom-code/ai-response/ai-response-pyodide-runner-guarded.js` | custom-code-ai-response | Guarded optional Pyodide (Python) execution | no (network) | none | ~10-20 MB download; JSPI crash risk on Chrome/Edge; Pyodide-optional |
 
+## Supporting reference docs
+
+These docs help you choose, compose, and troubleshoot snippets:
+
+| Question | Reference |
+|---|---|
+| Which snippet fits my task? | `docs/SNIPPET_SELECTION_GUIDE.md` (30 task-to-snippet scenarios) |
+| How do I combine multiple snippets? | `docs/REUSABLE_PATTERN_RECIPES.md` (12 composition recipes) |
+| Is this capability realistic in customCode? | `docs/CUSTOM_CODE_CAPABILITY_MATRIX.md` (47 capability rows) |
+| What prompting approach should I use? | `docs/PROMPTING_PATTERNS.md` (22 patterns) |
+| How do I style messages and panels? | `docs/STYLING_RECIPES.md` (22 CSS recipes) |
+| What usually goes wrong? | `docs/COMMON_FAILURE_MODES.md` (33 failure modes) |
+| Am I ready to merge? | `docs/CUSTOM_CODE_IMPLEMENTATION_CHECKLIST.md` |
+
 ## Update rules
 
 1. Add an entry for each new snippet file at creation time.
