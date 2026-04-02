@@ -54,19 +54,24 @@
   ];
   // ─────────────────────────────────────────────────────────────────────
 
+  const DANGEROUS_TAG_NAMES = new Set(["script", "iframe", "object", "embed", "form", "style"]);
+
   function stripDangerousTags(html) {
-    // Iteratively remove dangerous tags and their content to handle nested cases
-    const dangerousPattern = /<\s*(script|iframe|object|embed|form|style)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi;
-    const selfClosingPattern = /<\s*\/?\s*(script|iframe|object|embed|form|style)\b[^>]*\/?>/gi;
-    let result = html;
-    let prev;
-    // Loop until no more replacements are made (handles nested/recursive patterns)
-    do {
-      prev = result;
-      result = result.replace(dangerousPattern, "");
-      result = result.replace(selfClosingPattern, "");
-    } while (result !== prev);
-    return result;
+    // Use DOM parser for robust sanitization — handles nested and obfuscated tags
+    const parser = new DOMParser();
+    const doc = parser.parseFromString("<div>" + html + "</div>", "text/html");
+    const container = doc.body.firstChild;
+
+    // Remove all dangerous elements recursively
+    for (const tagName of DANGEROUS_TAG_NAMES) {
+      let elements = container.getElementsByTagName(tagName);
+      while (elements.length > 0) {
+        elements[0].remove();
+        elements = container.getElementsByTagName(tagName);
+      }
+    }
+
+    return container.innerHTML;
   }
 
   function stripDangerousAttrs(html) {
