@@ -14,6 +14,7 @@ Current repository layout and quick reference.
 - `snippets/` - reusable snippets
 - `tests/` - validator tests and fixtures
 - `tools/` - tooling notes/support
+- `wiki/` - repository wiki pages (Home, Getting Started, Bot Lifecycle, Export Format, etc.)
 
 ## Notable workflow templates
 
