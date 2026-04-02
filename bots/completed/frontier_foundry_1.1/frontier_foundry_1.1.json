@@ -1,0 +1,224 @@
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [
+      {
+        "name": "characters",
+        "schema": "++id,modelName,fitMessagesInContextMethod,uuid,creationTime,lastMessageTime,folderPath",
+        "rowCount": 1
+      },
+      {
+        "name": "threads",
+        "schema": "++id,name,characterId,creationTime,lastMessageTime,lastViewTime,folderPath",
+        "rowCount": 0
+      },
+      {
+        "name": "messages",
+        "schema": "++id,threadId,characterId,creationTime,order",
+        "rowCount": 0
+      },
+      {
+        "name": "misc",
+        "schema": "key",
+        "rowCount": 0
+      },
+      {
+        "name": "summaries",
+        "schema": "hash,threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "memories",
+        "schema": "++id,[summaryHash+threadId],[characterId+status],[threadId+status],[threadId+index],threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "lore",
+        "schema": "++id,bookId,bookUrl",
+        "rowCount": 0
+      },
+      {
+        "name": "textEmbeddingCache",
+        "schema": "++id,textHash,&[textHash+modelName]",
+        "rowCount": 0
+      },
+      {
+        "name": "textCompressionCache",
+        "schema": "++id,uncompressedTextHash,&[uncompressedTextHash+modelName+tokenLimit]",
+        "rowCount": 0
+      }
+    ],
+    "data": [
+      {
+        "tableName": "characters",
+        "inbound": true,
+        "rows": [
+          {
+            "name": "frontier_foundry_1.1",
+            "roleInstruction": "You are Chronicle Foundry: Living Expedition Engine, operating as a persistent expedition command simulator. You must maintain continuity across stateful world simulation, resources, party condition, faction pressure, contracts, and logged events. For normal narrative turns, always answer in this order: (1) concise SITREP, (2) grounded narrative progression, (3) consequences and constraints, (4) 3-6 actionable next steps. Respect command-driven system controls and never hallucinate state outside tracked context.",
+            "maxParagraphCountPerMessage": 0,
+            "reminderMessage": "Engine mode active. Keep strict continuity with deterministic world seed, current region graph position, resource pressure, party status, faction standing, active contracts, and recent event history.",
+            "generalWritingInstructions": "Use concise operational language first, then atmospheric but practical narration. Avoid decorative fluff.",
+            "messageWrapperStyle": "border-radius:10px;background:light-dark(rgba(246,248,252,0.96),rgba(14,22,34,0.96));color:light-dark(#1f2937,#d1d5db);border:1px solid light-dark(rgba(90,110,150,0.35),rgba(90,130,180,0.25));",
+            "imagePromptPrefix": "frontier expedition documentation style, grounded realism, practical gear,",
+            "imagePromptSuffix": ", coherent continuity with current state, no text overlay, high detail",
+            "imagePromptTriggers": "landmark discovery, route survey, faction envoy, expedition briefing",
+            "fitMessagesInContextMethod": "summarizeOld",
+            "autoGenerateMemories": "none",
+            "customCode": "(() => {\n  'use strict';\n\n  if (window.__pcbw_frontier_foundry_1_1_init) return;\n  window.__pcbw_frontier_foundry_1_1_init = true;\n\n  const CONFIG = {\n    namespace: '__pcbw_ff_1_1',\n    storageKey: '__pcbw_ff_1_1_state',\n    schemaVersion: 1,\n    maxEventHistory: 300,\n    maxContextMessages: 5,\n    world: {\n      regionCount: 8,\n      biomePool: ['storm-fens', 'ash-steppe', 'glasswood', 'ember-ridge', 'salt-basin', 'iron-marsh'],\n      weatherPool: ['clear', 'fog', 'acid-drizzle', 'dust-storm', 'cold-front', 'electric-wind'],\n      landmarkPool: ['collapsed relay', 'sunken observatory', 'fracture-gate', 'abandoned hydroforge', 'warding spire']\n    },\n    resources: {\n      caps: {\n        food: 180,\n        water: 180,\n        medicine: 40,\n        salvage: 140,\n        fuel: 90,\n        relic: 30\n      }\n    }\n  };\n\n  const Utils = {\n    nowIso() {\n      return new Date().toISOString();\n    },\n    safeClone(value, fallback = null) {\n      try {\n        return JSON.parse(JSON.stringify(value));\n      } catch (_err) {\n        return fallback;\n      }\n    },\n    clamp(value, min, max) {\n      return Math.max(min, Math.min(max, value));\n    },\n    hash(input) {\n      const text = String(input || '');\n      let h = 2166136261;\n      for (let i = 0; i < text.length; i++) {\n        h ^= text.charCodeAt(i);\n        h = Math.imul(h, 16777619);\n      }\n      return h >>> 0;\n    },\n    rng(seed) {\n      let a = Utils.hash(seed);\n      return function rand() {\n        a += 0x6D2B79F5;\n        let t = a;\n        t = Math.imul(t ^ (t >>> 15), t | 1);\n        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);\n        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n      };\n    },\n    pick(rand, list) {\n      if (!Array.isArray(list) || !list.length) return null;\n      return list[Math.floor(rand() * list.length) % list.length];\n    },\n    ensureContainers() {\n      oc.character.customData ||= {};\n      oc.character.customData.PUBLIC ||= {};\n      oc.thread.customData ||= {};\n    }\n  };\n\n  const WorldGen = {\n    createSeed(seedHint) {\n      if (seedHint && String(seedHint).trim()) {\n        return String(seedHint).trim().toLowerCase();\n      }\n      const base = [\n        String(Date.now()),\n        String((oc.character && oc.character.name) || 'frontier-foundry'),\n        String((oc.thread && oc.thread.messages && oc.thread.messages.length) || 0)\n      ].join('|');\n      return 'ff-' + Utils.hash(base).toString(36);\n    },\n    makeRegions(seed) {\n      const rand = Utils.rng(seed + '|regions');\n      const regions = [];\n      for (let i = 0; i < CONFIG.world.regionCount; i++) {\n        const id = 'rg-' + (i + 1);\n        const biome = Utils.pick(rand, CONFIG.world.biomePool);\n        const danger = Utils.clamp(Math.floor(rand() * 5) + 1, 1, 5);\n        const resources = [\n          Utils.pick(rand, ['food', 'water', 'medicine', 'salvage']),\n          Utils.pick(rand, ['food', 'water', 'salvage', 'fuel', 'relic'])\n        ].filter((value, idx, arr) => arr.indexOf(value) === idx);\n\n        regions.push({\n          id,\n          name: 'Region ' + (i + 1),\n          biome,\n          danger,\n          landmarks: [Utils.pick(rand, CONFIG.world.landmarkPool), Utils.pick(rand, CONFIG.world.landmarkPool)]\n            .filter((value, idx, arr) => arr.indexOf(value) === idx),\n          availableResources: resources,\n          neighbors: []\n        });\n      }\n\n      for (let i = 0; i < regions.length; i++) {\n        const n1 = (i + 1) % regions.length;\n        const n2 = (i + 2) % regions.length;\n        const prev = (i - 1 + regions.length) % regions.length;\n        regions[i].neighbors = [regions[n1].id, regions[n2].id, regions[prev].id]\n          .filter((value, idx, arr) => arr.indexOf(value) === idx);\n      }\n      return regions;\n    },\n    makeWorld(seed) {\n      const rand = Utils.rng(seed + '|world');\n      const regions = WorldGen.makeRegions(seed);\n      return {\n        seed,\n        regions,\n        currentRegionId: regions[0].id,\n        discoveredRegionIds: [regions[0].id],\n        routeHistory: [regions[0].id],\n        weather: {\n          current: Utils.pick(rand, CONFIG.world.weatherPool),\n          severity: Utils.clamp(Math.floor(rand() * 3) + 1, 1, 5)\n        }\n      };\n    }\n  };\n\n  const FoundationModels = {\n    makeParty(seed) {\n      const rand = Utils.rng(seed + '|party');\n      const names = ['Mara Quell', 'Torin Ash', 'Sera Vale', 'Iven Drax', 'Nyra Holt'];\n      const roles = ['Pathfinder', 'Quartermaster', 'Medic', 'Engineer', 'Scout'];\n      const members = Array.from({ length: 4 }).map((_, idx) => ({\n        id: 'pm-' + (idx + 1),\n        name: names[idx],\n        role: roles[idx],\n        morale: Utils.clamp(55 + Math.floor(rand() * 30), 0, 100),\n        fatigue: Utils.clamp(10 + Math.floor(rand() * 20), 0, 100),\n        status: 'ready'\n      }));\n      return {\n        members,\n        reserves: [],\n        moraleAverage: 0,\n        fatigueAverage: 0\n      };\n    },\n    makeResources() {\n      return {\n        stock: {\n          food: 110,\n          water: 115,\n          medicine: 18,\n          salvage: 30,\n          fuel: 20,\n          relic: 0\n        },\n        caps: Utils.safeClone(CONFIG.resources.caps, {}),\n        rates: {\n          foodPerTurn: 3,\n          waterPerTurn: 3,\n          medicineChancePerTurn: 0.15\n        }\n      };\n    },\n    makeFactions(seed) {\n      const rand = Utils.rng(seed + '|factions');\n      const entries = [\n        { id: 'river-compact', name: 'River Compact', doctrine: 'trade leverage' },\n        { id: 'embersynod', name: 'Ember Synod', doctrine: 'knowledge custody' },\n        { id: 'ironwardens', name: 'Iron Wardens', doctrine: 'security control' },\n        { id: 'verdant-covenant', name: 'Verdant Covenant', doctrine: 'ecology restoration' }\n      ];\n      const state = {};\n      for (const faction of entries) {\n        state[faction.id] = {\n          id: faction.id,\n          name: faction.name,\n          doctrine: faction.doctrine,\n          reputation: Utils.clamp(Math.floor(rand() * 31) - 10, -100, 100),\n          tension: Utils.clamp(Math.floor(rand() * 60), 0, 100),\n          notes: []\n        };\n      }\n      return state;\n    },\n    makeContracts(seed, world) {\n      const rand = Utils.rng(seed + '|contracts');\n      const regionA = world.regions[1] ? world.regions[1].id : world.currentRegionId;\n      const regionB = world.regions[3] ? world.regions[3].id : world.currentRegionId;\n      return {\n        active: [\n          {\n            id: 'ct-1',\n            title: 'Reopen the Foundry Relay',\n            issuerFactionId: 'river-compact',\n            objectiveType: 'recovery',\n            regionId: regionA,\n            objectives: [\n              { id: 'ct-1-o1', text: 'Survey relay foundation', done: false },\n              { id: 'ct-1-o2', text: 'Recover conductor core', done: false },\n              { id: 'ct-1-o3', text: 'Restore beacon signal', done: false }\n            ],\n            deadlineDay: 7,\n            risk: Utils.clamp(Math.floor(rand() * 5) + 1, 1, 5),\n            rewards: { resources: { food: 16, water: 20, salvage: 14 }, reputation: { 'river-compact': 10 } },\n            consequences: { reputation: { 'river-compact': -12 }, morale: -5 },\n            progress: 0,\n            status: 'active'\n          }\n        ],\n        backlog: [\n          {\n            id: 'ct-2',\n            title: 'Synod Archive Extraction',\n            issuerFactionId: 'embersynod',\n            objectiveType: 'intel',\n            regionId: regionB,\n            objectives: [\n              { id: 'ct-2-o1', text: 'Secure archive chamber', done: false },\n              { id: 'ct-2-o2', text: 'Extract ledger fragment', done: false }\n            ],\n            deadlineDay: 10,\n            risk: Utils.clamp(Math.floor(rand() * 5) + 1, 1, 5),\n            rewards: { resources: { medicine: 8, salvage: 12 }, reputation: { embersynod: 8 } },\n            consequences: { reputation: { embersynod: -10 }, morale: -4 },\n            progress: 0,\n            status: 'available'\n          }\n        ],\n        completed: [],\n        failed: []\n      };\n    }\n  };\n\n  const StateSchema = {\n    defaults(seedHint) {\n      const seed = WorldGen.createSeed(seedHint);\n      const world = WorldGen.makeWorld(seed);\n      const party = FoundationModels.makeParty(seed);\n\n      return {\n        schemaVersion: CONFIG.schemaVersion,\n        expedition: {\n          id: 'exp-' + Date.now(),\n          name: 'Chronicle Foundry Expedition',\n          status: 'active',\n          seed,\n          startedAt: Utils.nowIso(),\n          notes: ''\n        },\n        world,\n        time: {\n          day: 1,\n          hour: 7,\n          turn: 0,\n          phase: 'dawn',\n          totalHoursElapsed: 0\n        },\n        resources: FoundationModels.makeResources(),\n        party,\n        factions: FoundationModels.makeFactions(seed),\n        contracts: FoundationModels.makeContracts(seed, world),\n        events: {\n          history: [],\n          counters: {\n            travel: 0,\n            camp: 0,\n            command: 0\n          }\n        },\n        ui: {\n          appReady: false,\n          screen: 'dashboard',\n          debug: false\n        },\n        system: {\n          lastSavedAt: Utils.nowIso(),\n          lastLoadedAt: Utils.nowIso(),\n          contextMessageIds: []\n        }\n      };\n    }\n  };\n\n  const Migrations = {\n    apply(rawState) {\n      if (!rawState || typeof rawState !== 'object') return null;\n      const state = rawState;\n      state.schemaVersion ||= 0;\n\n      if (state.schemaVersion < 1) {\n        state.events ||= { history: [], counters: { travel: 0, camp: 0, command: 0 } };\n        state.system ||= { lastSavedAt: Utils.nowIso(), lastLoadedAt: Utils.nowIso(), contextMessageIds: [] };\n        state.schemaVersion = 1;\n      }\n\n      state.schemaVersion = CONFIG.schemaVersion;\n      return state;\n    }\n  };\n\n  const Storage = {\n    read() {\n      Utils.ensureContainers();\n      const ns = CONFIG.namespace;\n      const key = CONFIG.storageKey;\n      const candidates = [\n        oc.thread.customData[ns],\n        oc.character.customData[ns],\n        oc.character.customData.PUBLIC[key]\n      ];\n\n      for (const candidate of candidates) {\n        if (!candidate) continue;\n        const cloned = Utils.safeClone(candidate, null);\n        if (!cloned) continue;\n        const migrated = Migrations.apply(cloned);\n        if (!Engine.validateShape(migrated)) continue;\n        migrated.system.lastLoadedAt = Utils.nowIso();\n        return migrated;\n      }\n\n      return StateSchema.defaults();\n    },\n    write(state) {\n      Utils.ensureContainers();\n      const serial = Utils.safeClone(state, null);\n      if (!serial) return;\n      serial.system.lastSavedAt = Utils.nowIso();\n      oc.thread.customData[CONFIG.namespace] = serial;\n      oc.character.customData[CONFIG.namespace] = serial;\n      oc.character.customData.PUBLIC[CONFIG.storageKey] = serial;\n    }\n  };\n\n  const EventLog = {\n    add(type, detail) {\n      const state = Engine.state;\n      const row = {\n        id: 'ev-' + Date.now() + '-' + Math.floor(Math.random() * 100000),\n        at: Utils.nowIso(),\n        turn: state.time.turn,\n        type,\n        detail: String(detail || '').slice(0, 600)\n      };\n      state.events.history.push(row);\n      state.events.history = state.events.history.slice(-CONFIG.maxEventHistory);\n      return row;\n    },\n    summarizeRecent(limit = 5) {\n      const rows = Engine.state.events.history.slice(-limit);\n      if (!rows.length) return 'No notable events logged yet.';\n      return rows.map((row) => '- T' + row.turn + ' [' + row.type + '] ' + row.detail).join('\\\\n');\n    }\n  };\n\n  const ContextBuilder = {\n    build() {\n      const state = Engine.state;\n      const worldRegion = Engine.getCurrentRegion();\n      const lowResources = [];\n      for (const key of ['food', 'water', 'medicine']) {\n        const current = state.resources.stock[key] || 0;\n        const cap = state.resources.caps[key] || 1;\n        if (current / cap < 0.2) lowResources.push(key + ':' + current);\n      }\n\n      const activeContracts = state.contracts.active.map((c) => c.title + ' (D' + c.deadlineDay + ', ' + c.regionId + ')');\n      const topFaction = Object.values(state.factions)\n        .sort((a, b) => b.reputation - a.reputation)[0];\n\n      return [\n        'Expedition Context v' + state.schemaVersion,\n        'Seed: ' + state.expedition.seed,\n        'Time: day ' + state.time.day + ', hour ' + state.time.hour + ', turn ' + state.time.turn,\n        'Region: ' + (worldRegion ? worldRegion.name : state.world.currentRegionId),\n        'Weather: ' + state.world.weather.current + ' (severity ' + state.world.weather.severity + ')',\n        'Resources: food ' + state.resources.stock.food + ', water ' + state.resources.stock.water + ', medicine ' + state.resources.stock.medicine + ', salvage ' + state.resources.stock.salvage + ', fuel ' + state.resources.stock.fuel,\n        'Party morale/fatigue avg: ' + state.party.moraleAverage + '/' + state.party.fatigueAverage,\n        'Top faction: ' + (topFaction ? topFaction.name + ' rep ' + topFaction.reputation : 'none'),\n        'Active contracts: ' + (activeContracts.length ? activeContracts.join('; ') : 'none'),\n        'Low resource alerts: ' + (lowResources.length ? lowResources.join(', ') : 'none'),\n        'Recent events:\\\\n' + EventLog.summarizeRecent(4)\n      ].join('\\n');\n    },\n    injectHiddenSystemContext() {\n      const content = ContextBuilder.build();\n      const msg = {\n        author: 'system',\n        content,\n        hiddenFrom: ['user'],\n        expectsReply: false,\n        customData: {\n          __pcbw_ff_context: true,\n          createdAt: Utils.nowIso()\n        }\n      };\n      oc.thread.messages.push(msg);\n      const history = Engine.state.system.contextMessageIds;\n      history.push(msg.customData.createdAt);\n      if (history.length > CONFIG.maxContextMessages) history.splice(0, history.length - CONFIG.maxContextMessages);\n      ContextBuilder.pruneOldContextMessages();\n    },\n    pruneOldContextMessages() {\n      const indexes = [];\n      for (let i = 0; i < oc.thread.messages.length; i++) {\n        const m = oc.thread.messages[i];\n        if (m && m.author === 'system' && m.customData && m.customData.__pcbw_ff_context === true) {\n          indexes.push(i);\n        }\n      }\n      const removeCount = Math.max(0, indexes.length - CONFIG.maxContextMessages);\n      for (let i = 0; i < removeCount; i++) {\n        const idx = indexes[i] - i;\n        oc.thread.messages.splice(idx, 1);\n      }\n    }\n  };\n\n  const Commands = {\n    helpText() {\n      return [\n        'Frontier Foundry Commands:',\n        '!help - command list',\n        '!status - expedition status snapshot',\n        '!travel <region-id> - move to neighboring region',\n        '!camp - perform camp turn and recover',\n        '!new-expedition [seed] - reset into fresh deterministic world seed',\n        '!reset - safety reset using current seed',\n        '!diagnostics - engine diagnostics block'\n      ].join('\\n');\n    },\n    parse(input) {\n      const text = String(input || '').trim();\n      if (!text.startsWith('!')) return null;\n      const parts = text.slice(1).trim().split(/\\s+/).filter(Boolean);\n      if (!parts.length) return null;\n      return {\n        command: parts[0].toLowerCase(),\n        args: parts.slice(1),\n        raw: text\n      };\n    }\n  };\n\n  const ActionHandlers = {\n    systemNotice(text) {\n      oc.thread.messages.push({\n        author: 'system',\n        content: String(text || ''),\n        expectsReply: false\n      });\n    },\n    status() {\n      const state = Engine.state;\n      const region = Engine.getCurrentRegion();\n      const text = [\n        'SITREP — Foundation Engine',\n        'Expedition: ' + state.expedition.name,\n        'Seed: ' + state.expedition.seed,\n        'Time: day ' + state.time.day + ', hour ' + state.time.hour + ', turn ' + state.time.turn,\n        'Region: ' + (region ? region.name + ' [' + region.id + ']' : state.world.currentRegionId),\n        'Weather: ' + state.world.weather.current + ' (sev ' + state.world.weather.severity + ')',\n        'Resources: food ' + state.resources.stock.food + ', water ' + state.resources.stock.water + ', med ' + state.resources.stock.medicine + ', salvage ' + state.resources.stock.salvage + ', fuel ' + state.resources.stock.fuel,\n        'Active contracts: ' + state.contracts.active.length,\n        'Recent event: ' + (state.events.history.length ? state.events.history[state.events.history.length - 1].detail : 'none')\n      ].join('\\n');\n      ActionHandlers.systemNotice(text);\n    },\n    advanceTime(hours) {\n      const state = Engine.state;\n      state.time.totalHoursElapsed += hours;\n      state.time.hour += hours;\n      while (state.time.hour >= 24) {\n        state.time.hour -= 24;\n        state.time.day += 1;\n      }\n      state.time.turn += 1;\n      if (state.time.hour < 5) state.time.phase = 'deep-night';\n      else if (state.time.hour < 8) state.time.phase = 'dawn';\n      else if (state.time.hour < 12) state.time.phase = 'morning';\n      else if (state.time.hour < 17) state.time.phase = 'afternoon';\n      else if (state.time.hour < 20) state.time.phase = 'dusk';\n      else state.time.phase = 'night';\n    },\n    consumeResources() {\n      const state = Engine.state;\n      state.resources.stock.food = Utils.clamp(state.resources.stock.food - state.resources.rates.foodPerTurn, 0, state.resources.caps.food);\n      state.resources.stock.water = Utils.clamp(state.resources.stock.water - state.resources.rates.waterPerTurn, 0, state.resources.caps.water);\n      if (Math.random() < state.resources.rates.medicineChancePerTurn) {\n        state.resources.stock.medicine = Utils.clamp(state.resources.stock.medicine - 1, 0, state.resources.caps.medicine);\n      }\n    },\n    recomputePartyMetrics() {\n      const members = Engine.state.party.members;\n      if (!members.length) {\n        Engine.state.party.moraleAverage = 0;\n        Engine.state.party.fatigueAverage = 0;\n        return;\n      }\n      const morale = members.reduce((acc, m) => acc + m.morale, 0) / members.length;\n      const fatigue = members.reduce((acc, m) => acc + m.fatigue, 0) / members.length;\n      Engine.state.party.moraleAverage = Math.round(morale);\n      Engine.state.party.fatigueAverage = Math.round(fatigue);\n    },\n    travel(targetRegionId) {\n      const state = Engine.state;\n      const current = Engine.getCurrentRegion();\n      if (!targetRegionId) {\n        ActionHandlers.systemNotice('Travel failed: include a target region id, e.g. !travel rg-2');\n        return;\n      }\n      if (!current || !current.neighbors.includes(targetRegionId)) {\n        ActionHandlers.systemNotice('Travel failed: target is not adjacent. Adjacent: ' + (current ? current.neighbors.join(', ') : 'none'));\n        return;\n      }\n      state.world.currentRegionId = targetRegionId;\n      if (!state.world.discoveredRegionIds.includes(targetRegionId)) {\n        state.world.discoveredRegionIds.push(targetRegionId);\n      }\n      state.world.routeHistory.push(targetRegionId);\n      ActionHandlers.advanceTime(6);\n      ActionHandlers.consumeResources();\n      const rand = Utils.rng(state.expedition.seed + '|travel|' + state.time.turn);\n      state.world.weather.current = Utils.pick(rand, CONFIG.world.weatherPool);\n      state.world.weather.severity = Utils.clamp(Math.floor(rand() * 5) + 1, 1, 5);\n      EventLog.add('travel', 'Moved expedition from ' + current.id + ' to ' + targetRegionId + '.');\n      ActionHandlers.recomputePartyMetrics();\n      ActionHandlers.status();\n    },\n    camp() {\n      const state = Engine.state;\n      ActionHandlers.advanceTime(8);\n      ActionHandlers.consumeResources();\n      for (const member of state.party.members) {\n        member.fatigue = Utils.clamp(member.fatigue - 10, 0, 100);\n        member.morale = Utils.clamp(member.morale + 3, 0, 100);\n      }\n      ActionHandlers.recomputePartyMetrics();\n      EventLog.add('camp', 'Established camp and executed recovery cycle.');\n      ActionHandlers.systemNotice('Camp turn completed. Party recovered and supplies adjusted.');\n      ActionHandlers.status();\n    },\n    newExpedition(seedHint) {\n      const next = StateSchema.defaults(seedHint);\n      Engine.state = next;\n      EventLog.add('system', 'Started new expedition with seed ' + Engine.state.expedition.seed + '.');\n      ActionHandlers.systemNotice('New expedition initialized with deterministic seed: ' + Engine.state.expedition.seed);\n      ActionHandlers.status();\n    },\n    reset() {\n      ActionHandlers.newExpedition(Engine.state.expedition.seed);\n      EventLog.add('system', 'Safety reset completed for current seed.');\n      ActionHandlers.systemNotice('Safety reset complete. Seed preserved: ' + Engine.state.expedition.seed);\n    },\n    diagnostics() {\n      const state = Engine.state;\n      const payload = {\n        schemaVersion: state.schemaVersion,\n        seed: state.expedition.seed,\n        currentRegionId: state.world.currentRegionId,\n        turn: state.time.turn,\n        events: state.events.history.length,\n        discoveredRegions: state.world.discoveredRegionIds.length,\n        activeContracts: state.contracts.active.length,\n        contextMessagesTracked: state.system.contextMessageIds.length,\n        storageNamespace: CONFIG.namespace\n      };\n      ActionHandlers.systemNotice('<pre>' + JSON.stringify(payload, null, 2) + '</pre>');\n    }\n  };\n\n  const ReleaseDebug = {\n    applyShortcuts() {\n      oc.thread.shortcutButtons = [\n        { name: 'Help', message: '!help', insertionType: 'replace', autoSend: true, clearAfterSend: true },\n        { name: 'Status', message: '!status', insertionType: 'replace', autoSend: true, clearAfterSend: true },\n        { name: 'Camp', message: '!camp', insertionType: 'replace', autoSend: true, clearAfterSend: true },\n        { name: 'Travel rg-2', message: '!travel rg-2', insertionType: 'replace', autoSend: true, clearAfterSend: true },\n        { name: 'New Expedition', message: '!new-expedition', insertionType: 'replace', autoSend: true, clearAfterSend: true }\n      ];\n    },\n    syncReminder() {\n      const state = Engine.state;\n      const region = Engine.getCurrentRegion();\n      oc.character.reminderMessage = [\n        'State-locked expedition engine active.',\n        'Seed: ' + state.expedition.seed + '. Day ' + state.time.day + ', hour ' + state.time.hour + ', turn ' + state.time.turn + '.',\n        'Region: ' + (region ? region.name + ' (' + region.id + ')' : state.world.currentRegionId) + '.',\n        'Keep continuity with resources, party strain, faction reputation, contract deadlines, and event log.',\n        'Use concise SITREP first, then narrative progression, then actions.'\n      ].join(' ');\n    }\n  };\n\n  const Engine = {\n    state: null,\n    validateShape(state) {\n      if (!state || typeof state !== 'object') return false;\n      if (!state.world || !Array.isArray(state.world.regions)) return false;\n      if (!state.resources || !state.resources.stock || !state.resources.caps) return false;\n      if (!state.party || !Array.isArray(state.party.members)) return false;\n      if (!state.factions || typeof state.factions !== 'object') return false;\n      if (!state.contracts || !Array.isArray(state.contracts.active)) return false;\n      if (!state.events || !Array.isArray(state.events.history)) return false;\n      return true;\n    },\n    getCurrentRegion() {\n      return Engine.state.world.regions.find((r) => r.id === Engine.state.world.currentRegionId) || null;\n    },\n    bootstrap() {\n      Engine.state = Storage.read();\n      ActionHandlers.recomputePartyMetrics();\n      if (!Engine.state.events.history.length) {\n        EventLog.add('system', 'Phase 1 foundation boot complete.');\n      }\n      ReleaseDebug.applyShortcuts();\n      ReleaseDebug.syncReminder();\n      Storage.write(Engine.state);\n    },\n    handleCommand(parsed) {\n      if (!parsed) return false;\n      Engine.state.events.counters.command += 1;\n      const command = parsed.command;\n      if (command === 'help') {\n        ActionHandlers.systemNotice(Commands.helpText());\n        EventLog.add('command', 'Displayed help command output.');\n      } else if (command === 'status') {\n        ActionHandlers.status();\n        EventLog.add('command', 'Displayed status snapshot.');\n      } else if (command === 'travel') {\n        ActionHandlers.travel(parsed.args[0]);\n      } else if (command === 'camp') {\n        ActionHandlers.camp();\n      } else if (command === 'new-expedition') {\n        ActionHandlers.newExpedition(parsed.args[0]);\n      } else if (command === 'reset') {\n        ActionHandlers.reset();\n      } else if (command === 'diagnostics') {\n        ActionHandlers.diagnostics();\n        EventLog.add('command', 'Displayed diagnostics payload.');\n      } else {\n        ActionHandlers.systemNotice('Unknown command: ' + parsed.raw + '\\\\nUse !help for available commands.');\n      }\n\n      ReleaseDebug.syncReminder();\n      Storage.write(Engine.state);\n      return true;\n    }\n  };\n\n  Engine.bootstrap();\n\n  oc.thread.on('MessageAdded', ({ message }) => {\n    if (!message) return;\n    if (message.author !== 'user') return;\n\n    const parsed = Commands.parse(message.content);\n    if (parsed) {\n      const idx = oc.thread.messages.indexOf(message);\n      if (idx >= 0) oc.thread.messages.splice(idx, 1);\n      Engine.handleCommand(parsed);\n      return;\n    }\n\n    ContextBuilder.injectHiddenSystemContext();\n    ReleaseDebug.syncReminder();\n    Storage.write(Engine.state);\n  });\n})();",
+            "messageInputPlaceholder": "Use !help for commands or continue narrative play.",
+            "metaTitle": "frontier_foundry_1.1",
+            "metaDescription": "Phase 1 foundation build for Chronicle Foundry: Living Expedition Engine.",
+            "metaImage": "",
+            "modelName": "perchance-ai",
+            "temperature": 0.8,
+            "maxTokensPerMessage": 600,
+            "textEmbeddingModelName": "Xenova/bge-base-en-v1.5",
+            "initialMessages": [
+              {
+                "author": "system",
+                "content": "Foundation initialization complete. This expedition runs deterministic world generation, persistent state storage, command handling, and hidden context injection for continuity.",
+                "hiddenFrom": [
+                  "user"
+                ],
+                "expectsReply": false
+              },
+              {
+                "author": "ai",
+                "content": "SITREP: Chronicle Foundry foundation is online. Expedition systems are initialized with persistent state, deterministic world seed, region graph routing, resource tracking, party/faction/contract models, and event history logging.\n\nYou can issue command controls now with !help, or continue natural narrative operations and the engine will maintain continuity.",
+                "expectsReply": true
+              }
+            ],
+            "shortcutButtons": [
+              {
+                "name": "Help",
+                "message": "!help",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "Status",
+                "message": "!status",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "Camp",
+                "message": "!camp",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "Travel rg-2",
+                "message": "!travel rg-2",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "Reset",
+                "message": "!reset",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              }
+            ],
+            "loreBookUrls": [],
+            "avatar": {
+              "url": "",
+              "size": 1,
+              "shape": "square"
+            },
+            "scene": {
+              "background": {
+                "url": "",
+                "filter": ""
+              },
+              "music": {
+                "url": "",
+                "volume": 1
+              }
+            },
+            "userCharacter": {
+              "name": "",
+              "avatar": {
+                "url": "",
+                "size": 1,
+                "shape": "circle"
+              }
+            },
+            "systemCharacter": {
+              "name": "Chronicle Foundry System",
+              "avatar": {
+                "url": "",
+                "size": 1,
+                "shape": "circle"
+              }
+            },
+            "streamingResponse": true,
+            "folderPath": "",
+            "customData": {
+              "PUBLIC": {}
+            },
+            "uuid": null,
+            "creationTime": 1775148664682,
+            "lastMessageTime": 1775148664682,
+            "id": 1,
+            "$types": {
+              "maxParagraphCountPerMessage": "undef",
+              "initialMessages": "arrayNonindexKeys",
+              "shortcutButtons": "arrayNonindexKeys",
+              "loreBookUrls": "arrayNonindexKeys"
+            }
+          }
+        ]
+      },
+      {
+        "tableName": "threads",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "messages",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "misc",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "summaries",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "memories",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "lore",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textEmbeddingCache",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textCompressionCache",
+        "inbound": true,
+        "rows": []
+      }
+    ]
+  }
+}
