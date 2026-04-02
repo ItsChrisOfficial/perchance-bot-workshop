@@ -1,0 +1,34 @@
+# CODEOWNERS
+# Ownership assignments for perchance-bot-workshop repository areas.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @ItsChrisOfficial
+
+# Root governance files
+README.md @ItsChrisOfficial
+PROJECT_RULES.md @ItsChrisOfficial
+CONTRIBUTING.md @ItsChrisOfficial
+AGENTS.md @ItsChrisOfficial
+REPO_MAP.md @ItsChrisOfficial
+BOT_CATALOG.md @ItsChrisOfficial
+SNIPPETS_INDEX.md @ItsChrisOfficial
+
+# Documentation and standards
+/docs/ @ItsChrisOfficial
+
+# Snippet library
+/snippets/ @ItsChrisOfficial
+
+# Validation scripts and tests
+/scripts/ @ItsChrisOfficial
+/tests/ @ItsChrisOfficial
+
+# Bot lifecycle workspaces
+/bots/ @ItsChrisOfficial
+
+# GitHub configuration and CI
+/.github/ @ItsChrisOfficial
+
+# Shared utilities
+/shared/ @ItsChrisOfficial
