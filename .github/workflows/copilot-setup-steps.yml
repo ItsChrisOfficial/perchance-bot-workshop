@@ -12,7 +12,7 @@ on:
 jobs:
   copilot-setup-steps:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     permissions:
       contents: read
@@ -22,12 +22,12 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -37,24 +37,5 @@ jobs:
           python --version
           npm --version || true
 
-      - name: Install Node dependencies if present
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          elif [ -f package.json ]; then
-            npm install
-          else
-            echo "No package.json found, skipping Node dependency install."
-          fi
-
-      - name: Install Python dependencies if present
-        run: |
-          if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
-          else
-            echo "No requirements.txt found, skipping Python dependency install."
-          fi
-
       - name: Copilot environment ready
-        run: echo "Copilot coding agent environment initialized."
+        run: echo "Copilot coding agent baseline environment initialized."
