@@ -35,6 +35,18 @@ Before implementing customCode-heavy changes, agents should consult:
 - If structure changes, update required indexes in the same change.
 - Do not mark bot work complete without required validation.
 
+## Agent timeout and progress saving
+
+- Agent sessions have a 60-minute timeout limit.
+- **After 55 minutes of work**, agents must save their progress to a pull request that can be edited, appended, or continued in a future session.
+- When approaching the 55-minute mark:
+  1. Create or update a pull request with all work completed so far
+  2. Include a clear summary of what has been accomplished
+  3. Document any remaining work or next steps in the PR description
+  4. Ensure all changes are committed and pushed
+  5. Mark incomplete tasks clearly so they can be resumed
+- The PR should be in a state where another agent or developer can continue the work seamlessly.
+
 ## Validation gate for bot export tasks
 
 If a change touches Perchance export JSON or `customCode`, agents must:
