@@ -55,11 +55,17 @@
   // ─────────────────────────────────────────────────────────────────────
 
   function stripDangerousTags(html) {
-    // Remove script, iframe, object, embed, form, style tags and their content
+    // Iteratively remove dangerous tags and their content to handle nested cases
     const dangerousPattern = /<\s*(script|iframe|object|embed|form|style)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi;
-    let result = html.replace(dangerousPattern, "");
-    // Also remove self-closing or unclosed dangerous tags
-    result = result.replace(/<\s*\/?\s*(script|iframe|object|embed|form|style)\b[^>]*\/?>/gi, "");
+    const selfClosingPattern = /<\s*\/?\s*(script|iframe|object|embed|form|style)\b[^>]*\/?>/gi;
+    let result = html;
+    let prev;
+    // Loop until no more replacements are made (handles nested/recursive patterns)
+    do {
+      prev = result;
+      result = result.replace(dangerousPattern, "");
+      result = result.replace(selfClosingPattern, "");
+    } while (result !== prev);
     return result;
   }
 
