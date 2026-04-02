@@ -32,6 +32,19 @@ Read in this order:
 - Default starter: `bots/templates/perchance-empty-minimal.json`
 - Teaching/reference starter: `bots/templates/perchance-empty-annotated.json` (guidance is non-runtime)
 
+## Reference example bots
+
+Six completed bots in `bots/completed/` demonstrate different implementation patterns:
+
+| Bot | Pattern | Key features |
+|---|---|---|
+| Reference Minimal Helper | Baseline | Minimal import-safe export with small valid customCode |
+| Reference Minimal Utility Bot | Low-UI utility | Clean roleInstruction/reminder, slash commands, formatting discipline |
+| State-Driven Companion Bot | State management | Mood state machine, `oc.thread.customData`, dynamic reminder routing |
+| UI-Heavy Interactive Builder Bot | Embedded UI | Floating panel, checklist workflow, DOM init guards, `light-dark()` CSS |
+| Scene-and-Lore Adventure Bot | Narrative progression | Scene graph, lore discovery, hidden system context, pacing hints |
+| Image-Oriented Creative Director Bot | Image orchestration | Style presets, `imagePromptPrefix`/`Suffix` management, prompt history |
+
 ## Validation commands
 
 - `node scripts/validate-perchance-export.js /absolute/path/to/export.json`

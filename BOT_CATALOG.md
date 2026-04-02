@@ -64,6 +64,11 @@ No bot entries currently tracked under `bots/in-progress/`.
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
 | Reference Minimal Helper | completed | `bots/completed/reference-minimal-helper/` | Known-good minimal importable export reference with small valid customCode | ready | passed | Validator and unittest passed on 2026-04-01; use as completed baseline example |
+| Reference Minimal Utility Bot | completed | `bots/completed/reference-minimal-utility-bot/` | Clean low-friction utility bot; simplest high-quality example with slash commands and formatting discipline | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates clean roleInstruction/reminder, lightweight /help command, minimal safe customCode |
+| State-Driven Companion Bot | completed | `bots/completed/reference-state-driven-companion-bot/` | Personality bot with persistent mood state machine and dynamic reminder routing | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates oc.thread.customData, state transitions, MessageAdding reminder injection |
+| UI-Heavy Interactive Builder Bot | completed | `bots/completed/reference-ui-builder-bot/` | Project planning bot with floating checklist panel, progress tracking, and embedded iframe UI | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates iframe UI rendering, DOM init guards, light-dark() CSS, event handling |
+| Scene-and-Lore Adventure Bot | completed | `bots/completed/reference-scene-lore-adventure-bot/` | Narrative game master with 5-location scene graph, lore discovery, and progression-aware AI context | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates scene transitions, hidden system injection, lore tracking, pacing hints |
+| Image-Oriented Creative Director Bot | completed | `bots/completed/reference-image-director-bot/` | Image prompt engineer with 5 style presets, runtime imagePromptPrefix/Suffix management, and prompt history | ready | passed | Validator and unittest passed on 2026-04-02; demonstrates image prompt orchestration, style switching, art-direction context injection |
 
 ## Update rules (contributors and agents)
 
