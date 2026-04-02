@@ -14,6 +14,6 @@
 
 ## Notes
 
-- Promotion context: Pass 1 foundation complete — import-safe export envelope, schema-versioned persistent expedition state, migration/recovery guards, deterministic world seed+region graph generation, resource/party/faction/contract models, event logging, snapshot/restore scaffolding, base command layer, hidden runtime context injection, and safe reset/new-expedition flow.
-- Known constraints: Pass 1 iframe is intentionally minimal status shell; full multi-panel application, advanced simulation/event orchestration polish, and image/runtime shaping expansions are scheduled for Pass 2 and Pass 3.
-- Next maintenance action (if any): Implement Pass 2 full iframe application shell and deeper simulation wiring, then Pass 3 advanced behavior, hardening, and final catalog/release validation.
+- Promotion context: Pass 1 + Pass 2 foundation completed and expanded into a real multi-screen iframe expedition application with persistent simulation systems, event engine, contracts, faction standings, party/inventory management, snapshots, command interception, hidden context orchestration, and notification workflow.
+- Known constraints: Final polish tasks for Pass 3 remain focused on deeper consequence modeling, image prompt orchestration tuning, hardening, catalog/final release updates, and security/review gates.
+- Next maintenance action (if any): Complete Pass 3 advanced systems/hardening and finalize release metadata + catalog updates.
