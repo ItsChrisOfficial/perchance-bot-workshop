@@ -1,0 +1,225 @@
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [
+      {
+        "name": "characters",
+        "schema": "++id,modelName,fitMessagesInContextMethod,uuid,creationTime,lastMessageTime,folderPath",
+        "rowCount": 1
+      },
+      {
+        "name": "threads",
+        "schema": "++id,name,characterId,creationTime,lastMessageTime,lastViewTime,folderPath",
+        "rowCount": 0
+      },
+      {
+        "name": "messages",
+        "schema": "++id,threadId,characterId,creationTime,order",
+        "rowCount": 0
+      },
+      {
+        "name": "misc",
+        "schema": "key",
+        "rowCount": 0
+      },
+      {
+        "name": "summaries",
+        "schema": "hash,threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "memories",
+        "schema": "++id,[summaryHash+threadId],[characterId+status],[threadId+status],[threadId+index],threadId",
+        "rowCount": 0
+      },
+      {
+        "name": "lore",
+        "schema": "++id,bookId,bookUrl",
+        "rowCount": 0
+      },
+      {
+        "name": "textEmbeddingCache",
+        "schema": "++id,textHash,&[textHash+modelName]",
+        "rowCount": 0
+      },
+      {
+        "name": "textCompressionCache",
+        "schema": "++id,uncompressedTextHash,&[uncompressedTextHash+modelName+tokenLimit]",
+        "rowCount": 0
+      }
+    ],
+    "data": [
+      {
+        "tableName": "characters",
+        "inbound": true,
+        "rows": [
+          {
+            "name": "UI Project Builder",
+            "roleInstruction": "You are a project planning assistant with an interactive side panel that tracks project details in real time.\n\nYou help users define software projects step by step:\n1. **Name** the project (/project <name>)\n2. **Set the type** (/type <type>, e.g. web app, mobile app, API, CLI tool)\n3. **Add features** (/feature <description>) — up to 20 features\n4. **Review** the project spec (/review)\n5. **Confirm** the final spec (/confirm)\n\nWhen the user uses these commands, the side panel updates automatically. You should also respond conversationally, acknowledging what was added and guiding the user to the next step.\n\nYou can also help the user brainstorm features, refine their project idea, suggest tech stacks, and generate a project summary when they reach the review step.\n\nThe /panel command toggles the side panel. /reset clears the current project.\n\nAlways be constructive, organized, and encouraging. Format your responses clearly with headers and lists when appropriate.",
+            "maxParagraphCountPerMessage": 0,
+            "reminderMessage": "Guide the user through the project definition workflow: name → type → features → review → confirm. Reference the side panel. When in review, produce a clean structured summary. Keep responses focused and actionable.",
+            "generalWritingInstructions": "",
+            "messageWrapperStyle": "border-radius: 10px; background: light-dark(rgba(245, 248, 255, 0.97), rgba(18, 22, 32, 0.96)); color: light-dark(#1e2530, #dce3f0); border: 1px solid light-dark(rgba(90, 130, 200, 0.25), rgba(70, 110, 180, 0.2)); box-shadow: 0 1px 6px rgba(0,0,0,0.06);",
+            "imagePromptPrefix": "",
+            "imagePromptSuffix": "",
+            "imagePromptTriggers": "",
+            "fitMessagesInContextMethod": "summarizeOld",
+            "autoGenerateMemories": "none",
+            "customCode": "(() => {\n  'use strict';\n  if (window.__pcbw_uiBuilderInit) return;\n  window.__pcbw_uiBuilderInit = true;\n\n  const NS = '__pcbw_uiBuilder';\n  const PANEL_ID = '__pcbw_uiBuilder_panel';\n\n  function ensureState() {\n    if (!oc.thread.customData) oc.thread.customData = {};\n    if (!oc.thread.customData[NS]) {\n      oc.thread.customData[NS] = {\n        projectName: '',\n        projectType: '',\n        features: [],\n        currentStep: 'idle',\n        history: [],\n        panelVisible: false\n      };\n    }\n    return oc.thread.customData[NS];\n  }\n\n  function getOrCreatePanel() {\n    let panel = document.getElementById(PANEL_ID);\n    if (panel) return panel;\n\n    panel = document.createElement('div');\n    panel.id = PANEL_ID;\n    panel.style.cssText = [\n      'position: fixed',\n      'top: 60px',\n      'right: 16px',\n      'width: 280px',\n      'max-height: 420px',\n      'overflow-y: auto',\n      'background: light-dark(#fafbfd, #1a1d24)',\n      'border: 1px solid light-dark(rgba(100,140,200,0.35), rgba(80,120,180,0.3))',\n      'border-radius: 12px',\n      'padding: 16px',\n      'box-shadow: 0 4px 20px rgba(0,0,0,0.15)',\n      'z-index: 99999',\n      'font-family: system-ui, sans-serif',\n      'font-size: 13px',\n      'color: light-dark(#2a2e35, #d8dce6)',\n      'display: none',\n      'transition: opacity 0.2s ease'\n    ].join('; ');\n\n    document.body.appendChild(panel);\n    return panel;\n  }\n\n  function renderPanel() {\n    const state = ensureState();\n    const panel = getOrCreatePanel();\n    \n    const stepLabels = {\n      'idle': '⏳ Waiting for project',\n      'naming': '✏️ Naming project',\n      'typing': '📦 Selecting type',\n      'features': '🔧 Adding features',\n      'review': '✅ Review & confirm',\n      'complete': '🎉 Project defined'\n    };\n\n    let html = '<div style=\"margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;\">';\n    html += '<strong style=\"font-size:14px;\">🏗️ Project Builder</strong>';\n    html += '<button id=\"' + PANEL_ID + '_close\" style=\"background:none;border:none;cursor:pointer;font-size:16px;color:light-dark(#666,#aaa);padding:2px 6px;\">✕</button>';\n    html += '</div>';\n    html += '<hr style=\"border:none;border-top:1px solid light-dark(rgba(0,0,0,0.1),rgba(255,255,255,0.1));margin:8px 0;\">';\n\n    html += '<div style=\"margin-bottom:8px;\"><strong>Step:</strong> ' + (stepLabels[state.currentStep] || state.currentStep) + '</div>';\n    \n    if (state.projectName) {\n      html += '<div style=\"margin-bottom:4px;\"><strong>Project:</strong> ' + escapeHtml(state.projectName) + '</div>';\n    }\n    if (state.projectType) {\n      html += '<div style=\"margin-bottom:4px;\"><strong>Type:</strong> ' + escapeHtml(state.projectType) + '</div>';\n    }\n    if (state.features.length > 0) {\n      html += '<div style=\"margin-bottom:4px;\"><strong>Features:</strong></div><ul style=\"margin:2px 0 6px 16px;padding:0;\">';\n      state.features.forEach(function(f) {\n        html += '<li style=\"margin-bottom:2px;\">' + escapeHtml(f) + '</li>';\n      });\n      html += '</ul>';\n    }\n\n    if (state.history.length > 0) {\n      html += '<hr style=\"border:none;border-top:1px solid light-dark(rgba(0,0,0,0.1),rgba(255,255,255,0.1));margin:8px 0;\">';\n      html += '<div style=\"font-size:11px;color:light-dark(#888,#777);\"><strong>History:</strong></div>';\n      html += '<div style=\"font-size:11px;max-height:100px;overflow-y:auto;color:light-dark(#666,#888);margin-top:4px;\">';\n      state.history.slice(-5).forEach(function(h) {\n        html += '<div style=\"margin-bottom:2px;\">• ' + escapeHtml(h) + '</div>';\n      });\n      html += '</div>';\n    }\n\n    panel.innerHTML = html;\n\n    const closeBtn = document.getElementById(PANEL_ID + '_close');\n    if (closeBtn) {\n      closeBtn.onclick = function() { togglePanel(false); };\n    }\n  }\n\n  function escapeHtml(str) {\n    var d = document.createElement('div');\n    d.textContent = str;\n    return d.innerHTML;\n  }\n\n  function togglePanel(show) {\n    const state = ensureState();\n    const panel = getOrCreatePanel();\n    if (typeof show === 'boolean') {\n      state.panelVisible = show;\n    } else {\n      state.panelVisible = !state.panelVisible;\n    }\n    panel.style.display = state.panelVisible ? 'block' : 'none';\n    if (state.panelVisible) renderPanel();\n  }\n\n  function processCommand(text) {\n    const state = ensureState();\n    const lower = (text || '').toLowerCase().trim();\n\n    if (lower === '/panel') {\n      togglePanel();\n      return;\n    }\n    if (lower === '/panel open') {\n      togglePanel(true);\n      return;\n    }\n    if (lower === '/panel close') {\n      togglePanel(false);\n      return;\n    }\n\n    if (lower.startsWith('/project ')) {\n      const name = text.trim().substring(9).trim();\n      if (name) {\n        state.projectName = name;\n        state.currentStep = 'naming';\n        state.history.push('Named project: ' + name);\n      }\n    } else if (lower.startsWith('/type ')) {\n      const ptype = text.trim().substring(6).trim();\n      if (ptype) {\n        state.projectType = ptype;\n        state.currentStep = 'typing';\n        state.history.push('Set type: ' + ptype);\n      }\n    } else if (lower.startsWith('/feature ')) {\n      const feat = text.trim().substring(9).trim();\n      if (feat && state.features.length < 20) {\n        state.features.push(feat);\n        state.currentStep = 'features';\n        state.history.push('Added feature: ' + feat);\n      }\n    } else if (lower === '/review') {\n      state.currentStep = 'review';\n      state.history.push('Entered review step');\n    } else if (lower === '/confirm') {\n      state.currentStep = 'complete';\n      state.history.push('Project confirmed');\n    } else if (lower === '/reset') {\n      state.projectName = '';\n      state.projectType = '';\n      state.features = [];\n      state.currentStep = 'idle';\n      state.history.push('Project reset');\n    }\n\n    if (state.panelVisible) renderPanel();\n  }\n\n  oc.thread.on('MessageAdded', function() {\n    try {\n      const msgs = oc.thread.messages;\n      if (!msgs || msgs.length === 0) return;\n      const last = msgs[msgs.length - 1];\n      if (last.author !== 'user') return;\n      const text = (last.content || '').trim();\n      if (text.startsWith('/')) processCommand(text);\n    } catch (e) {\n      console.warn('[UIBuilderBot] MessageAdded handler error:', e);\n    }\n  });\n\n  togglePanel(true);\n  renderPanel();\n})();",
+            "messageInputPlaceholder": "Describe your project, or use /project, /type, /feature, /review, /confirm...",
+            "metaTitle": "",
+            "metaDescription": "",
+            "metaImage": "",
+            "modelName": "perchance-ai",
+            "temperature": 0.75,
+            "maxTokensPerMessage": 800,
+            "textEmbeddingModelName": "Xenova/bge-base-en-v1.5",
+            "initialMessages": [
+              {
+                "author": "ai",
+                "content": "🏗️ **Welcome to the Project Builder!**\n\nI'll help you define your project step by step. The **side panel** (right side) will track your progress in real time.\n\n**Quick start commands:**\n- `/project My App Name` — name your project\n- `/type web app` — set the project type\n- `/feature user authentication` — add a feature\n- `/review` — review your spec\n- `/confirm` — finalize it\n- `/panel` — toggle the side panel\n- `/reset` — start over\n\nOr just tell me about your idea and I'll help you shape it!",
+                "hiddenFrom": [],
+                "expectsReply": true
+              }
+            ],
+            "shortcutButtons": [
+              {
+                "name": "📋 Review Spec",
+                "message": "/review",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "✅ Confirm",
+                "message": "/confirm",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "🔄 Reset",
+                "message": "/reset",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "📌 Toggle Panel",
+                "message": "/panel",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "💡 Suggest Features",
+                "message": "Based on my project so far, suggest 5 features I should consider adding.",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              },
+              {
+                "name": "🔧 Tech Stack",
+                "message": "Recommend a tech stack for this project with brief justifications.",
+                "insertionType": "replace",
+                "autoSend": true,
+                "clearAfterSend": true
+              }
+            ],
+            "loreBookUrls": [],
+            "avatar": {
+              "url": "",
+              "size": 1,
+              "shape": "square"
+            },
+            "scene": {
+              "background": {
+                "url": "",
+                "filter": ""
+              },
+              "music": {
+                "url": "",
+                "volume": 1
+              }
+            },
+            "userCharacter": {
+              "name": "",
+              "avatar": {
+                "url": "",
+                "size": 1,
+                "shape": "circle"
+              }
+            },
+            "systemCharacter": {
+              "name": "",
+              "avatar": {
+                "url": "",
+                "size": 1,
+                "shape": "circle"
+              }
+            },
+            "streamingResponse": true,
+            "folderPath": "",
+            "customData": {
+              "PUBLIC": {}
+            },
+            "uuid": null,
+            "creationTime": 1775100000000,
+            "lastMessageTime": 1775100000000,
+            "id": 1,
+            "$types": {
+              "maxParagraphCountPerMessage": "undef",
+              "initialMessages": "arrayNonindexKeys",
+              "initialMessages.0.hiddenFrom": "arrayNonindexKeys",
+              "shortcutButtons": "arrayNonindexKeys",
+              "loreBookUrls": "arrayNonindexKeys"
+            }
+          }
+        ]
+      },
+      {
+        "tableName": "threads",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "messages",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "misc",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "summaries",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "memories",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "lore",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textEmbeddingCache",
+        "inbound": true,
+        "rows": []
+      },
+      {
+        "tableName": "textCompressionCache",
+        "inbound": true,
+        "rows": []
+      }
+    ]
+  }
+}
