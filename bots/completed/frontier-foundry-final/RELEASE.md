@@ -1,6 +1,4 @@
-# RELEASE TEMPLATE
-
-Use this template inside each completed bot folder as `RELEASE.md`.
+# RELEASE
 
 ## Bot
 

@@ -4,8 +4,8 @@
 //
 // Run: node build-final.js
 //
-// Input:  ../frontier_foundry_1.3/frontier_foundry_1.3.json  (Phase 3 Final)
-// Output: frontier-foundry-final-v2.0.0.json
+// Input:  ../frontier_foundry_1.3/frontier_foundry_1.3.json (Phase 3 Final)
+// Output: ./frontier-foundry-final-v2.0.0.json
 
 const fs = require('fs');
 const path = require('path');
