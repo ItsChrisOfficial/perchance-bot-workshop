@@ -54,10 +54,9 @@ Every catalog entry must include:
 
 ## In-progress bots
 
-No bot entries currently tracked under `bots/in-progress/`.
-
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
+| Nyx — The Archivist | in-progress | `bots/in-progress/nyx-archivist/` | Atmospheric RP archivist bot with state machine, lore injection, context packing, slash commands, toast notifications, regen guard, and postprocessor | active | passed | Validator and unittest passed; 8 features composed from snippet library; customCode syntax verified |
 
 ## Completed bots
 
