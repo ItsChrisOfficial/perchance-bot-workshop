@@ -126,6 +126,34 @@ One character row unless the user explicitly requests multiple.
 
 Change only what was asked. Preserve everything else.
 
+### 10. Type safety — forbidden types
+
+Every field in the export must be the exact primitive JSON type expected by Perchance's Dexie/typeson importer. Using the wrong type causes `"Unregistered type"` import errors.
+
+**Forbidden patterns (any of these will break import):**
+
+| What | Wrong | Right |
+|---|---|---|
+| Number as string | `"temperature": "0.8"` | `"temperature": 0.8` |
+| String as number | `"modelName": 0` | `"modelName": "perchance-ai"` |
+| Boolean as int | `"streamingResponse": 1` | `"streamingResponse": true` |
+| Boolean as string | `"autoSend": "true"` | `"autoSend": true` |
+| Null array | `"initialMessages": null` | `"initialMessages": []` |
+| Null object | `"customData": null` | `"customData": {}` |
+| String for array | `"hiddenFrom": "ai"` | `"hiddenFrom": ["ai"]` |
+| Boxed Number | `new Number(0.8)` | `0.8` |
+| NaN / Infinity | `NaN` | finite number only |
+
+**Type requirements summary:**
+
+- **Number fields** (`temperature`, `maxTokensPerMessage`, `creationTime`, `lastMessageTime`, `formatVersion`, `databaseVersion`, `rowCount`): finite number primitives
+- **String fields** (`name`, `roleInstruction`, `reminderMessage`, `customCode`, `modelName`, `fitMessagesInContextMethod`, `autoGenerateMemories`, `folderPath`): string primitives
+- **Boolean fields** (`streamingResponse`, `inbound`, `autoSend`, `clearAfterSend`, `expectsReply`): boolean primitives
+- **Array fields** (`initialMessages`, `shortcutButtons`, `loreBookUrls`, `tables`, `data`, `rows`, `hiddenFrom`): arrays, never null
+- **Object fields** (`avatar`, `scene`, `userCharacter`, `systemCharacter`, `customData`, `data`): plain objects, never null or array
+
+See `docs/EXPORT_FIELD_REFERENCE.md` §16 for the complete type safety table.
+
 ---
 
 ## Output discipline

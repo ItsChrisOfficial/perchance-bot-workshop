@@ -205,3 +205,43 @@ When processing this brief, the agent MUST:
 5. NOT output commentary in place of the file.
 6. NOT leave TODOs, stubs, or placeholder text in the export.
 7. NOT ask follow-up questions — infer from defaults if a field is missing.
+
+---
+
+## FIELD TYPE CONSTRAINTS
+
+Every export field must use the exact primitive JSON type below. Using the wrong type causes Perchance import failures (`"Unregistered type"` errors). See `docs/EXPORT_FIELD_REFERENCE.md` §16 for full details.
+
+| Brief Field | Export Field | Required JSON Type | Forbidden Types |
+|---|---|---|---|
+| `BOT_NAME` | `name` | string | number, null |
+| `MODEL` | `modelName` | string | number, null |
+| `TEMPERATURE` | `temperature` | number (finite) | string `"0.8"` |
+| `MAX_TOKENS` | `maxTokensPerMessage` | number (finite) | string |
+| `FOLDER_PATH` | `folderPath` | string | number, null |
+| `UUID` | `uuid` | string or null | number |
+| `ROLE_INSTRUCTION` | `roleInstruction` | string | number, null |
+| `REMINDER_MESSAGE` | `reminderMessage` | string | number, null |
+| `GENERAL_WRITING_INSTRUCTIONS` | `generalWritingInstructions` | string | number, null |
+| `MAX_PARAGRAPHS_PER_MESSAGE` | `maxParagraphCountPerMessage` | number (finite) | string |
+| — | `fitMessagesInContextMethod` | string | number, boolean |
+| — | `autoGenerateMemories` | string | number, boolean |
+| — | `streamingResponse` | boolean | number `0`/`1`, string |
+| — | `creationTime` | number (finite, ms) | string, null |
+| — | `lastMessageTime` | number (finite, ms) | string, null |
+| `INITIAL_MESSAGES` | `initialMessages` | array | null |
+| `SHORTCUT_BUTTONS` | `shortcutButtons` | array | null |
+| `LORE_BOOK_URLS` | `loreBookUrls` | array | null |
+| — | `customData` | object | null, array |
+| — | `avatar` | object | null, array |
+| — | `scene` | object | null, array |
+| — | `userCharacter` | object | null, array |
+| — | `systemCharacter` | object | null, array |
+| — | `customCode` | string | number, null, object |
+| button `autoSend` | `autoSend` | boolean | number, string |
+| button `clearAfterSend` | `clearAfterSend` | boolean | number, string |
+| button `insertionType` | `insertionType` | string (`"replace"`, `"prepend"`, `"append"`) | number |
+| message `author` | `author` | string (`"user"`, `"ai"`, `"system"`) | number |
+| message `content` | `content` | string | number, null |
+| message `hiddenFrom` | `hiddenFrom` | array | string |
+| message `expectsReply` | `expectsReply` | boolean | number, string |

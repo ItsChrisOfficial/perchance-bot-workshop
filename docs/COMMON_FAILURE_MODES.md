@@ -341,6 +341,31 @@ window.__pcbw_myfeature_init = true;
 **Prevention:** Follow `pcbw-` naming convention. All repo snippets already namespace their IDs.  
 **Related:** `snippets/README.md`, all `ui-*.js` snippets
 
+### FM-34: Unregistered type: Number (and related Dexie type errors)
+
+**Symptoms:** Perchance import fails with `"Unregistered type: Number"`, `"Unregistered type: String"`, or similar typeson errors. Export may look visually correct and pass JSON validation.  
+**Likely cause:** One or more fields in the export contain a type that Dexie's typeson deserializer does not recognize. This happens when:
+
+- Numeric fields are strings: `"temperature": "0.8"` instead of `"temperature": 0.8`
+- String fields are numbers: `"modelName": 0` instead of `"modelName": "perchance-ai"`
+- Boolean fields are integers: `"streamingResponse": 1` instead of `"streamingResponse": true`
+- Boolean fields are strings: `"autoSend": "true"` instead of `"autoSend": true`
+- Array fields are null: `"initialMessages": null` instead of `"initialMessages": []`
+- Object fields are null: `"customData": null` instead of `"customData": {}`
+- `hiddenFrom` is a string: `"hiddenFrom": "ai"` instead of `"hiddenFrom": ["ai"]`
+- Boxed types used during assembly: `new Number(0.8)` instead of `0.8`
+- `NaN` or `Infinity` in numeric fields (not valid JSON but can creep in via programmatic assembly)
+
+**How to detect:** Run `node scripts/validate-perchance-export.js <file>`. The validator reports: `FAIL [field]: expected [type], got [actual type] — value: [value]`.  
+**How to fix:** Correct each field to its expected primitive type per the TYPE SAFETY TABLE in `docs/EXPORT_FIELD_REFERENCE.md` §16. Never use boxed constructors (`new Number`, `new String`, `new Boolean`). Always serialize with `JSON.stringify`.  
+**Prevention:**
+- Before serialization, sweep every field against the type safety table.
+- Use `typeof` checks during programmatic assembly.
+- Always serialize with `JSON.stringify` (strips `undefined`, rejects `NaN`/`Infinity`).
+- Run the validator before marking any export complete.
+
+**Related:** `docs/PERCHANCE_IMPORT_VERIFICATION.md` (Failure 11), `docs/EXPORT_FIELD_REFERENCE.md` §16, `scripts/validate-perchance-export.js`
+
 ---
 
 ## Quick Diagnosis Table
@@ -361,3 +386,4 @@ window.__pcbw_myfeature_init = true;
 | Pyodide never loads | FM-19 |
 | Validator reports rowCount error | FM-24 |
 | Works in validator, breaks at runtime | FM-23 |
+| Import fails with "Unregistered type" | FM-34 |

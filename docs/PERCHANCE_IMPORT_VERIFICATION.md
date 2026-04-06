@@ -574,6 +574,26 @@ Examples:
 
 **Problem:** JS was not syntax-checked after extraction from the serialized JSON.
 
+### Failure 11: Unregistered type error on import (Dexie/typeson type mismatch)
+
+**Problem:** Perchance’s Dexie/typeson-based importer rejects the file with "Unregistered type: Number" or similar errors.
+
+**Root cause:** One or more fields in the export contain a JavaScript type that Dexie’s typeson registry does not know how to deserialize. Common triggers:
+
+- A numeric field (`temperature`, `maxTokensPerMessage`, `creationTime`, `lastMessageTime`, `formatVersion`, `databaseVersion`, `rowCount`) is stored as a string (e.g. `"0.8"` instead of `0.8`).
+- A string field (`modelName`, `fitMessagesInContextMethod`, `autoGenerateMemories`, `name`) is stored as a number.
+- A boolean field (`streamingResponse`, `autoSend`, `clearAfterSend`, `inbound`) is stored as `0`/`1` or `"true"`/`"false"`.
+- An array field (`initialMessages`, `shortcutButtons`, `loreBookUrls`) is `null` instead of `[]`.
+- An object field (`customData`, `avatar`, `scene`, `userCharacter`, `systemCharacter`) is `null` or an array instead of a plain object.
+- A `Number` object (`new Number(0.8)`) was used instead of a number primitive.
+- `NaN` or `Infinity` appeared in a numeric field (not valid JSON, but can occur during programmatic assembly).
+- `hiddenFrom` was a string instead of an array.
+- `expectsReply` was set to `0` or `1` instead of `true` or `false`.
+
+**Detection:** Run `node scripts/validate-perchance-export.js <file>`. The validator checks every field type and reports `FAIL [field]: expected [type], got [actual type] — value: [value]`.
+
+**Fix:** Ensure every field matches the TYPE SAFETY TABLE in `docs/EXPORT_FIELD_REFERENCE.md` §16. Use primitive types only — never boxed types (`new Number`, `new String`, `new Boolean`). Use `JSON.stringify` for serialization (which naturally strips `undefined` and rejects `NaN`/`Infinity`).
+
 ---
 
 ## Release Checklist
@@ -607,6 +627,20 @@ Every export must pass this checklist before it is considered finished.
 - [ ] `initialMessages` is an array.
 - [ ] `shortcutButtons` is an array.
 - [ ] `avatar`, `scene`, `userCharacter`, `systemCharacter`, and `customData` are objects where expected.
+
+### C2. Type safety (prevents Failure 11)
+
+- [ ] `temperature` and `maxTokensPerMessage` are finite number primitives (not strings).
+- [ ] `creationTime` and `lastMessageTime` are finite number primitives.
+- [ ] `streamingResponse` is a boolean primitive (not `0`/`1`, not `"true"`/`"false"`).
+- [ ] `modelName`, `fitMessagesInContextMethod`, `autoGenerateMemories` are strings (not numbers).
+- [ ] `initialMessages` and `shortcutButtons` are arrays (not `null`).
+- [ ] `avatar`, `scene`, `userCharacter`, `systemCharacter`, `customData` are plain objects (not `null`, not arrays).
+- [ ] Every shortcut button: `autoSend` and `clearAfterSend` are booleans.
+- [ ] Every seeded message: `hiddenFrom` is an array if present (not a string).
+- [ ] Every seeded message: `expectsReply` is a boolean if present (not `0`/`1`).
+- [ ] No `NaN`, `Infinity`, or `undefined` values anywhere in the export.
+- [ ] `rowCount` values are finite integers, `formatVersion` and `databaseVersion` are numbers.
 
 ### D. Message integrity
 

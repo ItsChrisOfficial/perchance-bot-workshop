@@ -124,6 +124,28 @@ Replace the character row with:
 
 Set `data.tables[0].rowCount = 1`.
 
+#### Type sweep (mandatory before serialization)
+
+Before proceeding to Step 5, verify every field has the correct primitive type. This prevents `"Unregistered type"` Dexie import errors (FM-34). Check each field:
+
+| Field(s) | Required `typeof` | Forbidden |
+|---|---|---|
+| `temperature`, `maxTokensPerMessage`, `creationTime`, `lastMessageTime` | `"number"` + `isFinite()` | string, NaN, Infinity |
+| `name`, `roleInstruction`, `reminderMessage`, `customCode`, `modelName`, `fitMessagesInContextMethod`, `autoGenerateMemories`, `folderPath` | `"string"` | number, null |
+| `streamingResponse` | `"boolean"` | `0`/`1`, `"true"`/`"false"` |
+| `initialMessages`, `shortcutButtons`, `loreBookUrls` | `Array.isArray()` | `null` |
+| `avatar`, `scene`, `userCharacter`, `systemCharacter`, `customData` | plain object | `null`, array |
+| each button `.autoSend`, `.clearAfterSend` | `"boolean"` | `0`/`1`, string |
+| each button `.insertionType` | `"string"` ∈ {`"replace"`,`"prepend"`,`"append"`} | number |
+| each message `.author` | `"string"` ∈ {`"user"`,`"ai"`,`"system"`} | number |
+| each message `.content` | `"string"` | number, null |
+| each message `.hiddenFrom` (if present) | `Array.isArray()` | string |
+| each message `.expectsReply` (if present) | `"boolean"` | `0`/`1`, string |
+| `formatVersion`, `databaseVersion` | `"number"` + finite | string |
+| every `rowCount` | `"number"` + integer | string, NaN |
+
+If any field fails the type check, fix it before serialization.
+
 ---
 
 ### Step 5 — Serialize
