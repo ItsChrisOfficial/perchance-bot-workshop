@@ -221,19 +221,21 @@ function validateExport(raw, sourceLabel) {
 
     // --- String fields (checked when present) ---
     // name and roleInstruction are required
-    assertString(character?.name, `${pfx}.name`, errors);
-    assertString(character?.roleInstruction, `${pfx}.roleInstruction`, errors);
+    if (character) {
+      assertString(character.name, `${pfx}.name`, errors);
+      assertString(character.roleInstruction, `${pfx}.roleInstruction`, errors);
+    }
     // The rest are checked only when present to allow minimal fixtures
     const stringFieldsWhenPresent = [
       "reminderMessage", "modelName", "fitMessagesInContextMethod",
-      "autoGenerateMemories", "folderPath", "customCode",
+      "autoGenerateMemories", "folderPath",
       "generalWritingInstructions", "messageWrapperStyle",
       "imagePromptPrefix", "imagePromptSuffix", "imagePromptTriggers",
       "messageInputPlaceholder", "metaTitle", "metaDescription", "metaImage",
       "textEmbeddingModelName"
     ];
     for (const field of stringFieldsWhenPresent) {
-      if (character && field in character && field !== "customCode") {
+      if (character && field in character) {
         assertString(character[field], `${pfx}.${field}`, errors);
       }
     }
@@ -258,8 +260,10 @@ function validateExport(raw, sourceLabel) {
     }
 
     // --- Array fields ---
-    assertArray(character?.initialMessages, `${pfx}.initialMessages`, errors);
-    assertArray(character?.shortcutButtons, `${pfx}.shortcutButtons`, errors);
+    if (character) {
+      assertArray(character.initialMessages, `${pfx}.initialMessages`, errors);
+      assertArray(character.shortcutButtons, `${pfx}.shortcutButtons`, errors);
+    }
     if (character && "loreBookUrls" in character) {
       assertArray(character.loreBookUrls, `${pfx}.loreBookUrls`, errors);
     }
