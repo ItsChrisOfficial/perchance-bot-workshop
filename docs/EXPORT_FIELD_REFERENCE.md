@@ -380,3 +380,111 @@ oc.character.reminderMessage = "Always stay in character.";
 | `wrapperStyle` | Message object | string | opt | §8, §13 |
 
 > **Key:** yes = required, rec = recommended, opt = optional.
+
+---
+
+## 16. Type Safety Table
+
+Every field in a Perchance export must use the exact primitive JSON type listed below. Using the wrong type — even one that "looks right" (e.g. `"0.8"` instead of `0.8`) — will cause import failure with Dexie/typeson errors such as `"Unregistered type: Number"`.
+
+### Rules
+
+1. **Use only primitive types.** Never use boxed constructors (`new Number`, `new String`, `new Boolean`).
+2. **Numbers must be finite.** No `NaN`, no `Infinity`, no `-Infinity`.
+3. **Strings must be string primitives.** Never store a number where a string is expected (or vice versa).
+4. **Booleans must be `true` or `false`.** Never use `0`/`1` or `"true"`/`"false"`.
+5. **Arrays must be `[]` when empty.** Never use `null` or omit them.
+6. **Objects must be `{}` when empty.** Never use `null` or an array where a plain object is expected.
+7. **`undefined` must not appear.** JSON.stringify strips it, but verify after serialization.
+
+### Root / Envelope Fields
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `formatName` | string | number, null | Must be `"dexie"` |
+| `formatVersion` | number (finite integer) | string `"1"`, null | Must be `1` |
+| `data` | object | null, array | — |
+| `data.databaseName` | string | number, null | Must be `"chatbot-ui-v1"` |
+| `data.databaseVersion` | number (finite integer) | string `"90"`, null | Must be `90` |
+| `data.tables` | array | null, object | — |
+| `data.data` | array | null, object | — |
+
+### Table Descriptor Fields
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `name` | string | number, null | Case-sensitive; must match canonical name |
+| `schema` | string | number, null | Do not alter |
+| `rowCount` | number (finite integer) | string, null, NaN | Must equal `rows.length` |
+
+### Data Entry Fields
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `tableName` | string | number, null | Must match `data.tables[].name` |
+| `inbound` | boolean | number `0`/`1`, string | Must be `true` |
+| `rows` | array | null, object | Must be `[]` for empty tables |
+
+### Character Row — Identity & Config
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `name` | string | number, null | Required |
+| `roleInstruction` | string | number, null | Required |
+| `reminderMessage` | string | number, null | — |
+| `customCode` | string | number, null, object | Must be valid JS after parse |
+| `modelName` | string | number, null | e.g. `"perchance-ai"` |
+| `temperature` | number (finite) | string `"0.8"`, boolean | Typically 0.0–2.0 |
+| `maxTokensPerMessage` | number (finite) | string, boolean | — |
+| `fitMessagesInContextMethod` | string | number, boolean | e.g. `"summarizeOld"` |
+| `autoGenerateMemories` | string | number, boolean | e.g. `"none"` |
+| `textEmbeddingModelName` | string | number, null | — |
+| `initialMessages` | array | null, string | Must be `[]` if empty |
+| `shortcutButtons` | array | null, string | Must be `[]` if empty |
+| `loreBookUrls` | array | null, string | Must be `[]` if empty |
+| `streamingResponse` | boolean | number `0`/`1`, string | — |
+| `folderPath` | string | number, null | — |
+| `customData` | object | null, array | — |
+| `creationTime` | number (finite) | string, null | Unix ms timestamp |
+| `lastMessageTime` | number (finite) | string, null | Unix ms timestamp |
+| `avatar` | object | null, array | — |
+| `scene` | object | null, array | — |
+| `userCharacter` | object | null, array | — |
+| `systemCharacter` | object | null, array | — |
+
+### Character Row — Presentation
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `maxParagraphCountPerMessage` | number (finite) | string | — |
+| `generalWritingInstructions` | string | number, null | — |
+| `messageWrapperStyle` | string | number, null | CSS string |
+| `imagePromptPrefix` | string | number, null | — |
+| `imagePromptSuffix` | string | number, null | — |
+| `imagePromptTriggers` | string | number, null, array | Not an array |
+| `messageInputPlaceholder` | string | number, null | — |
+| `metaTitle` | string | number, null | — |
+| `metaDescription` | string | number, null | — |
+| `metaImage` | string | number, null | URL string |
+| `uuid` | string or null | number | May be null in templates |
+
+### Message Object
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `content` | string | number, null | Required |
+| `author` | string | number, null | Must be `"user"`, `"ai"`, or `"system"` |
+| `name` | string | number | Optional |
+| `hiddenFrom` | array | string `"ai"` | Must be array if present: `["ai"]` |
+| `expectsReply` | boolean | number `0`/`1`, string | Optional |
+| `customData` | object | null, array | Optional |
+
+### Shortcut Button
+
+| Field | Expected JSON Type | Forbidden Types | Notes |
+|---|---|---|---|
+| `name` | string | number, null | Required |
+| `message` | string | number, null | Required |
+| `insertionType` | string | number | Must be `"replace"`, `"prepend"`, or `"append"` |
+| `autoSend` | boolean | number `0`/`1`, string | Required |
+| `clearAfterSend` | boolean | number `0`/`1`, string | Required |

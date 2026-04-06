@@ -58,6 +58,26 @@ Structure:
 
 Clone the structure of `bots/templates/perchance-empty-minimal.json`. Replace character row values. Attach `customCode` as a string. Set `creationTime` and `lastMessageTime` to `Date.now()`.
 
+### Step 4.5 — Type-safety sweep
+
+Before serialization, verify every field has the correct primitive type. This prevents `"Unregistered type"` import errors (see FM-34).
+
+Sweep checklist:
+
+- [ ] `temperature`, `maxTokensPerMessage`: `typeof === "number"` and `isFinite()`
+- [ ] `creationTime`, `lastMessageTime`: `typeof === "number"` and `isFinite()`
+- [ ] `name`, `roleInstruction`, `reminderMessage`, `customCode`, `modelName`, `fitMessagesInContextMethod`, `autoGenerateMemories`, `folderPath`: `typeof === "string"`
+- [ ] `streamingResponse`: `typeof === "boolean"` (not `0`/`1`)
+- [ ] `initialMessages`, `shortcutButtons`, `loreBookUrls`: `Array.isArray()` (never `null`)
+- [ ] `avatar`, `scene`, `userCharacter`, `systemCharacter`, `customData`: plain object (not `null`, not array)
+- [ ] Every shortcut button: `autoSend` and `clearAfterSend` are booleans; `insertionType` is `"replace"` | `"prepend"` | `"append"`
+- [ ] Every seeded message: `author` is `"user"` | `"ai"` | `"system"`; `content` is a string; `hiddenFrom` is an array if present; `expectsReply` is a boolean if present
+- [ ] `formatVersion`, `databaseVersion`: finite numbers
+- [ ] Every `rowCount`: finite integer matching `rows.length`
+- [ ] No `NaN`, `Infinity`, `undefined`, or boxed types (`new Number`, `new String`, `new Boolean`) anywhere
+
+See `docs/EXPORT_FIELD_REFERENCE.md` §16 for the full TYPE SAFETY TABLE.
+
 ### Step 5 — Serialize to JSON
 
 Use a JSON serializer. Never hand-escape.
