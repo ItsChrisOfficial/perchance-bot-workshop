@@ -165,6 +165,7 @@
             "$types": {
               "maxParagraphCountPerMessage": "undef",
               "initialMessages": "arrayNonindexKeys",
+              "initialMessages.0.hiddenFrom": "arrayNonindexKeys",
               "shortcutButtons": "arrayNonindexKeys",
               "loreBookUrls": "arrayNonindexKeys"
             }
