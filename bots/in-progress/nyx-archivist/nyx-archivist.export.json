@@ -163,7 +163,7 @@
             "lastMessageTime": 1775509276682,
             "id": 1,
             "$types": {
-              "maxParagraphCountPerMessage": "Number",
+              "maxParagraphCountPerMessage": "undef",
               "initialMessages": "arrayNonindexKeys",
               "shortcutButtons": "arrayNonindexKeys",
               "loreBookUrls": "arrayNonindexKeys"
