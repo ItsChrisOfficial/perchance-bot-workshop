@@ -2,148 +2,181 @@
 
 These instructions are mandatory for any task that creates, edits, patches, reviews, or exports a **Perchance Advanced AI Character Chat** bot JSON in this repository.
 
-## Required reading before work starts
+---
 
-Before making changes to any Perchance export JSON or any source that will be compiled into one, read:
+## ⚡ Real-Time Monolithic Creation Mode (PRIMARY WORKFLOW)
 
-- `docs/PERCHANCE_IMPORT_VERIFICATION.md`
+When a user asks to **create a new bot**, the default workflow is **monolithic prompt → single-pass JSON output**.
 
-Do not treat that file as optional background material. It is the release standard.
+**Do not ask follow-up questions. Do not output partial artifacts. Do not output pseudocode.**
+
+### Monolithic creation trigger phrases
+
+Any of these mean: use the monolithic workflow immediately.
+
+- "create a bot"
+- "make a bot"
+- "build a bot"
+- "new bot"
+- "generate a bot"
+- "I want a bot that..."
+- "write me a character"
+- any request supplying a `shared/prompts/CREATE_BOT_MONOLITHIC.md`-style filled brief
+
+### Monolithic creation execution order
+
+1. Read `shared/prompts/CREATE_BOT_MONOLITHIC.md` to load the canonical brief schema.
+2. Extract all values from the user's brief (or infer sensible defaults for any missing field).
+3. Build `customCode` as normal JavaScript source first, then attach it as a string.
+4. Assemble the full export object in memory using `bots/templates/perchance-empty-minimal.json` as the structural baseline.
+5. Serialize to JSON (programmatically — never hand-escape).
+6. Parse back and verify.
+7. Run the mental checklist from `docs/PERCHANCE_IMPORT_VERIFICATION.md` §Release Checklist.
+8. Output **only the finished, importable JSON file** to `bots/in-progress/<bot-name>/<bot-name>.export.json`.
+9. Update `BOT_CATALOG.md` and `REPO_MAP.md` in the same change.
+
+> **Speed rule:** Steps 1–9 happen in a single agent pass. The user should not need to send a second message to get a valid export.
+
+---
+
+## Required reading before any work starts
+
+- `docs/PERCHANCE_IMPORT_VERIFICATION.md` — release gate, not optional
+- `docs/EXPORT_FIELD_REFERENCE.md` — field types, locations, constraints
+
+---
 
 ## Primary rule
 
-When a task involves a Perchance bot export, your job is not finished when the prose, UI plan, or JavaScript looks correct.
+Your job is finished only when the final output is a **fully importable Perchance export JSON** that satisfies `docs/PERCHANCE_IMPORT_VERIFICATION.md`.
 
-Your job is finished only when the final output is a **fully importable Perchance export JSON** that satisfies the verification document.
+"Looks right" is not done. "Imports and runs correctly" is done.
+
+---
 
 ## Hard requirements
 
 ### 1. Preserve the Perchance export envelope
 
-Unless the user explicitly requests a different export strategy, preserve the known-good import structure:
+Always use the full Dexie envelope:
 
-- root export envelope
-- canonical table list
-- matching `rowCount` values
-- `data.data` entries for each table
+```json
+{
+  "formatName": "dexie",
+  "formatVersion": 1,
+  "data": {
+    "databaseName": "chatbot-ui-v1",
+    "databaseVersion": 90,
+    "tables": [...],
+    "data": [...]
+  }
+}
+```
 
-Do not replace a valid export envelope with a bare character object.
+Never replace this with a bare character object.
 
 ### 2. Always produce a finished artifact
 
-If the user asks for a finished bot/export, do not stop at:
-
+If the user asks for a finished bot, never stop at:
 - pseudocode
 - partial snippets
 - patch fragments
-- commentary describing what should be changed
+- commentary
 - a character object without the export envelope
 
-Return the finished export file content or modify the repository files so the finished export exists.
+Return the finished export file or write it to the correct location.
 
-### 3. Treat import safety as a release gate
+### 3. Import safety is the release gate
 
-Before considering work complete, verify at minimum:
+Before marking work complete, verify:
 
-- the JSON parses
-- the export envelope matches the repository baseline
-- all required tables exist
+- JSON parses
+- export envelope matches baseline
+- all 9 canonical tables present
 - `rowCount` values match actual row lengths
-- the character row is present and complete
+- character row is present and complete
 - `initialMessages` is an array
 - `shortcutButtons` is an array
-- `customCode` is a string
-- extracted `customCode` is valid JavaScript after serialization
-
-If any check fails, fix the export before finishing.
+- `customCode` is a string and valid JS after parse
 
 ### 4. Never handwave `customCode`
 
-`customCode` must survive two parsers:
+Write JS normally first. Attach to the export object as a string. Serialize the whole export programmatically. Never hand-escape.
 
-- JSON parsing
-- JavaScript parsing
+### 5. Valid message objects only
 
-Write JavaScript normally first, then serialize the whole export object programmatically whenever possible.
+- `content`: string (required)
+- `author`: `"user"` | `"ai"` | `"system"` (required)
+- `hiddenFrom`: array if present
+- `expectsReply`: boolean or omitted
 
-Do **not** rely on hand-escaped giant JSON strings if avoidable.
+### 6. Valid shortcut buttons only
 
-### 5. Preserve object contracts
+Each button needs: `name`, `message`, `insertionType` (`"replace"` | `"prepend"` | `"append"`), `autoSend` (boolean), `clearAfterSend` (boolean).
 
-For seeded messages, only use valid message objects.
+### 7. Never alter baseline compatibility values
 
-At minimum:
+Do not change: `formatName`, `formatVersion`, `databaseName`, `databaseVersion`, table names, or table schemas — unless the task explicitly requires it.
 
-- `content` must be a string
-- `author` must be `"user"`, `"ai"`, or `"system"`
-- `hiddenFrom` must be an array if present
-- `expectsReply` must be boolean or omitted
+### 8. Single-bot tasks stay single-bot
 
-For shortcut buttons:
+One character row unless the user explicitly requests multiple.
 
-- use object entries
-- keep `name`, `message`, `insertionType`, `autoSend`, and `clearAfterSend` well-formed
-- only use `replace`, `prepend`, or `append` for `insertionType`
+### 9. Patch tasks preserve working structure
 
-### 6. Do not casually alter baseline compatibility values
+Change only what was asked. Preserve everything else.
 
-Do not change these unless the task explicitly requires it and compatibility has been re-verified:
-
-- `formatName`
-- `formatVersion`
-- `databaseName`
-- `databaseVersion`
-- canonical table names
-- canonical table schemas
-
-### 7. Single-bot tasks should stay single-bot
-
-If the user asks for one finished importable bot JSON, keep the export to one character row unless they explicitly request multiple bots.
-
-### 8. Preserve runtime behavior unless asked to change it
-
-When patching an existing export:
-
-- preserve working structures
-- preserve known-good envelope and table layout
-- preserve unrelated working features
-- change only what the user asked to change, plus whatever is required to keep the export valid and importable
+---
 
 ## Output discipline
 
 When a user asks for the final export:
 
-- do not output explanations instead of the file
-- do not output a “how to finish” guide instead of the file
-- do not leave TODO placeholders in release output
-- do not leave incomplete handlers, stubs, or broken escaping in `customCode`
+- output the file, not an explanation of the file
+- no TODO placeholders in release output
+- no incomplete handlers or stubs in `customCode`
+- no "insert this manually" instructions
+
+---
 
 ## Conflict resolution
 
-If there is tension between:
+When there is tension between speed, conciseness, and import safety → **import safety wins**.
 
-- fancy implementation ideas
-- fast drafting
-- concise output
-- import safety
+---
 
-then choose **import safety**.
+## Canonical working method
 
-## Working method
+1. Clone `bots/templates/perchance-empty-minimal.json` as the structural baseline.
+2. Replace character row content with the new bot's data.
+3. Write `customCode` as normal JS source.
+4. Attach as string to the character object.
+5. Serialize entire export to JSON programmatically.
+6. Parse it back.
+7. Syntax-check extracted `customCode`.
+8. Run `docs/PERCHANCE_IMPORT_VERIFICATION.md` §Release Checklist.
+9. Only then treat the export as complete.
 
-Preferred workflow for Perchance export work:
+---
 
-1. Start from a known-good export template already in the repo.
-2. Modify character content and behavior carefully.
-3. Keep `customCode` as normal source during editing.
-4. Serialize to JSON programmatically.
-5. Parse the final JSON back.
-6. Validate the extracted `customCode`.
-7. Re-check structural integrity.
-8. Only then treat the export as complete.
+## Agent capability lookup (use these before implementing)
+
+| Question | Go to |
+|---|---|
+| Is this capability realistic in customCode? | `docs/CUSTOM_CODE_CAPABILITY_MATRIX.md` |
+| Which snippet fits this task? | `docs/SNIPPET_SELECTION_GUIDE.md` |
+| How do I combine snippets safely? | `docs/REUSABLE_PATTERN_RECIPES.md` |
+| What usually breaks? | `docs/COMMON_FAILURE_MODES.md` |
+| What prompting approach? | `docs/PROMPTING_PATTERNS.md` |
+| How do I style messages? | `docs/STYLING_RECIPES.md` |
+| Am I ready to merge? | `docs/CUSTOM_CODE_IMPLEMENTATION_CHECKLIST.md` |
+| What does this JSON field do? | `docs/EXPORT_FIELD_REFERENCE.md` |
+| How do I plan a new bot? | `docs/BOT_DESIGN_BRIEF_TEMPLATE.md` |
+
+---
 
 ## Final instruction
 
-For Perchance bot tasks in this repository, never optimize for “looks done.”
+Never optimize for "looks done."
 
-Optimize for **imports correctly, runs correctly, and is complete**.
+Optimize for **imports correctly, runs correctly, and is complete** — delivered in a **single agent pass**.
