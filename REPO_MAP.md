@@ -29,6 +29,11 @@ Current repository layout and quick reference.
 - CI: `.github/workflows/ci.yml`
 - Wiki sync: `.github/workflows/sync-wiki.yml` (pushes `wiki/` contents to GitHub Wiki on main-branch changes)
 
+## Active in-progress bot workspaces
+
+- `bots/in-progress/nyx-archivist/` - Atmospheric RP archivist build with composed snippet systems
+- `bots/in-progress/perchance-foundry-mentor/` - Panel-first Perchance bot-building mentor with level curriculum and runtime teaching controls
+
 ## Reference docs in `docs/`
 
 - `docs/PERCHANCE_IMPORT_VERIFICATION.md` - mandatory import/export verification standard

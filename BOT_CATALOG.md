@@ -57,6 +57,7 @@ Every catalog entry must include:
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
 | Nyx — The Archivist | in-progress | `bots/in-progress/nyx-archivist/` | Atmospheric RP archivist bot with state machine, lore injection, context packing, slash commands, toast notifications, regen guard, and postprocessor | active | passed | Validator and unittest passed; 8 features composed from snippet library; customCode syntax verified |
+| Perchance Foundry Mentor | in-progress | `bots/in-progress/perchance-foundry-mentor/` | Panel-first Perchance teaching mentor with level-based curriculum, field mapping, code lab, optional aliases, reminder routing, hidden-state injection, sanitizer, and regen guard | active | passed | Export generated via monolithic workflow; validator and unittest passed for current artifact |
 
 ## Completed bots
 
