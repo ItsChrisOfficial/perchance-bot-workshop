@@ -349,6 +349,72 @@ async function fetchKinksList() {
   }
 }
 
+// ── KINKS FILTER — select only character-applicable kinks ─────
+//  Uses an AI call to pick relevant kinks from the full reference list
+//  based on the character's personality, traits, and scenario.
+//  Results are cached in customData so this only runs once per character
+//  generation (not every message).
+
+async function filterKinksForCharacter() {
+  // Return cached result if already filtered for this character
+  if (oc.character.customData.__pcbw_filteredKinks) {
+    return oc.character.customData.__pcbw_filteredKinks;
+  }
+
+  const fullKinks = oc.character.customData.__pcbw_kinksList || "";
+  if (!fullKinks) return "";
+
+  const charName   = oc.character.customData.charName || oc.character.name || "the character";
+  const charDesc   = oc.character.customData.charDescription || "";
+  const charTraits = oc.character.customData.charTraits || "";
+  const charQuirk  = oc.character.customData.charQuirk || "";
+
+  try {
+    const result = await oc.getChatCompletion({
+      messages: [
+        {
+          author: "system",
+          content: [
+            `You are a kink-curation assistant. Given a character profile and a reference list of kinks, select ONLY the kinks that naturally fit this specific character's personality, traits, and scenario.`,
+            `For each selected kink, output it on its own line in this exact format:`,
+            `- <kink name>: <1-2 sentence explanation of how this kink fits this character>`,
+            ``,
+            `Rules:`,
+            `- Select 5-12 kinks maximum — quality over quantity.`,
+            `- Only pick kinks that genuinely suit the character's personality, role, or dynamic.`,
+            `- The explanation should tie the kink to the character's specific traits or scenario.`,
+            `- Do not add kinks not in the reference list.`,
+            `- Output ONLY the formatted list, no preamble or commentary.`,
+          ].join("\n"),
+        },
+        {
+          author: "user",
+          content: [
+            `CHARACTER PROFILE:`,
+            `Name: ${charName}`,
+            `Description: ${charDesc}`,
+            `Traits: ${charTraits}`,
+            `Quirk: ${charQuirk}`,
+            ``,
+            `KINK REFERENCE LIST:`,
+            fullKinks,
+          ].join("\n"),
+        },
+      ],
+      temperature: 0.5,
+    });
+
+    if (result && result.trim()) {
+      oc.character.customData.__pcbw_filteredKinks = result.trim();
+      return result.trim();
+    }
+  } catch (e) {
+    console.warn("[Kinks] Filtering failed — falling back to no kinks:", e);
+  }
+
+  return "";
+}
+
 // ── LORE SYSTEM ──────────────────────────────────────────────
 //  Lore entries are stored in customData (not applied to character fields).
 //  They are read and injected as hidden system messages after every user reply.
@@ -389,21 +455,21 @@ function injectLoreContext() {
   const lore = oc.character.customData.__pcbw_lore;
   if (!lore || !lore.length) return;
 
-  const kinks = oc.character.customData.__pcbw_kinksList || "";
+  const filteredKinks = oc.character.customData.__pcbw_filteredKinks || "";
   const genre = oc.character.customData.selectedGenre;
   const isSpicy = genre === "spicy" || genre === "smut";
 
   let loreText = lore.map(l => `[${l.key}]: ${l.content}`).join("\n");
 
-  if (isSpicy && kinks) {
-    loreText += `\n[kinks_context]: Kink preferences to weave naturally into the scene:\n${kinks}`;
+  if (isSpicy && filteredKinks) {
+    loreText += `\n[kinks_context]: Character-specific kink preferences — weave naturally into the scene:\n${filteredKinks}`;
   }
 
   const loreMessage = {
     author:       "system",
     hiddenFrom:   ["user"],
     name:         "Lore",
-    expectsReply: false,
+    expectsReply: true,
     content:      `[Active Lore — read and apply to your next response]\n${loreText}`,
     customData:   { __pcbw_isLore: true },
   };
@@ -642,9 +708,10 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     const loreEntries = buildLoreEntries(charName, charDescription, charTraits, charQuirk, worldDesc, mood, isNsfw, genre);
     oc.character.customData.__pcbw_lore = loreEntries;
 
-    // ── Fetch kinks list for spicy/smut genres ──
+    // ── Fetch and filter kinks list for spicy/smut genres ──
     if (isNsfw && (genre === "spicy" || genre === "smut")) {
-      await fetchKinksList(); // cached in customData for lore injection
+      await fetchKinksList();           // cached raw list in customData
+      await filterKinksForCharacter();  // cached filtered list in customData
     }
 
     // ── Generate avatars in parallel ─────────────────────────
@@ -727,6 +794,7 @@ async function handleSlashCommand(message) {
     case "regen":
       oc.thread.messages.pop();
       oc.character.name = "Unknown";
+      delete oc.character.customData.__pcbw_filteredKinks;
       generateCharactersAndScenario(oc.character.customData.userInstruction);
       return true;
 
@@ -745,8 +813,15 @@ async function handleSlashCommand(message) {
         return true;
       }
       oc.character.customData.selectedGenre = key;
+      // Clear cached filtered kinks when genre changes so they can be re-filtered
+      delete oc.character.customData.__pcbw_filteredKinks;
       if (oc.character.name !== "Unknown") {
         applyGenreScene(key);
+        // Fetch and filter kinks if switching to a spicy/smut genre
+        if (GENRES[key].nsfw && (key === "spicy" || key === "smut")) {
+          await fetchKinksList();
+          await filterKinksForCharacter();
+        }
         oc.thread.messages.push({
           author:       "system",
           hiddenFrom:   ["ai"],
