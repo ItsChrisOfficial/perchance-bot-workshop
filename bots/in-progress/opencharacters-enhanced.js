@@ -31,6 +31,7 @@ const GENRES = {
   adventure: { label: "🗺️ Adventure",      music: "https://cdn.pixabay.com/audio/2022/10/13/audio_a9e7c3bc1a.mp3", bgFilter: "saturate(1.2) brightness(0.9)" },
   slice:     { label: "☕ Slice of Life",  music: "https://cdn.pixabay.com/audio/2022/10/30/audio_b99dc952d1.mp3", bgFilter: "" },
   smut:      { label: "🔞 Smut",           music: "https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3", bgFilter: "sepia(0.15) saturate(1.3) brightness(0.9)", nsfw: true },
+  spicy:     { label: "🌶️ Spicy",          music: "https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3", bgFilter: "saturate(1.2) brightness(0.85) contrast(1.05) sepia(0.1)", nsfw: true },
 };
 
 // ── IMAGE GENERATION STYLES ───────────────────────────────────
@@ -155,6 +156,24 @@ const STYLE_CATEGORIES = [
 
 const MEMORY_DIGEST_EVERY = 20;   // summarise after every N AI messages
 const MAX_CHOICE_BUTTONS   = 5;   // max [[choices]] rendered as buttons
+
+const KINKS_URL = "https://user.uploads.dev/file/edc972de9235585e24590c4728018e5d.txt";
+
+// ── GENRE-THEMED MESSAGE STYLES ──────────────────────────────
+//  Applied via messageRenderingPipeline for consistent per-genre CSS.
+
+const GENRE_STYLES = {
+  spicy:     "font-family:'Georgia','Times New Roman',serif;line-height:1.8;color:light-dark(#2b1a1a,#e8d5d0);background:light-dark(rgba(120,40,60,0.06),rgba(180,60,80,0.08));border-left:3px solid light-dark(#8b3a50,#c4627a);padding:0.6rem 1rem;border-radius:4px;",
+  smut:      "font-family:'Georgia','Times New Roman',serif;line-height:1.8;color:light-dark(#2b1a1a,#e8d5d0);background:light-dark(rgba(120,40,60,0.06),rgba(180,60,80,0.08));border-left:3px solid light-dark(#8b3a50,#c4627a);padding:0.6rem 1rem;border-radius:4px;",
+  fantasy:   "font-family:'Georgia','Times New Roman',serif;color:light-dark(#3b2f2f,#d5cfc4);background:light-dark(rgba(245,235,220,0.3),rgba(60,50,40,0.3));border-left:3px solid light-dark(#c4a77d,#8a7050);padding:0.6rem 1rem;border-radius:4px;",
+  horror:    "font-family:'Courier New',monospace;color:light-dark(#1a1a2e,#c8c8e0);background:light-dark(rgba(26,26,46,0.08),rgba(200,200,224,0.06));border:1px solid light-dark(rgba(26,26,46,0.2),rgba(200,200,224,0.15));padding:0.5rem 0.8rem;border-radius:2px;letter-spacing:0.02em;",
+  scifi:     "font-family:'Segoe UI',system-ui,sans-serif;color:light-dark(#0d1117,#e0e0ff);border-left:3px solid light-dark(#6366f1,#818cf8);background:light-dark(rgba(99,102,241,0.05),rgba(129,140,248,0.08));padding:0.5rem 1rem;border-radius:6px;",
+  romance:   "font-family:'Georgia',serif;color:light-dark(#3b2020,#e8d0d0);background:light-dark(rgba(220,180,190,0.12),rgba(140,60,80,0.08));border-left:3px solid light-dark(#c97088,#d4849a);padding:0.6rem 1rem;border-radius:6px;",
+  mystery:   "font-family:'Courier New',monospace;color:light-dark(#1a1a2e,#c8c8e0);background:light-dark(rgba(40,30,20,0.06),rgba(200,180,160,0.06));border-left:3px solid light-dark(#8a7050,#a08868);padding:0.5rem 0.8rem;border-radius:2px;",
+  adventure: "font-family:system-ui,sans-serif;color:light-dark(#2d3b2d,#c8d8c8);background:light-dark(rgba(76,120,76,0.06),rgba(120,180,120,0.06));border-left:3px solid light-dark(#5a8f5a,#6aaa6a);padding:0.5rem 1rem;border-radius:4px;",
+  comedy:    "font-family:system-ui,sans-serif;color:light-dark(#333,#ddd);background:light-dark(rgba(255,220,100,0.08),rgba(255,200,50,0.06));border-left:3px solid light-dark(#e6a817,#f0c040);padding:0.5rem 1rem;border-radius:6px;",
+  slice:     "font-family:system-ui,-apple-system,sans-serif;font-size:0.95rem;line-height:1.6;color:light-dark(#2d2d2d,#d4d4d4);padding:0.4rem 0;",
+};
 
 // ── STATE ────────────────────────────────────────────────────
 
@@ -315,6 +334,158 @@ function _renderStyleStep() {
   };
 }
 
+// ── KINKS LIST LOADER ─────────────────────────────────────────
+
+async function fetchKinksList() {
+  if (oc.character.customData.__pcbw_kinksList) return oc.character.customData.__pcbw_kinksList;
+  try {
+    const resp = await fetch(KINKS_URL);
+    const text = await resp.text();
+    oc.character.customData.__pcbw_kinksList = text.trim();
+    return text.trim();
+  } catch (e) {
+    console.warn("[Kinks] Failed to fetch kinks list — continuing without kinks context:", e);
+    return "";
+  }
+}
+
+// ── LORE SYSTEM ──────────────────────────────────────────────
+//  Lore entries are stored in customData (not applied to character fields).
+//  They are read and injected as hidden system messages after every user reply.
+
+function buildLoreEntries(charName, charDescription, charTraits, charQuirk, worldDesc, mood, isNsfw, genre) {
+  const lore = [];
+
+  lore.push({
+    key: "character_essence",
+    content: `${charName} embodies ${charTraits}. Their signature quirk: ${charQuirk}. This shapes every interaction, dialogue choice, and physical mannerism.`,
+  });
+
+  lore.push({
+    key: "world_state",
+    content: `The world: ${worldDesc}. Current atmosphere: ${mood}. The environment responds to emotional tension — surroundings shift with the scene's energy.`,
+  });
+
+  lore.push({
+    key: "relationship_dynamic",
+    content: `Track the evolving dynamic between ${charName} and the other character. Note power shifts, emotional undercurrents, unspoken tensions, and moments of vulnerability or dominance.`,
+  });
+
+  if (isNsfw && (genre === "spicy" || genre === "smut")) {
+    lore.push({
+      key: "spicy_tone",
+      content: `Writing style: sensual, kink-positive, in-depth, 18+. Embrace desire openly. Build tension through body language, breath, texture, and anticipation. Never fade to black. Every touch has weight and consequence. Layer sensory detail — warmth, pressure, scent, sound.`,
+    });
+    lore.push({
+      key: "kink_awareness",
+      content: `Reference loaded kinks context naturally. Weave preferences into character behavior, dialogue subtext, and scenario progression. Let kinks emerge from character and moment rather than forced exposition.`,
+    });
+  }
+
+  return lore;
+}
+
+function injectLoreContext() {
+  const lore = oc.character.customData.__pcbw_lore;
+  if (!lore || !lore.length) return;
+
+  const kinks = oc.character.customData.__pcbw_kinksList || "";
+  const genre = oc.character.customData.selectedGenre;
+  const isSpicy = genre === "spicy" || genre === "smut";
+
+  let loreText = lore.map(l => `[${l.key}]: ${l.content}`).join("\n");
+
+  if (isSpicy && kinks) {
+    loreText += `\n[kinks_context]: Kink preferences to weave naturally into the scene:\n${kinks}`;
+  }
+
+  const loreMessage = {
+    author:       "system",
+    hiddenFrom:   ["user"],
+    name:         "Lore",
+    expectsReply: false,
+    content:      `[Active Lore — read and apply to your next response]\n${loreText}`,
+    customData:   { __pcbw_isLore: true },
+  };
+
+  // Update existing lore message or insert a new one
+  const existingIdx = oc.thread.messages.findIndex(
+    m => m.author === "system" && m.customData?.__pcbw_isLore
+  );
+
+  if (existingIdx >= 0) {
+    oc.thread.messages[existingIdx] = loreMessage;
+  } else {
+    oc.thread.messages.push(loreMessage);
+  }
+}
+
+// ── DYNAMIC POINTERS ─────────────────────────────────────────
+//  Context-aware narrative pointers generated after each user message.
+//  They push responses forward predictively without narrative rails.
+
+async function generateDynamicPointers() {
+  try {
+    const recent = oc.thread.messages
+      .filter(m => !m.customData?.__pcbw_isLore && !m.customData?.__pcbw_isPointer
+                   && (m.author !== "system" || !m.hiddenFrom?.includes("ai")))
+      .slice(-6)
+      .map(m => `${m.name || m.author}: ${m.content.replace(/<[^>]+>/g, "").slice(0, 400)}`)
+      .join("\n");
+
+    if (!recent.trim()) return;
+
+    const genre = oc.character.customData.selectedGenre;
+    const isSpicy = genre === "spicy" || genre === "smut";
+
+    const pointerInstruction = isSpicy
+      ? [
+          `Analyze the conversation below. Generate exactly 3 short narrative pointers (1 sentence each) that push the scene forward.`,
+          `Focus on: sensual tension escalation, character desire and body language, physical/emotional power dynamics.`,
+          `Be explicit, kink-positive, and grounded in the characters' established personalities.`,
+          `Format: one pointer per line, prefixed with "→". No numbering, no explanation.`,
+        ].join(" ")
+      : [
+          `Analyze the conversation below. Generate exactly 3 short narrative pointers (1 sentence each) that push the story forward.`,
+          `Focus on: unresolved tension or conflict, character motivation and emotional state, environmental or situational shifts.`,
+          `Pointers should suggest direction without prescribing exact outcomes.`,
+          `Format: one pointer per line, prefixed with "→". No numbering, no explanation.`,
+        ].join(" ");
+
+    const result = await oc.getChatCompletion({
+      messages: [
+        { author: "system", content: pointerInstruction },
+        { author: "user",   content: recent },
+      ],
+      temperature: 0.7,
+    });
+
+    if (result) {
+      const pointers = result.trim();
+      oc.thread.customData ??= {};
+      oc.thread.customData.__pcbw_dynamicPointers = pointers;
+
+      // Remove old pointer message
+      const oldIdx = oc.thread.messages.findIndex(
+        m => m.customData?.__pcbw_isPointer
+      );
+      if (oldIdx >= 0) oc.thread.messages.splice(oldIdx, 1);
+
+      // Insert new pointer message
+      oc.thread.messages.push({
+        author:       "system",
+        hiddenFrom:   ["user"],
+        name:         "Narrative Direction",
+        expectsReply: false,
+        content:      `[Dynamic narrative pointers — incorporate these naturally into your next response. Do not list them explicitly.]\n${pointers}`,
+        customData:   { __pcbw_isPointer: true },
+      });
+    }
+  } catch (e) {
+    console.warn("[Pointers] Dynamic pointer generation failed:", e);
+  }
+}
+
 // ── MAIN EVENT LISTENER ──────────────────────────────────────
 
 oc.thread.on("MessageAdded", async function ({ message }) {
@@ -331,6 +502,12 @@ oc.thread.on("MessageAdded", async function ({ message }) {
   if (oc.character.name === "Unknown") {
     generateCharactersAndScenario(message.content);
     return;
+  }
+
+  // ── After user message: inject lore context + generate dynamic pointers ─
+  if (message.author === "user") {
+    injectLoreContext();
+    await generateDynamicPointers();
   }
 
   // ── Post-generation: emotion avatar + memory digest ────────
@@ -363,9 +540,11 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     const genre    = oc.character.customData.selectedGenre || null;
     const isNsfw   = genre ? !!GENRES[genre].nsfw : false;
     const genreHint = genre
-      ? isNsfw
-        ? `The roleplay is explicitly adult/erotic (🔞 Smut). You must create a sensual, sexually-charged scenario and characters. Explicit adult content is fully permitted and expected. Do not censor or fade to black.`
-        : `The roleplay should have a "${GENRES[genre].label}" genre/tone.`
+      ? genre === "spicy"
+        ? `The roleplay is explicitly adult/erotic (🌶️ Spicy). Kink-focused, NSFW, 18+, kink-positive. Create a sensually-charged scenario with in-depth, descriptive writing. Characters should have clear desires, tensions, and physical chemistry. Explicit content is fully permitted and expected.`
+        : isNsfw
+          ? `The roleplay is explicitly adult/erotic (🔞 Smut). You must create a sensual, sexually-charged scenario and characters. Explicit adult content is fully permitted and expected. Do not censor or fade to black.`
+          : `The roleplay should have a "${GENRES[genre].label}" genre/tone.`
       : "";
 
     if (isRegen) {
@@ -446,8 +625,8 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
 
     // ── Apply to character ──
     oc.character.name            = charName || "Character";
-    oc.character.roleInstruction = buildRoleInstruction(charName, charDescription, charTraits, charQuirk, worldDesc, isNsfw);
-    oc.character.reminderMessage = buildReminderMessage(charTraits, charQuirk, mood);
+    oc.character.roleInstruction = buildRoleInstruction(charName, charDescription, charTraits, charQuirk, worldDesc, isNsfw, genre);
+    oc.character.reminderMessage = buildReminderMessage(charTraits, charQuirk, mood, genre);
     oc.character.initialMessages = [];
     oc.character.avatar.url      = "";
 
@@ -458,6 +637,15 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       charTraits, charQuirk, worldDesc, mood, imagePrompt,
       charDescription, userDescription, userName, charName, starter,
     });
+
+    // ── Build and store lore entries in customData ──
+    const loreEntries = buildLoreEntries(charName, charDescription, charTraits, charQuirk, worldDesc, mood, isNsfw, genre);
+    oc.character.customData.__pcbw_lore = loreEntries;
+
+    // ── Fetch kinks list for spicy/smut genres ──
+    if (isNsfw && (genre === "spicy" || genre === "smut")) {
+      await fetchKinksList(); // cached in customData for lore injection
+    }
 
     // ── Generate avatars in parallel ─────────────────────────
     //  Avatar prompts are also passed through styledImagePrompt() so they
@@ -781,6 +969,15 @@ function renderChoiceButtons() {
   // No-op placeholder — the pipeline handles this reactively on every render
 }
 
+// ── GENRE-THEMED MESSAGE STYLING (rendering pipeline) ─────────
+
+oc.messageRenderingPipeline.push(function ({ message, reader }) {
+  if (reader !== "user") return;
+  const genre = oc.character.customData?.selectedGenre;
+  if (!genre || !GENRE_STYLES[genre]) return;
+  message.wrapperStyle = (message.wrapperStyle ? message.wrapperStyle + ";" : "") + GENRE_STYLES[genre];
+});
+
 // ── MEMORY DIGEST ─────────────────────────────────────────────
 
 async function maybeDigestMemory() {
@@ -870,7 +1067,25 @@ function buildLoadingMessage(isRegen) {
   ].join("");
 }
 
-function buildRoleInstruction(name, description, traits, quirk, world, isNsfw = false) {
+function buildRoleInstruction(name, description, traits, quirk, world, isNsfw = false, genre = null) {
+  const isSpicy = genre === "spicy";
+
+  let writingDirective;
+  if (isSpicy) {
+    writingDirective = [
+      `This is an explicitly adult (🌶️ Spicy) roleplay. Kink-focused, NSFW, 18+, kink-positive.`,
+      `Write with vivid, sensual, in-depth detail. Embrace desire, tension, and physical intimacy openly.`,
+      `Never fade to black. Never censor. Every touch, glance, and breath carries weight.`,
+      `Build scenes through layered sensory detail — texture, warmth, pressure, scent, sound.`,
+      `Let desire drive character decisions. Subtext matters as much as action.`,
+      `Stay true to ${name}'s personality and desires throughout. Kinks should emerge naturally from character and context.`,
+    ].join("\n");
+  } else if (isNsfw) {
+    writingDirective = `This is an explicitly adult (🔞) roleplay. Explicit sexual content is fully permitted and expected — do not fade to black, do not censor yourself. Write with vivid, sensual detail and stay true to your character's desires and personality throughout.`;
+  } else {
+    writingDirective = `Stay in character at all times. Write immersively and authentically. When giving the user options, wrap them in double-square brackets like [[option text]] so they appear as buttons.`;
+  }
+
   return [
     `You are ${name}.`,
     ``,
@@ -881,21 +1096,29 @@ function buildRoleInstruction(name, description, traits, quirk, world, isNsfw = 
     ``,
     `World/Setting: ${world}`,
     ``,
-    isNsfw
-      ? `This is an explicitly adult (🔞) roleplay. Explicit sexual content is fully permitted and expected — do not fade to black, do not censor yourself. Write with vivid, sensual detail and stay true to your character's desires and personality throughout.`
-      : `Stay in character at all times. Write immersively and authentically. When giving the user options, wrap them in double-square brackets like [[option text]] so they appear as buttons.`,
+    writingDirective,
     ``,
     `When giving the user options, wrap them in double-square brackets like [[option text]] so they appear as buttons.`,
   ].join("\n");
 }
 
-function buildReminderMessage(traits, quirk, mood) {
-  return [
+function buildReminderMessage(traits, quirk, mood, genre = null) {
+  const isSpicy = genre === "spicy" || genre === "smut";
+
+  const lines = [
     `Remember: your traits are ${traits}. You have a notable quirk: ${quirk}.`,
     `The current mood/atmosphere is: ${mood}.`,
-    `---`,
-    `Emotional state: neutral (update as the story progresses).`,
-  ].join("\n");
+  ];
+
+  if (isSpicy) {
+    lines.push(`Writing style: sensual, explicit, kink-positive, in-depth. Build tension through body language, anticipation, and desire. Never fade to black.`);
+    lines.push(`Read any active [Lore] and [Narrative Direction] system messages and incorporate them naturally into your response.`);
+  }
+
+  lines.push(`---`);
+  lines.push(`Emotional state: neutral (update as the story progresses).`);
+
+  return lines.join("\n");
 }
 
 function buildIntroMessage(charName, charDesc, traits, quirk, world, userName, userDesc, starter, mood) {
