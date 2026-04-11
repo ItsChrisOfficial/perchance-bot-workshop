@@ -344,7 +344,7 @@ async function fetchKinksList() {
     oc.character.customData.__pcbw_kinksList = text.trim();
     return text.trim();
   } catch (e) {
-    console.warn("[Kinks] Failed to fetch kinks list:", e);
+    console.warn("[Kinks] Failed to fetch kinks list — continuing without kinks context:", e);
     return "";
   }
 }
@@ -427,8 +427,8 @@ function injectLoreContext() {
 async function generateDynamicPointers() {
   try {
     const recent = oc.thread.messages
-      .filter(m => !m.customData?.__pcbw_isLore && !m.customData?.__pcbw_isPointer)
-      .filter(m => m.author !== "system" || !m.hiddenFrom?.includes("ai"))
+      .filter(m => !m.customData?.__pcbw_isLore && !m.customData?.__pcbw_isPointer
+                   && (m.author !== "system" || !m.hiddenFrom?.includes("ai")))
       .slice(-6)
       .map(m => `${m.name || m.author}: ${m.content.replace(/<[^>]+>/g, "").slice(0, 400)}`)
       .join("\n");
@@ -644,7 +644,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
 
     // ── Fetch kinks list for spicy/smut genres ──
     if (isNsfw && (genre === "spicy" || genre === "smut")) {
-      fetchKinksList(); // fire-and-forget — cached in customData for lore injection
+      await fetchKinksList(); // cached in customData for lore injection
     }
 
     // ── Generate avatars in parallel ─────────────────────────
@@ -975,7 +975,7 @@ oc.messageRenderingPipeline.push(function ({ message, reader }) {
   if (reader !== "user") return;
   const genre = oc.character.customData?.selectedGenre;
   if (!genre || !GENRE_STYLES[genre]) return;
-  message.wrapperStyle = (message.wrapperStyle || "") + GENRE_STYLES[genre];
+  message.wrapperStyle = (message.wrapperStyle ? message.wrapperStyle + ";" : "") + GENRE_STYLES[genre];
 });
 
 // ── MEMORY DIGEST ─────────────────────────────────────────────
