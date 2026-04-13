@@ -542,7 +542,7 @@ async function generateDynamicPointers() {
         author:       "system",
         hiddenFrom:   ["user"],
         name:         "Narrative Direction",
-        expectsReply: false,
+        expectsReply: true,
         content:      `[Dynamic narrative pointers — incorporate these naturally into your next response. Do not list them explicitly.]\n${pointers}`,
         customData:   { __pcbw_isPointer: true },
       });
