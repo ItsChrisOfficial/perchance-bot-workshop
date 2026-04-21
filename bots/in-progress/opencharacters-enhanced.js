@@ -353,30 +353,36 @@ function _applyImageStyle(key) {
  * writes an image prompt containing a known noun (a character name, a world
  * keyword, etc.) the matching visual description is automatically injected.
  *
+ * Full description strings are used without truncation so that every physical
+ * trait constant from the initial generation is available to the image model.
+ *
  * @param {string}      charName        - AI character name
- * @param {string}      charDescription - AI character appearance / personality
+ * @param {string}      charDescription - AI character full appearance / personality
  * @param {string}      charTraits      - comma-separated personality traits
+ * @param {string}      charQuirk       - distinctive quirk / physical habit
  * @param {string}      userName        - user character name
- * @param {string}      userDescription - user character appearance
+ * @param {string}      userDescription - user character full appearance
  * @param {string}      worldDesc       - setting / world description
  * @param {string|null} genre           - genre key from GENRES, or null
  * @returns {string}                    - newline-separated trigger lines
  */
-function buildImagePromptTriggers(charName, charDescription, charTraits, userName, userDescription, worldDesc, genre) {
+function buildImagePromptTriggers(charName, charDescription, charTraits, charQuirk, userName, userDescription, worldDesc, genre) {
   const lines = [];
 
   // ── Character reference ───────────────────────────────────
+  // Use the full description — no truncation — so every physical trait the AI
+  // generated is retained and injected whenever the character name appears in
+  // an image prompt.
   if (charName && charDescription) {
-    // Trim the description to a compact visual summary (first sentence / 200 chars)
-    const charVisual = charDescription.replace(/\s+/g, " ").slice(0, 200).replace(/[^.!?]*$/, "").trim()
-      || charDescription.slice(0, 120).trim();
-    lines.push(`${charName}: ${charVisual}${charTraits ? `, ${charTraits}` : ""}`);
+    const charVisual = charDescription.replace(/\s+/g, " ").trim();
+    const traitParts = [charTraits, charQuirk].filter(Boolean).join(", ");
+    lines.push(`${charName}: ${charVisual}${traitParts ? `, ${traitParts}` : ""}`);
   }
 
   // ── User character reference ──────────────────────────────
+  // Same: full description, no truncation.
   if (userName && userDescription) {
-    const userVisual = userDescription.replace(/\s+/g, " ").slice(0, 200).replace(/[^.!?]*$/, "").trim()
-      || userDescription.slice(0, 120).trim();
+    const userVisual = userDescription.replace(/\s+/g, " ").trim();
     lines.push(`${userName}: ${userVisual}`);
   }
 
@@ -410,17 +416,22 @@ function buildImagePromptTriggers(charName, charDescription, charTraits, userNam
 }
 
 /**
- * Wrap a raw image prompt with the currently-selected style's prepend/append.
- * Falls back gracefully when no style is selected.
+ * Wrap a raw image prompt with BASE_QUALITY_POSITIVE and (if set) the
+ * currently-selected style's prepend/append.
+ *
+ * BASE_QUALITY_POSITIVE is always injected so that every oc.textToImage()
+ * call — whether a style is selected or not — guards against uncanny faces,
+ * misaligned eyes, and bad anatomy without needing per-call boilerplate.
  *
  * @param {string} corePrompt  - the subject / scene description
- * @returns {string}           - fully-styled prompt string
+ * @returns {string}           - fully-styled, quality-boosted prompt string
  */
 function styledImagePrompt(corePrompt) {
+  const qualityCore = `${corePrompt}, ${BASE_QUALITY_POSITIVE}`;
   const styleKey = oc.character.customData?.selectedImageStyle;
-  if (!styleKey || !IMAGE_STYLES[styleKey]) return corePrompt;
+  if (!styleKey || !IMAGE_STYLES[styleKey]) return qualityCore;
   const style = IMAGE_STYLES[styleKey];
-  return `${style.prepend} ${corePrompt}${style.append}`;
+  return `${style.prepend} ${qualityCore}${style.append}`;
 }
 
 // ── INIT ─────────────────────────────────────────────────────
@@ -1048,7 +1059,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     // writes an image prompt containing a known name or noun, the matching
     // visual description is automatically injected into that prompt.
     oc.character.imagePromptTriggers = buildImagePromptTriggers(
-      charName, charDescription, charTraits,
+      charName, charDescription, charTraits, charQuirk,
       userName, userDescription,
       worldDesc, genre
     );
@@ -1066,15 +1077,14 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     //  is broadened to allow adult/sensual portrait content; otherwise the
     //  "pfp / avatar portrait" framing keeps images clean and headshot-like.
     const avatarQuality = isNsfw
-      ? "highly detailed, masterpiece, character portrait, expressive, sensual, adult content"
-      : "digital art, highly detailed, masterpiece, pfp, avatar portrait, expressive";
-    const negPrompt = "worst quality, blurry, low resolution, distorted, watermark";
+      ? "character portrait, expressive face, sensual, adult content"
+      : "pfp, avatar portrait, expressive face";
 
     const charAvatarPromise = oc.textToImage({
       prompt: styledImagePrompt(
         `${charName} character portrait, ${charDescription}, ${charTraits}, ${avatarQuality}`
       ),
-      negativePrompt: negPrompt,
+      negativePrompt: NEG_PROMPT,
     }).then(async ({ dataUrl }) => {
       oc.character.avatar.url = await resizeDataURLWidth(dataUrl, 300);
     }).catch(() => {});
@@ -1083,7 +1093,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       prompt: styledImagePrompt(
         `${userName} character portrait, ${userDescription}, ${avatarQuality}`
       ),
-      negativePrompt: negPrompt,
+      negativePrompt: NEG_PROMPT,
     }).then(async ({ dataUrl }) => {
       oc.character.userCharacter.avatar.url = await resizeDataURLWidth(dataUrl, 300);
     }).catch(() => {});
