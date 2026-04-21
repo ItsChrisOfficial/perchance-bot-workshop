@@ -183,6 +183,94 @@ window._ocMemoryCount      = 0;   // tracks messages since last digest
 // ── STYLE HELPER ─────────────────────────────────────────────
 
 /**
+ * Atomically apply an image style key to all three extensible style fields:
+ *   - oc.character.customData.selectedImageStyle  (key reference)
+ *   - oc.character.imagePromptPrefix              (prepend string)
+ *   - oc.character.imagePromptSuffix              (append string)
+ *
+ * Pass null / undefined to clear the style.
+ *
+ * @param {string|null} key  - key from IMAGE_STYLES, or null to clear
+ */
+function _applyImageStyle(key) {
+  oc.character.customData.selectedImageStyle = key || null;
+  if (key && IMAGE_STYLES[key]) {
+    oc.character.imagePromptPrefix = IMAGE_STYLES[key].prepend;
+    oc.character.imagePromptSuffix = IMAGE_STYLES[key].append;
+  } else {
+    oc.character.imagePromptPrefix = "";
+    oc.character.imagePromptSuffix = "";
+  }
+}
+
+/**
+ * Build the imagePromptTriggers string from generated character data.
+ *
+ * Format (per OpenCharacters spec):
+ *   trigger: description text to append when that trigger appears in an image prompt
+ *   @prepend before description → text is prepended instead of appended
+ *
+ * Each line is a character/place/object reference so that whenever the AI
+ * writes an image prompt containing a known noun (a character name, a world
+ * keyword, etc.) the matching visual description is automatically injected.
+ *
+ * @param {string}      charName        - AI character name
+ * @param {string}      charDescription - AI character appearance / personality
+ * @param {string}      charTraits      - comma-separated personality traits
+ * @param {string}      userName        - user character name
+ * @param {string}      userDescription - user character appearance
+ * @param {string}      worldDesc       - setting / world description
+ * @param {string|null} genre           - genre key from GENRES, or null
+ * @returns {string}                    - newline-separated trigger lines
+ */
+function buildImagePromptTriggers(charName, charDescription, charTraits, userName, userDescription, worldDesc, genre) {
+  const lines = [];
+
+  // ── Character reference ───────────────────────────────────
+  if (charName && charDescription) {
+    // Trim the description to a compact visual summary (first sentence / 200 chars)
+    const charVisual = charDescription.replace(/\s+/g, " ").slice(0, 200).replace(/[^.!?]*$/, "").trim()
+      || charDescription.slice(0, 120).trim();
+    lines.push(`${charName}: ${charVisual}${charTraits ? `, ${charTraits}` : ""}`);
+  }
+
+  // ── User character reference ──────────────────────────────
+  if (userName && userDescription) {
+    const userVisual = userDescription.replace(/\s+/g, " ").slice(0, 200).replace(/[^.!?]*$/, "").trim()
+      || userDescription.slice(0, 120).trim();
+    lines.push(`${userName}: ${userVisual}`);
+  }
+
+  // ── World / setting reference ─────────────────────────────
+  if (worldDesc) {
+    const worldVisual = worldDesc.replace(/\s+/g, " ").slice(0, 150).trim();
+    lines.push(`the setting: ${worldVisual}`);
+    lines.push(`the world: ${worldVisual}`);
+  }
+
+  // ── Genre-specific environment references ────────────────
+  const genreEnvs = {
+    fantasy:   "ancient stone castle, enchanted forest, torchlit corridors, mystical atmosphere",
+    scifi:     "futuristic space station, neon-lit corridors, holographic displays, high-tech environment",
+    horror:    "crumbling mansion, dim flickering lights, deep shadows, unsettling atmosphere",
+    romance:   "soft candlelight, flower-filled garden, warm golden ambiance, intimate atmosphere",
+    mystery:   "dimly lit detective office, rain-slicked streets, fog, mysterious atmosphere",
+    adventure: "sweeping landscape, dramatic sky, rugged terrain, epic vista",
+    comedy:    "bright colorful environment, exaggerated expressions, lively chaotic setting",
+    slice:     "cozy cafe interior, sunlit street, warm everyday atmosphere",
+    spicy:     "intimate bedroom, soft warm lighting, luxurious textures, sensual atmosphere",
+    smut:      "intimate bedroom, soft warm lighting, luxurious textures, sensual atmosphere",
+  };
+
+  if (genre && genreEnvs[genre]) {
+    lines.push(`the room: ${genreEnvs[genre]}`);
+    lines.push(`the scene: ${genreEnvs[genre]}`);
+  }
+
+  return lines.join("\n");
+}
+
+/**
  * Wrap a raw image prompt with the currently-selected style's prepend/append.
  * Falls back gracefully when no style is selected.
  *
@@ -321,7 +409,7 @@ function _renderStyleStep() {
       btn.onclick = () => {
         document.querySelectorAll(".style-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
-        oc.character.customData.selectedImageStyle = key;
+        _applyImageStyle(key);
         setTimeout(() => { oc.window.hide(); }, 300);
       };
       grid.appendChild(btn);
@@ -329,7 +417,7 @@ function _renderStyleStep() {
   }
 
   document.getElementById("styleSkipBtn").onclick = () => {
-    oc.character.customData.selectedImageStyle = null;
+    _applyImageStyle(null);
     oc.window.hide();
   };
 }
@@ -708,6 +796,21 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     const loreEntries = buildLoreEntries(charName, charDescription, charTraits, charQuirk, worldDesc, mood, isNsfw, genre);
     oc.character.customData.__pcbw_lore = loreEntries;
 
+    // ── Update extensible character objects ──
+    // imagePromptPrefix / imagePromptSuffix — derived from the selected image
+    // style so that ALL image calls (including AI-triggered ones) automatically
+    // inherit the style without needing to go through styledImagePrompt().
+    _applyImageStyle(oc.character.customData.selectedImageStyle);
+
+    // imagePromptTriggers — keyword→description lookup so that whenever the AI
+    // writes an image prompt containing a known name or noun, the matching
+    // visual description is automatically injected into that prompt.
+    oc.character.imagePromptTriggers = buildImagePromptTriggers(
+      charName, charDescription, charTraits,
+      userName, userDescription,
+      worldDesc, genre
+    );
+
     // ── Fetch and filter kinks list for spicy/smut genres ──
     if (isNsfw && (genre === "spicy" || genre === "smut")) {
       await fetchKinksList();           // cached raw list in customData
@@ -862,7 +965,7 @@ async function handleSlashCommand(message) {
         return true;
       }
 
-      oc.character.customData.selectedImageStyle = key;
+      _applyImageStyle(key);
       const style = IMAGE_STYLES[key];
       oc.thread.messages.push({
         author:       "system",
@@ -1340,7 +1443,7 @@ window._showStylePicker = function () {
       btn.className = "style-btn" + (key === currentStyle ? " active" : "");
       btn.textContent = val.label;
       btn.onclick = () => {
-        oc.character.customData.selectedImageStyle = key;
+        _applyImageStyle(key);
         oc.thread.messages.push({
           author:       "system",
           hiddenFrom:   ["ai"],
@@ -1355,7 +1458,7 @@ window._showStylePicker = function () {
   }
 
   document.getElementById("clearStyleBtn").onclick = () => {
-    oc.character.customData.selectedImageStyle = null;
+    _applyImageStyle(null);
     oc.thread.messages.push({
       author:       "system",
       hiddenFrom:   ["ai"],
