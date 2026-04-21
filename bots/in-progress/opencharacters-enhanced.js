@@ -143,6 +143,40 @@ const IMAGE_STYLES = {
     prepend:  "vaporwave aesthetic, synthwave art, lo-fi retro-futuristic,",
     append:   ", pastel purple magenta teal gradient, glitch accents, 90s nostalgia, dreamy surreal",
   },
+  nsfw_stylized: {
+    label:    "🔥 Glamour Fantasy Art",
+    category: "✨ Ultra-Stylized",
+    prepend:  "glamour fantasy concept art, sensual atmospheric illustration, high-detail digital painting, seductive mood,",
+    append:   ", dramatic rim lighting, rich jewel-tone palette, cinematic adult fantasy art, masterpiece quality",
+    nsfw:     true,
+  },
+
+  // ── NSFW — Photorealistic ────────────────────────────────────
+  nsfw_photo: {
+    label:    "🛋️ Boudoir Photography",
+    category: "📷 Photorealistic",
+    prepend:  "professional boudoir photography, intimate portrait session, 85mm prime lens, studio softbox lighting,",
+    append:   ", elegant sensual composition, silky skin texture, warm ambient light, high-resolution intimate photography",
+    nsfw:     true,
+  },
+
+  // ── NSFW — Illustrated ───────────────────────────────────────
+  nsfw_illustrated: {
+    label:    "💋 Sensual Illustration",
+    category: "🌸 Anime / Illustrated",
+    prepend:  "sensual digital illustration, elegant pinup art, Artgerm-inspired figure study,",
+    append:   ", soft intimate lighting, detailed expressive face, beautiful figure, high-quality digital painting",
+    nsfw:     true,
+  },
+
+  // ── 3D Render ────────────────────────────────────────────────
+  nsfw_3d: {
+    label:    "🧊 Photorealistic 3D",
+    category: "🧊 3D Render",
+    prepend:  "photorealistic 3D render, Unreal Engine 5 quality, octane render, physically-based rendering,",
+    append:   ", subsurface scattering skin, global illumination, ultra-detailed textures, cinematic 3D character render",
+    nsfw:     true,
+  },
 };
 
 // Ordered category labels (for rendering grouped headers in the picker)
@@ -152,6 +186,7 @@ const STYLE_CATEGORIES = [
   "🖌️ Painterly",
   "🎬 Filmish",
   "✨ Ultra-Stylized",
+  "🧊 3D Render",
 ];
 
 const MEMORY_DIGEST_EVERY = 20;   // summarise after every N AI messages
