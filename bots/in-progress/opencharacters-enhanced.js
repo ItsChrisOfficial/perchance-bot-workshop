@@ -189,6 +189,74 @@ const STYLE_CATEGORIES = [
   "🧊 3D Render",
 ];
 
+// ── SCENARIO TONES ────────────────────────────────────────────
+//  Presented as Step 3 of the setup wizard (after genre and image style).
+//  The selected tone's `hint` string is injected into the character
+//  generation instruction to shape the opening scenario's atmosphere.
+//
+//  Distribution: 5 SFW · 2 SFW-with-undertones · 3 NSFW
+
+const SCENARIO_TONES = {
+
+  // ── SFW (5) ──────────────────────────────────────────────────
+  everyday: {
+    label: "🌅 Everyday Adventure",
+    hint:  "The starting scenario should feel lighthearted, curious, and grounded — an ordinary world full of interesting little moments.",
+    nsfw:  false,
+  },
+  cozy: {
+    label: "☕ Cozy & Casual",
+    hint:  "The starting scenario should feel warm, comfortable, and slice-of-life — low stakes, intimate, everyday warmth.",
+    nsfw:  false,
+  },
+  suspense: {
+    label: "🔍 Suspenseful",
+    hint:  "The starting scenario should build mystery and tension — slow-burn intrigue, half-revealed secrets, and a creeping sense of rising stakes.",
+    nsfw:  false,
+  },
+  epic: {
+    label: "⚔️ Epic & Dramatic",
+    hint:  "The starting scenario should feel high-stakes and emotionally charged — heroic conflict, grand decisions, and dramatic weight in every moment.",
+    nsfw:  false,
+  },
+  comedic: {
+    label: "😄 Playful & Comedic",
+    hint:  "The starting scenario should be fun and humorous — witty banter, absurd situations, and a light-hearted energy throughout.",
+    nsfw:  false,
+  },
+
+  // ── SFW with NSFW undertones (2) ─────────────────────────────
+  flirty: {
+    label:      "💫 Flirty & Romantic",
+    hint:       "The starting scenario should have teasing chemistry and suggestive tension — romantic undertones, playful flirtation, and unspoken attraction simmering beneath the surface. Keep it tasteful but charged.",
+    nsfw:       false,
+    undertones: true,
+  },
+  charged: {
+    label:      "🌶️ Charged Tension",
+    hint:       "The starting scenario should crackle with electric push-pull energy — restrained passion, desire barely held in check, and electric proximity. Suggestive but not explicit.",
+    nsfw:       false,
+    undertones: true,
+  },
+
+  // ── NSFW (3) ─────────────────────────────────────────────────
+  steamy: {
+    label: "🔥 Steamy Encounters",
+    hint:  "The starting scenario is explicitly adult and sensual — build richly toward intimate encounters using layered sensory detail. Explicit content is expected. 18+ only.",
+    nsfw:  true,
+  },
+  dark_intense: {
+    label: "🖤 Dark & Intense",
+    hint:  "The starting scenario explores edgy adult themes — psychological tension, power dynamics, and morally complex characters. Explicit adult content is permitted. 18+ only.",
+    nsfw:  true,
+  },
+  explicit: {
+    label: "💋 Explicit Romance",
+    hint:  "The starting scenario is fully explicit adult romance — deeply intimate and sexually charged from the very first moment. No fading to black. Explicit content is fully expected. 18+ only.",
+    nsfw:  true,
+  },
+};
+
 const MEMORY_DIGEST_EVERY = 20;   // summarise after every N AI messages
 const MAX_CHOICE_BUTTONS   = 5;   // max [[choices]] rendered as buttons
 
@@ -354,7 +422,7 @@ function _renderGenreStep() {
         background:#333; color:#bbb; cursor:pointer; font-size:0.8rem;
       }
     </style>
-    <div class="step-label">Step 1 of 2 · Genre</div>
+    <div class="step-label">Step 1 of 3 · Genre</div>
     <h2>Choose a genre to get started</h2>
     <div class="genre-grid" id="genreGrid"></div>
     <button id="skipBtn">⚡ Let the AI decide</button>
@@ -412,7 +480,7 @@ function _renderStyleStep() {
       }
     </style>
     <button id="backBtn">← Back to genre</button>
-    <div class="step-label">Step 2 of 2 · Image Style</div>
+    <div class="step-label">Step 2 of 3 · Image Style</div>
     <h2>Choose an image generation style</h2>
     <div id="styleList"></div>
     <button id="styleSkipBtn">⚡ No specific style</button>
@@ -445,7 +513,7 @@ function _renderStyleStep() {
         document.querySelectorAll(".style-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         _applyImageStyle(key);
-        setTimeout(() => { oc.window.hide(); }, 300);
+        setTimeout(() => _renderToneStep(), 300);
       };
       grid.appendChild(btn);
     }
@@ -453,7 +521,7 @@ function _renderStyleStep() {
 
   document.getElementById("styleSkipBtn").onclick = () => {
     _applyImageStyle(null);
-    oc.window.hide();
+    _renderToneStep();
   };
 }
 
