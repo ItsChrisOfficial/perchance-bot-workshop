@@ -694,11 +694,33 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     oc.character.roleInstruction = buildRoleInstruction(charName, charDescription, charTraits, charQuirk, worldDesc, isNsfw, genre);
     oc.character.reminderMessage = buildReminderMessage(charTraits, charQuirk, mood, genre);
     oc.character.initialMessages = [];
-    oc.character.avatar.url      = "";
 
-    oc.character.userCharacter.name = userName || "Traveller";
+    // Avatar extensible object — shape/size defaults; url filled async below
+    oc.character.avatar.url   = "";
+    oc.character.avatar.shape = "portrait";
+    oc.character.avatar.size  = 1;
+
+    // User character extensible object — full initialisation before async fill
+    oc.character.userCharacter.name        = userName || "Traveller";
+    oc.character.userCharacter.avatar.url   = "";
+    oc.character.userCharacter.avatar.shape = "circle";
+    oc.character.userCharacter.avatar.size  = 1;
+
+    // Thread extensible objects
+    oc.thread.name         = charName || "Character";
+    oc.thread.customData ??= {};
+
+    // Apply background/music directly on the thread (genre scene sets these via
+    // a scene message too — both approaches are kept so the state is consistent
+    // whether or not the scene message is the most-recent one in the list).
+    const genreData = genre ? GENRES[genre] : null;
+    oc.thread.background = { url: "", filter: genreData?.bgFilter || "" };
+    if (genreData?.music) {
+      oc.thread.music = { url: genreData.music, volume: 0.25 };
+    }
 
     // Store metadata for later use (regen, status command, etc.)
+    // Non-extensible values only — extensible objects are assigned above.
     Object.assign(oc.character.customData, {
       charTraits, charQuirk, worldDesc, mood, imagePrompt,
       charDescription, userDescription, userName, charName, starter,
