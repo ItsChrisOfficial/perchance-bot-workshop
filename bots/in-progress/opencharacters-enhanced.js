@@ -1191,6 +1191,8 @@ oc.thread.on("MessageAdded", async function ({ message }) {
   if (message.author === "user") {
     injectLoreContext();
     await generateDynamicPointers();
+    // Ensure the AI always replies after all custom-code processing completes.
+    message.expectsReply = true;
   }
 
   // ── Post-generation: emotion avatar + memory digest ────────
