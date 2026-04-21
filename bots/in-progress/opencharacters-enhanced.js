@@ -343,6 +343,98 @@ function _applyImageStyle(key) {
 }
 
 /**
+ * Scan free-form character description text and return a compact, comma-separated
+ * string containing only visually-renderable physical trait tokens.
+ *
+ * Strategy:
+ *  1. Split the text on sentence boundaries and commas so each fragment is small.
+ *  2. Keep a fragment only when it contains at least one physical/appearance keyword.
+ *  3. Strip any surviving sub-clauses that are clearly narrative
+ *     ("she is", "he tends to", "known for", "who", "that", "because", etc.).
+ *  4. Return the surviving fragments joined as a comma-separated list.
+ *
+ * This ensures imagePromptTriggers contain only what Stable Diffusion can render
+ * (hair colour, eye colour, body type, clothing, accessories, facial features, etc.)
+ * and no personality summaries, backstory sentences, or relational clauses.
+ *
+ * @param {string} text  - raw description / trait / quirk text from the LLM
+ * @returns {string}     - comma-separated physical trait tokens, or "" if none found
+ */
+function extractPhysicalTraits(text) {
+  if (!text) return "";
+
+  // Physical appearance signal words — a fragment must contain at least one.
+  const PHYSICAL_SIGNALS = [
+    // Body / build
+    "hair", "eye", "eyes", "skin", "face", "lips", "nose", "jaw", "cheek", "brow",
+    "forehead", "neck", "shoulder", "chest", "breast", "waist", "hip", "leg", "arm",
+    "hand", "finger", "body", "build", "figure", "height", "tall", "short", "slim",
+    "slender", "curvy", "muscular", "athletic", "petite", "voluptuous", "toned",
+    "broad", "narrow", "lithe",
+    // Hair descriptors
+    "blonde", "brunette", "redhead", "auburn", "black hair", "white hair", "silver hair",
+    "gray hair", "grey hair", "dark hair", "curly", "wavy", "straight hair", "braided",
+    "braid", "ponytail", "bun", "long hair", "short hair", "shoulder-length",
+    // Eye descriptors
+    "blue eyes", "green eyes", "brown eyes", "hazel eyes", "amber eyes", "gray eyes",
+    "grey eyes", "violet eyes", "golden eyes", "dark eyes",
+    // Skin / complexion
+    "pale", "tan", "tanned", "dark skin", "light skin", "olive skin", "freckles",
+    "freckle", "scar", "tattoo", "piercing", "dimple", "birthmark",
+    // Clothing / accessories
+    "wear", "wearing", "dressed", "outfit", "dress", "skirt", "top", "shirt", "blouse",
+    "jacket", "coat", "suit", "uniform", "gown", "robe", "cloak", "armor", "armour",
+    "boots", "shoes", "gloves", "hat", "hood", "mask", "glasses", "spectacles",
+    "necklace", "earring", "ring", "bracelet", "crown", "tiara", "cape",
+    // Age / general appearance
+    "young", "mature", "aged", "elderly", "youthful", "adult",
+    // Colour as standalone adjective
+    "red ", "blue ", "green ", "purple ", "pink ", "white ", "black ", "gold ", "silver ",
+    "crimson", "azure", "emerald", "violet",
+  ];
+
+  // Narrative / non-visual patterns to strip from surviving fragments.
+  // These are clause starters that introduce personality or backstory.
+  const NARRATIVE_STRIP = [
+    /\b(she|he|they)\s+(is|are|was|were|has|have|had|tends?|likes?|loves?|hates?|enjoys?|believes?|feels?|thinks?|knows?|wants?|seems?|appears?)\b[^,]*/gi,
+    /\b(known\s+for|famous\s+for|regarded\s+as|considered|described\s+as)\b[^,]*/gi,
+    /\b(who|that|which|because|although|despite|however|but|and\s+(?:she|he|they))\b[^,]*/gi,
+    /\b(her|his|their)\s+(personality|nature|attitude|demeanor|character|backstory|history|past|story)\b[^,]*/gi,
+    /\b(often|always|never|usually|sometimes|rarely)\s+(?!wearing|dressed)[^,]*/gi,
+  ];
+
+  // 1. Normalise whitespace and split into candidate fragments on
+  //    sentence boundaries ( . ! ? ) and list commas.
+  const raw = text.replace(/\s+/g, " ").trim();
+  const fragments = raw
+    .split(/[.!?]+|,\s*/)
+    .map(f => f.trim())
+    .filter(Boolean);
+
+  const kept = [];
+
+  for (let frag of fragments) {
+    const lower = frag.toLowerCase();
+
+    // 2. Keep only fragments that contain at least one physical signal word.
+    const isPhysical = PHYSICAL_SIGNALS.some(sig => lower.includes(sig));
+    if (!isPhysical) continue;
+
+    // 3. Strip narrative sub-clauses from the surviving fragment.
+    let clean = frag;
+    for (const pattern of NARRATIVE_STRIP) {
+      clean = clean.replace(pattern, "");
+    }
+    // Collapse any artefact punctuation left behind by the strip.
+    clean = clean.replace(/\s*[,;]\s*$/, "").replace(/^\s*[,;]\s*/, "").replace(/\s+/g, " ").trim();
+
+    if (clean.length > 2) kept.push(clean);
+  }
+
+  return kept.join(", ");
+}
+
+/**
  * Build the imagePromptTriggers string from generated character data.
  *
  * Format (per OpenCharacters spec):
@@ -353,8 +445,9 @@ function _applyImageStyle(key) {
  * writes an image prompt containing a known noun (a character name, a world
  * keyword, etc.) the matching visual description is automatically injected.
  *
- * Full description strings are used without truncation so that every physical
- * trait constant from the initial generation is available to the image model.
+ * extractPhysicalTraits() is applied to all free-form description inputs so
+ * that only visually-renderable tokens reach the image model — no narrative
+ * sentences, personality summaries, or backstory clauses.
  *
  * @param {string}      charName        - AI character name
  * @param {string}      charDescription - AI character full appearance / personality
@@ -370,20 +463,18 @@ function buildImagePromptTriggers(charName, charDescription, charTraits, charQui
   const lines = [];
 
   // ── Character reference ───────────────────────────────────
-  // Use the full description — no truncation — so every physical trait the AI
-  // generated is retained and injected whenever the character name appears in
-  // an image prompt.
+  // extractPhysicalTraits() scans the full description, traits, and quirk text
+  // to produce a compact list of only visually-renderable tokens — no narrative.
   if (charName && charDescription) {
-    const charVisual = charDescription.replace(/\s+/g, " ").trim();
-    const traitParts = [charTraits, charQuirk].filter(Boolean).join(", ");
-    lines.push(`${charName}: ${charVisual}${traitParts ? `, ${traitParts}` : ""}`);
+    const allCharText = [charDescription, charTraits, charQuirk].filter(Boolean).join(". ");
+    const charVisual  = extractPhysicalTraits(allCharText);
+    if (charVisual) lines.push(`${charName}: ${charVisual}`);
   }
 
   // ── User character reference ──────────────────────────────
-  // Same: full description, no truncation.
   if (userName && userDescription) {
-    const userVisual = userDescription.replace(/\s+/g, " ").trim();
-    lines.push(`${userName}: ${userVisual}`);
+    const userVisual = extractPhysicalTraits(userDescription);
+    if (userVisual) lines.push(`${userName}: ${userVisual}`);
   }
 
   // ── World / setting reference ─────────────────────────────
