@@ -364,33 +364,164 @@ function extractPhysicalTraits(text) {
   if (!text) return "";
 
   // Physical appearance signal words — a fragment must contain at least one.
+  // Organised by category so new trait groups are easy to add or audit.
   const PHYSICAL_SIGNALS = [
-    // Body / build
-    "hair", "eye", "eyes", "skin", "face", "lips", "nose", "jaw", "cheek", "brow",
-    "forehead", "neck", "shoulder", "chest", "breast", "waist", "hip", "leg", "arm",
-    "hand", "finger", "body", "build", "figure", "height", "tall", "short", "slim",
-    "slender", "curvy", "muscular", "athletic", "petite", "voluptuous", "toned",
-    "broad", "narrow", "lithe",
-    // Hair descriptors
-    "blonde", "brunette", "redhead", "auburn", "black hair", "white hair", "silver hair",
-    "gray hair", "grey hair", "dark hair", "curly", "wavy", "straight hair", "braided",
-    "braid", "ponytail", "bun", "long hair", "short hair", "shoulder-length",
-    // Eye descriptors
-    "blue eyes", "green eyes", "brown eyes", "hazel eyes", "amber eyes", "gray eyes",
-    "grey eyes", "violet eyes", "golden eyes", "dark eyes",
-    // Skin / complexion
-    "pale", "tan", "tanned", "dark skin", "light skin", "olive skin", "freckles",
-    "freckle", "scar", "tattoo", "piercing", "dimple", "birthmark",
-    // Clothing / accessories
-    "wear", "wearing", "dressed", "outfit", "dress", "skirt", "top", "shirt", "blouse",
-    "jacket", "coat", "suit", "uniform", "gown", "robe", "cloak", "armor", "armour",
-    "boots", "shoes", "gloves", "hat", "hood", "mask", "glasses", "spectacles",
-    "necklace", "earring", "ring", "bracelet", "crown", "tiara", "cape",
-    // Age / general appearance
-    "young", "mature", "aged", "elderly", "youthful", "adult",
-    // Colour as standalone adjective
-    "red ", "blue ", "green ", "purple ", "pink ", "white ", "black ", "gold ", "silver ",
-    "crimson", "azure", "emerald", "violet",
+    // ── Body / build ─────────────────────────────────────────
+    "hair", "eye", "eyes", "skin", "face", "lips", "lip", "nose", "jaw", "chin",
+    "cheek", "cheekbone", "brow", "eyebrow", "forehead", "temple", "neck", "throat",
+    "shoulder", "chest", "breast", "waist", "hip", "thigh", "leg", "calf", "ankle",
+    "arm", "elbow", "wrist", "hand", "finger", "knuckle", "body", "build", "frame",
+    "figure", "silhouette", "physique", "stature", "posture",
+
+    // ── Height ───────────────────────────────────────────────
+    "height", "tall", "short", "petite", "statuesque", "towering", "average height",
+    "medium height", "average-height", "medium-height",
+    // Measurement patterns — matched as substrings so "5'8\"" and "170cm" both hit
+    "ft tall", "feet tall", " cm tall", "cm tall", "'", "\"",
+
+    // ── Weight / body mass ───────────────────────────────────
+    "weight", "weighs", "lbs", " lb ", "pounds", "kg", "kilos", "kilograms",
+    "heavy", "heavy-set", "heavyset", "stocky", "stout", "plump", "chubby",
+    "overweight", "obese", "rotund", "portly", "robust", "solid", "thick",
+    "lightweight", "featherweight", "underweight", "gaunt", "scrawny", "wiry",
+    "lean", "lanky", "gangly",
+
+    // ── Bust / chest ─────────────────────────────────────────
+    "bust", "busty", "buxom", "large bust", "full bust", "flat chest", "flat-chested",
+    "perky", "ample bosom", "bosom", "cleavage",
+    // Cup sizes (a–g inclusive)
+    "a-cup", "b-cup", "c-cup", "d-cup", "dd-cup", "ddd-cup", "e-cup", "f-cup", "g-cup",
+
+    // ── General body descriptors ─────────────────────────────
+    "slim", "slender", "svelte", "lithe", "willowy", "lean", "trim",
+    "curvy", "curvaceous", "hourglass", "full-figured", "plus-size", "plus size",
+    "muscular", "beefy", "buff", "ripped", "chiseled", "chiselled", "defined",
+    "athletic", "toned", "fit", "well-built",
+    "broad", "narrow", "petite", "voluptuous", "shapely",
+
+    // ── Face shape ───────────────────────────────────────────
+    "face shape", "oval face", "round face", "square face", "heart-shaped face",
+    "heart shaped face", "diamond face", "oblong face", "rectangular face",
+    "triangular face", "pear-shaped face", "oval-shaped", "round-shaped",
+    "square jaw", "soft jaw", "strong jaw", "defined jaw", "pointed chin",
+    "sharp chin", "rounded chin", "wide forehead", "narrow forehead",
+    "high cheekbones", "prominent cheekbones", "hollow cheeks", "chubby cheeks",
+    "apple cheeks",
+
+    // ── Facial markers ───────────────────────────────────────
+    "mole", "beauty mark", "freckle", "freckles", "freckled",
+    "scar", "scarred", "birthmark", "dimple", "dimples",
+    "stubble", "beard", "goatee", "mustache", "moustache", "clean-shaven",
+    "five o'clock shadow", "shadow",
+    "wrinkle", "wrinkles", "crow's feet", "laugh lines", "fine lines",
+    "acne", "blemish", "rosy cheeks",
+
+    // ── Eye colour ───────────────────────────────────────────
+    "blue eyes", "green eyes", "brown eyes", "hazel eyes", "amber eyes",
+    "gray eyes", "grey eyes", "violet eyes", "golden eyes", "dark eyes",
+    "black eyes", "red eyes", "pink eyes", "heterochromia",
+    "sapphire eyes", "emerald eyes", "teal eyes", "silver eyes",
+    "light eyes", "bright eyes", "piercing eyes", "warm eyes",
+
+    // ── Eye shape ────────────────────────────────────────────
+    "almond eyes", "almond-shaped eyes", "hooded eyes", "wide-set eyes",
+    "close-set eyes", "monolid", "upturned eyes", "downturned eyes",
+    "deep-set eyes", "prominent eyes", "wide eyes", "narrow eyes",
+    "doe eyes", "cat eyes",
+
+    // ── Hair colour ──────────────────────────────────────────
+    "blonde", "brunette", "redhead", "auburn",
+    "black hair", "white hair", "silver hair", "platinum hair",
+    "gray hair", "grey hair", "dark hair", "light hair",
+    "chestnut hair", "copper hair", "strawberry blonde", "dirty blonde",
+    "honey blonde", "ash blonde", "jet black", "raven hair",
+    "ombre hair", "highlighted hair", "balayage", "dyed hair",
+    "multi-colored hair", "multicolored hair", "rainbow hair",
+    "bleached hair", "frosted tips",
+
+    // ── Hairstyle ────────────────────────────────────────────
+    "curly", "wavy", "straight hair", "kinky hair", "coily",
+    "braided", "braid", "braids", "cornrows", "dreadlocks", "locs",
+    "ponytail", "high ponytail", "low ponytail", "pigtails", "twin tails",
+    "bun", "top knot", "chignon", "updo",
+    "long hair", "short hair", "medium hair", "mid-length hair",
+    "shoulder-length", "chin-length", "neck-length",
+    "pixie cut", "pixie", "bob cut", "bob", "lob", "inverted bob",
+    "undercut", "buzzcut", "buzz cut", "shaved head", "shaved sides",
+    "mohawk", "fauxhawk", "faux hawk", "pompadour",
+    "afro", "natural hair", "bangs", "fringe", "side-swept bangs",
+    "wispy bangs", "curtain bangs", "blunt bangs",
+    "layers", "layered hair", "textured hair", "voluminous hair",
+    "sleek hair", "tousled hair", "messy hair",
+
+    // ── Skin / complexion ────────────────────────────────────
+    "pale", "pallid", "porcelain skin", "fair skin",
+    "tan", "tanned", "bronzed", "sun-kissed",
+    "dark skin", "brown skin", "ebony skin", "light skin", "medium skin",
+    "olive skin", "warm complexion", "cool complexion",
+    "complexion", "skin tone",
+
+    // ── Wardrobe / fashion style ─────────────────────────────
+    "wear", "wearing", "dressed", "outfit", "attire", "wardrobe",
+    "fashion", "style", "look", "aesthetic",
+    // Garments
+    "dress", "skirt", "mini skirt", "maxi skirt", "wrap skirt",
+    "top", "crop top", "tank top", "halter top",
+    "shirt", "t-shirt", "button-up", "button-down", "flannel",
+    "blouse", "tunic",
+    "jacket", "blazer", "bomber jacket", "leather jacket", "denim jacket",
+    "coat", "trench coat", "overcoat", "pea coat",
+    "suit", "tuxedo", "pantsuit",
+    "uniform", "scrubs",
+    "gown", "ball gown", "evening gown", "slip dress",
+    "robe", "kimono", "yukata", "hanfu", "qipao", "cheongsam", "sari",
+    "cloak", "cape", "poncho",
+    "armor", "armour", "chainmail", "plate armor",
+    "jeans", "trousers", "pants", "leggings", "shorts",
+    "hoodie", "sweatshirt", "cardigan", "sweater",
+    // Footwear
+    "boots", "ankle boots", "knee-high boots", "heels", "stilettos",
+    "sneakers", "shoes", "flats", "sandals", "loafers", "oxfords",
+    // Accessories
+    "gloves", "fingerless gloves",
+    "hat", "cap", "beanie", "beret", "fedora", "top hat",
+    "hood", "veil",
+    "mask", "half-mask",
+    "glasses", "spectacles", "sunglasses", "reading glasses", "monocle",
+    "necklace", "choker", "pendant", "locket",
+    "earring", "earrings", "studs", "hoops", "dangling earrings",
+    "ring", "rings", "bracelet", "bangle", "cuff",
+    "crown", "tiara", "diadem", "circlet",
+    "scarf", "wrap", "shawl",
+    "belt", "corset", "waist cincher",
+    "bag", "purse", "clutch", "backpack",
+    // Fashion style keywords
+    "casual", "formal", "semi-formal", "smart casual", "business casual",
+    "gothic", "goth", "dark", "grunge", "punk", "cyberpunk", "steampunk",
+    "bohemian", "boho", "hippie",
+    "streetwear", "street style", "urban",
+    "preppy", "classic", "conservative",
+    "vintage", "retro", "cottagecore", "fairycore", "darkacademia",
+    "dark academia", "light academia", "cottagecore",
+    "sporty", "sporty-chic", "athleisure",
+    "elegant", "sophisticated", "minimalist", "maximalist",
+    "lolita", "cosplay", "anime",
+
+    // ── Age / general appearance ─────────────────────────────
+    "young", "mature", "aged", "elderly", "youthful", "adult", "teenage",
+    "middle-aged", "middle aged",
+
+    // ── Colour as standalone appearance adjective ─────────────
+    "red ", "blue ", "green ", "purple ", "pink ", "white ", "black ",
+    "gold ", "silver ", "brown ", "orange ", "yellow ",
+    "crimson", "azure", "emerald", "violet", "indigo",
+    "magenta", "teal", "turquoise", "ivory", "beige", "nude",
+
+    // ── Tattoos / piercings / body modifications ──────────────
+    "tattoo", "tattoos", "tattooed", "ink", "inked",
+    "piercing", "piercings", "pierced",
+    "nose ring", "lip ring", "septum", "tongue ring",
+    "belly ring", "navel piercing",
   ];
 
   // Narrative / non-visual patterns to strip from surviving fragments.
