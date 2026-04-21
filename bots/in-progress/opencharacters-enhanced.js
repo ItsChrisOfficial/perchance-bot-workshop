@@ -42,112 +42,148 @@ const GENRES = {
 //  Categories (3 styles each = 15 total):
 //    photorealistic | anime | painterly | filmish | ultra-stylized
 
+// ── SHARED IMAGE QUALITY CONSTANTS ───────────────────────────
+//  Applied to every oc.textToImage() call regardless of chosen style.
+//
+//  BASE_QUALITY_POSITIVE is injected by styledImagePrompt() so that all
+//  image output — whether a style is selected or not — receives the same
+//  baseline guard against uncanny faces, misaligned eyes, and bad anatomy.
+//
+//  NEG_PROMPT is used as the negativePrompt argument on every call site.
+
+const BASE_QUALITY_POSITIVE =
+  "best quality, masterpiece, ultra-detailed, sharp focus, " +
+  "correct anatomy, natural body proportions, " +
+  "symmetric eyes, straight-looking eyes, detailed eyes, focused eyes, " +
+  "beautiful face, perfect facial features, professional";
+
+const NEG_PROMPT =
+  // Overall quality
+  "worst quality, low quality, normal quality, bad quality, amateur, amateurish, " +
+  // Focus / sharpness
+  "blurry, out of focus, soft focus, fuzzy, grainy, noisy, pixelated, jpeg artifacts, " +
+  // Anatomy
+  "deformed, malformed, mutated, mutation, disfigured, distorted, warped, " +
+  "bad anatomy, bad proportions, bad body, wrong anatomy, incorrect anatomy, " +
+  "poorly drawn, poorly drawn face, poorly drawn hands, poorly drawn feet, " +
+  "extra fingers, missing fingers, six fingers, fused fingers, " +
+  "extra limbs, missing limbs, extra arms, extra legs, floating limbs, " +
+  // Face / eyes — the primary uncanny culprits
+  "cross-eyed, lazy eye, wall-eyed, asymmetric eyes, misaligned eyes, uneven eyes, " +
+  "too many eyes, one eye, googly eyes, vacant eyes, dead eyes, empty eyes, " +
+  "ugly face, bad face, weird face, distorted face, melting face, " +
+  // Skin / texture
+  "uncanny valley, plastic skin, doll skin, mannequin, wax figure, fake skin, " +
+  "oversaturated skin, orange skin, grey skin, unnatural skin tone, " +
+  // Artefacts
+  "watermark, text, signature, logo, username, artist name, copyright, caption";
+
 const IMAGE_STYLES = {
 
   // ── Photorealistic ──────────────────────────────────────────
   photo_hyper: {
     label:    "📷 Hyperrealistic",
     category: "📷 Photorealistic",
-    prepend:  "hyperrealistic photography, 8K DSLR, ultra-sharp focus, photorealistic,",
-    append:   ", RAW photo, professional lighting, subtle bokeh, high-fidelity detail",
+    prepend:  "hyperrealistic photography, 8K DSLR, RAW photo, photorealistic, best quality,",
+    append:   ", professional studio lighting, subtle bokeh, high-fidelity skin detail, natural skin texture, true-to-life color accuracy",
   },
   photo_cinematic: {
     label:    "🎞️ Cinematic Photo",
     category: "📷 Photorealistic",
-    prepend:  "cinematic photograph, movie still, 35mm film, anamorphic lens,",
-    append:   ", film grain, shallow depth of field, cinematic color grade, golden hour",
+    prepend:  "cinematic photograph, movie still, 35mm film, anamorphic lens, best quality,",
+    append:   ", shallow depth of field, cinematic color grade, golden hour light, natural skin tones, film grain",
   },
   photo_documentary: {
     label:    "📸 Documentary",
     category: "📷 Photorealistic",
-    prepend:  "documentary photography, candid shot, natural available lighting,",
-    append:   ", authentic atmosphere, journalistic style, gritty realism",
+    prepend:  "documentary photography, candid shot, natural available lighting, best quality,",
+    append:   ", authentic atmosphere, journalistic style, natural proportions, gritty realism, sharp focus",
   },
 
   // ── Anime / Illustrated ─────────────────────────────────────
   anime_modern: {
     label:    "🌸 Modern Anime",
     category: "🌸 Anime / Illustrated",
-    prepend:  "modern anime art, cel-shaded, studio-quality anime illustration,",
-    append:   ", vibrant colors, expressive eyes, clean linework, detailed anime background",
+    prepend:  "modern anime art, cel-shaded, studio-quality anime illustration, best quality,",
+    append:   ", vibrant colors, symmetric expressive eyes, clean linework, correct anime proportions, detailed anime face",
   },
   anime_manga: {
     label:    "📖 Manga",
     category: "🌸 Anime / Illustrated",
-    prepend:  "manga art style, black and white ink illustration, screen tones,",
-    append:   ", dynamic linework, hatching shadows, manga panel composition",
+    prepend:  "manga art style, black and white ink illustration, screen tones, best quality,",
+    append:   ", dynamic linework, hatching shadows, correct proportions, symmetric eyes, manga panel composition",
   },
   anime_webtoon: {
     label:    "🎨 Webtoon / Comic",
     category: "🌸 Anime / Illustrated",
-    prepend:  "Korean webtoon art, manhwa illustration, digital comic style,",
-    append:   ", flat vibrant colors, clean outlines, soft shading, webtoon aesthetic",
+    prepend:  "Korean webtoon art, manhwa illustration, digital comic style, best quality,",
+    append:   ", flat vibrant colors, clean outlines, soft shading, correct proportions, symmetric eyes, webtoon aesthetic",
   },
 
   // ── Painterly ───────────────────────────────────────────────
   paint_oil: {
     label:    "🖼️ Oil Painting",
     category: "🖌️ Painterly",
-    prepend:  "classical oil painting, old masters technique, rich impasto brushwork,",
-    append:   ", museum-quality fine art, deep rich colors, painted canvas texture",
+    prepend:  "classical oil painting, old masters technique, rich impasto brushwork, best quality,",
+    append:   ", museum-quality fine art, deep rich colors, painted canvas texture, masterful composition, correct proportions",
   },
   paint_watercolor: {
     label:    "💧 Watercolor",
     category: "🖌️ Painterly",
-    prepend:  "watercolor illustration, delicate wet-on-wet washes, soft edges,",
-    append:   ", flowing pigments, cold-press paper texture, luminous watercolor painting",
+    prepend:  "watercolor illustration, delicate wet-on-wet washes, soft edges, best quality,",
+    append:   ", flowing pigments, cold-press paper texture, luminous watercolor painting, correct proportions, graceful linework",
   },
   paint_impressionist: {
     label:    "🌊 Impressionist",
     category: "🖌️ Painterly",
-    prepend:  "impressionist painting, expressive broken brushstrokes, plein-air feel,",
-    append:   ", dappled light, post-impressionist color palette, painterly atmosphere",
+    prepend:  "impressionist painting, expressive broken brushstrokes, plein-air feel, best quality,",
+    append:   ", dappled light, post-impressionist color palette, painterly atmosphere, masterful composition, natural proportions",
   },
 
   // ── Filmish ─────────────────────────────────────────────────
   film_noir: {
     label:    "🎬 Film Noir",
     category: "🎬 Filmish",
-    prepend:  "film noir, dramatic black and white photography, hard chiaroscuro shadows,",
-    append:   ", venetian blind light streaks, 1940s aesthetic, smoky moody atmosphere",
+    prepend:  "film noir, dramatic black and white photography, hard chiaroscuro shadows, best quality,",
+    append:   ", venetian blind light streaks, 1940s aesthetic, smoky moody atmosphere, sharp focus, correct anatomy",
   },
   film_retro: {
     label:    "📼 Retro 80s",
     category: "🎬 Filmish",
-    prepend:  "retro 1980s film aesthetic, analog VHS warmth, vintage cinema look,",
-    append:   ", light leak, faded highlights, warm teal-orange grade, 80s movie nostalgia",
+    prepend:  "retro 1980s film aesthetic, analog VHS warmth, vintage cinema look, best quality,",
+    append:   ", light leak, faded highlights, warm teal-orange grade, 80s movie nostalgia, correct proportions",
   },
   film_wes: {
     label:    "🟡 Wes Anderson",
     category: "🎬 Filmish",
-    prepend:  "Wes Anderson film style, perfectly symmetrical composition, muted pastel palette,",
-    append:   ", flat 2-point perspective, whimsical storybook aesthetic, quirky color grade",
+    prepend:  "Wes Anderson film style, perfectly symmetrical composition, muted pastel palette, best quality,",
+    append:   ", flat 2-point perspective, whimsical storybook aesthetic, quirky color grade, correct proportions, natural face",
   },
 
   // ── Ultra-Stylized ───────────────────────────────────────────
   stylized_cyberpunk: {
     label:    "🔮 Neon Cyberpunk",
     category: "✨ Ultra-Stylized",
-    prepend:  "cyberpunk concept art, neon-drenched futuristic cityscape, electric glow,",
-    append:   ", glowing holographic elements, rain-slicked streets, ultra-detailed sci-fi dystopia",
+    prepend:  "cyberpunk concept art, neon-drenched futuristic cityscape, electric glow, best quality,",
+    append:   ", glowing holographic elements, rain-slicked streets, ultra-detailed sci-fi dystopia, correct anatomy, sharp focus",
   },
   stylized_darkfantasy: {
     label:    "🐉 Dark Fantasy Art",
     category: "✨ Ultra-Stylized",
-    prepend:  "dark fantasy concept art, epic dramatic illustration, ominous atmosphere,",
-    append:   ", intricate magical details, brooding color palette, fantasy art masterpiece",
+    prepend:  "dark fantasy concept art, epic dramatic illustration, ominous atmosphere, best quality,",
+    append:   ", intricate magical details, brooding color palette, fantasy art masterpiece, correct anatomy, detailed expressive face",
   },
   stylized_vaporwave: {
     label:    "🌈 Vaporwave",
     category: "✨ Ultra-Stylized",
-    prepend:  "vaporwave aesthetic, synthwave art, lo-fi retro-futuristic,",
-    append:   ", pastel purple magenta teal gradient, glitch accents, 90s nostalgia, dreamy surreal",
+    prepend:  "vaporwave aesthetic, synthwave art, lo-fi retro-futuristic, best quality,",
+    append:   ", pastel purple magenta teal gradient, glitch accents, 90s nostalgia, dreamy surreal, correct proportions",
   },
   nsfw_stylized: {
     label:    "🔥 Glamour Fantasy Art",
     category: "✨ Ultra-Stylized",
-    prepend:  "glamour fantasy concept art, sensual atmospheric illustration, high-detail digital painting, seductive mood,",
-    append:   ", dramatic rim lighting, rich jewel-tone palette, cinematic adult fantasy art, masterpiece quality",
+    prepend:  "glamour fantasy concept art, sensual atmospheric illustration, high-detail digital painting, seductive mood, best quality,",
+    append:   ", dramatic rim lighting, rich jewel-tone palette, cinematic adult fantasy art, masterpiece quality, correct anatomy, perfect face",
     nsfw:     true,
   },
 
@@ -155,8 +191,8 @@ const IMAGE_STYLES = {
   nsfw_photo: {
     label:    "🛋️ Boudoir Photography",
     category: "📷 Photorealistic",
-    prepend:  "professional boudoir photography, intimate portrait session, 85mm prime lens, studio softbox lighting,",
-    append:   ", elegant sensual composition, silky skin texture, warm ambient light, high-resolution intimate photography",
+    prepend:  "professional boudoir photography, intimate portrait session, 85mm prime lens, studio softbox lighting, best quality,",
+    append:   ", elegant sensual composition, natural skin texture, warm ambient light, high-resolution intimate photography, correct anatomy, symmetric eyes",
     nsfw:     true,
   },
 
@@ -164,8 +200,8 @@ const IMAGE_STYLES = {
   nsfw_illustrated: {
     label:    "💋 Sensual Illustration",
     category: "🌸 Anime / Illustrated",
-    prepend:  "sensual digital illustration, elegant pinup art, Artgerm-inspired figure study,",
-    append:   ", soft intimate lighting, detailed expressive face, beautiful figure, high-quality digital painting",
+    prepend:  "sensual digital illustration, elegant pinup art, Artgerm-inspired figure study, best quality,",
+    append:   ", soft intimate lighting, detailed expressive face, symmetric eyes, correct anatomy, beautiful figure, high-quality digital painting",
     nsfw:     true,
   },
 
@@ -173,8 +209,8 @@ const IMAGE_STYLES = {
   nsfw_3d: {
     label:    "🧊 Photorealistic 3D",
     category: "🧊 3D Render",
-    prepend:  "photorealistic 3D render, Unreal Engine 5 quality, octane render, physically-based rendering,",
-    append:   ", subsurface scattering skin, global illumination, ultra-detailed textures, cinematic 3D character render",
+    prepend:  "photorealistic 3D render, Unreal Engine 5 quality, octane render, physically-based rendering, best quality,",
+    append:   ", subsurface scattering skin, global illumination, ultra-detailed textures, cinematic 3D character render, correct anatomy, perfect face, symmetric eyes",
     nsfw:     true,
   },
 };
