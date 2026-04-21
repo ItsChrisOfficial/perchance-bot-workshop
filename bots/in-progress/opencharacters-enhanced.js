@@ -525,6 +525,103 @@ function _renderStyleStep() {
   };
 }
 
+function _renderToneStep() {
+  document.body.innerHTML = `
+    <style>
+      h2  { margin:0 0 4px; font-size:0.95rem; color:#aaa; font-weight:400; }
+      .step-label { font-size:0.7rem; color:#666; margin-bottom:8px; letter-spacing:.04em; text-transform:uppercase; }
+      .section-label {
+        font-size:0.72rem; color:#888; text-transform:uppercase;
+        letter-spacing:.06em; margin:10px 0 4px; padding-left:2px;
+      }
+      .tone-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:2px; }
+      .tone-btn {
+        padding:8px 6px; border-radius:8px; border:1px solid #333;
+        background:#16213e; color:#eee; cursor:pointer; font-size:0.82rem;
+        text-align:center; line-height:1.35;
+        transition:background .15s, transform .1s;
+      }
+      .tone-btn:hover   { background:#0f3460; transform:scale(1.03); }
+      .tone-btn.selected { background:#1a4a3a; border-color:#2ecc71; }
+      .tone-btn.nsfw-undertone { border-color:#7a4a00; }
+      .tone-btn.nsfw-btn  { border-color:#5a1a1a; }
+      #toneSkipBtn {
+        width:100%; margin-top:10px; padding:6px; border-radius:8px; border:none;
+        background:#333; color:#bbb; cursor:pointer; font-size:0.8rem;
+      }
+      #toneBackBtn {
+        width:100%; margin-bottom:8px; padding:5px; border-radius:8px; border:1px solid #333;
+        background:transparent; color:#777; cursor:pointer; font-size:0.75rem;
+      }
+    </style>
+    <button id="toneBackBtn">← Back to image style</button>
+    <div class="step-label">Step 3 of 3 · Scenario Tone</div>
+    <h2>Choose the tone of the opening scenario</h2>
+    <div id="toneList"></div>
+    <button id="toneSkipBtn">⚡ No preference</button>
+  `;
+
+  document.getElementById("toneBackBtn").onclick = _renderStyleStep;
+
+  const list = document.getElementById("toneList");
+
+  // Group tones by SFW / undertones / NSFW for clarity
+  const groups = [
+    {
+      label: "✅ SFW",
+      keys: Object.entries(SCENARIO_TONES)
+        .filter(([, v]) => !v.nsfw && !v.undertones)
+        .map(([k]) => k),
+    },
+    {
+      label: "🌶️ SFW — with suggestive undertones",
+      keys: Object.entries(SCENARIO_TONES)
+        .filter(([, v]) => v.undertones)
+        .map(([k]) => k),
+    },
+    {
+      label: "🔞 NSFW",
+      keys: Object.entries(SCENARIO_TONES)
+        .filter(([, v]) => v.nsfw)
+        .map(([k]) => k),
+    },
+  ];
+
+  for (const group of groups) {
+    if (!group.keys.length) continue;
+
+    const header = document.createElement("div");
+    header.className = "section-label";
+    header.textContent = group.label;
+    list.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "tone-grid";
+    list.appendChild(grid);
+
+    for (const key of group.keys) {
+      const val = SCENARIO_TONES[key];
+      const btn = document.createElement("button");
+      btn.className = "tone-btn" +
+        (val.nsfw ? " nsfw-btn" : val.undertones ? " nsfw-undertone" : "");
+      btn.textContent = val.label;
+      btn.dataset.tone = key;
+      btn.onclick = () => {
+        document.querySelectorAll(".tone-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        oc.character.customData.selectedScenarioTone = key;
+        setTimeout(() => oc.window.hide(), 300);
+      };
+      grid.appendChild(btn);
+    }
+  }
+
+  document.getElementById("toneSkipBtn").onclick = () => {
+    oc.character.customData.selectedScenarioTone = null;
+    oc.window.hide();
+  };
+}
+
 // ── KINKS LIST LOADER ─────────────────────────────────────────
 
 async function fetchKinksList() {
@@ -794,14 +891,19 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       oc.character.customData.userInstruction = userInstruction;
     }
 
-    const genre    = oc.character.customData.selectedGenre || null;
-    const isNsfw   = genre ? !!GENRES[genre].nsfw : false;
+    const genre         = oc.character.customData.selectedGenre || null;
+    const selectedTone  = oc.character.customData.selectedScenarioTone || null;
+    const isNsfw        = (genre ? !!GENRES[genre].nsfw : false) ||
+                          (selectedTone ? !!SCENARIO_TONES[selectedTone]?.nsfw : false);
     const genreHint = genre
       ? genre === "spicy"
         ? `The roleplay is explicitly adult/erotic (🌶️ Spicy). Kink-focused, NSFW, 18+, kink-positive. Create a sensually-charged scenario with in-depth, descriptive writing. Characters should have clear desires, tensions, and physical chemistry. Explicit content is fully permitted and expected.`
         : isNsfw
           ? `The roleplay is explicitly adult/erotic (🔞 Smut). You must create a sensual, sexually-charged scenario and characters. Explicit adult content is fully permitted and expected. Do not censor or fade to black.`
           : `The roleplay should have a "${GENRES[genre].label}" genre/tone.`
+      : "";
+    const toneHint = selectedTone && SCENARIO_TONES[selectedTone]
+      ? `SCENARIO TONE: ${SCENARIO_TONES[selectedTone].hint}`
       : "";
 
     if (isRegen) {
@@ -824,6 +926,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       `The user wants to engage in a fun, creative roleplay. Your task is to CREATE a character for yourself and a scenario, based on the "USER INSTRUCTION" below.`,
       `If the user's instructions don't specify a character for themselves, make one up that fits the scenario.`,
       genreHint,
+      toneHint,
       ``,
       `USER INSTRUCTION: ${userInstruction}`,
       ``,
@@ -923,8 +1026,13 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     // ── Generate avatars in parallel ─────────────────────────
     //  Avatar prompts are also passed through styledImagePrompt() so they
     //  inherit the chosen image style (prepend/append).
-    const avatarQuality = "digital art, highly detailed, masterpiece, pfp, avatar portrait, expressive";
-    const negPrompt     = "worst quality, blurry, low resolution, distorted, watermark";
+    //  When NSFW mode is active (via genre or tone) the quality descriptor
+    //  is broadened to allow adult/sensual portrait content; otherwise the
+    //  "pfp / avatar portrait" framing keeps images clean and headshot-like.
+    const avatarQuality = isNsfw
+      ? "highly detailed, masterpiece, character portrait, expressive, sensual, adult content"
+      : "digital art, highly detailed, masterpiece, pfp, avatar portrait, expressive";
+    const negPrompt = "worst quality, blurry, low resolution, distorted, watermark";
 
     const charAvatarPromise = oc.textToImage({
       prompt: styledImagePrompt(
@@ -1100,6 +1208,8 @@ async function handleSlashCommand(message) {
       const d = oc.character.customData;
       const styleKey   = d.selectedImageStyle;
       const styleLabel = styleKey ? `${IMAGE_STYLES[styleKey]?.label} *(${IMAGE_STYLES[styleKey]?.category})*` : "None";
+      const toneKey    = d.selectedScenarioTone;
+      const toneLabel  = toneKey ? SCENARIO_TONES[toneKey]?.label : null;
       oc.thread.messages.push({
         author:       "system",
         hiddenFrom:   ["ai"],
@@ -1113,6 +1223,7 @@ async function handleSlashCommand(message) {
           `- 👤 User character: **${oc.character.userCharacter.name || "You"}**`,
           d.selectedGenre    ? `- 🎬 Genre: ${GENRES[d.selectedGenre]?.label}` : "",
           `- 🎨 Image Style: ${styleLabel}`,
+          toneLabel          ? `- 🎙️ Scenario Tone: ${toneLabel}` : "",
         ].filter(Boolean).join("\n"),
         expectsReply: false,
       });
