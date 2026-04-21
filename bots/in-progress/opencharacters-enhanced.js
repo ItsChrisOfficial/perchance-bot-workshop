@@ -230,7 +230,7 @@ const STYLE_CATEGORIES = [
 //  The selected tone's `hint` string is injected into the character
 //  generation instruction to shape the opening scenario's atmosphere.
 //
-//  Distribution: 5 SFW · 2 SFW-with-undertones · 3 NSFW
+//  Distribution: 5 SFW · 2 SFW-with-undertones · 4 NSFW
 
 const SCENARIO_TONES = {
 
@@ -275,7 +275,12 @@ const SCENARIO_TONES = {
     undertones: true,
   },
 
-  // ── NSFW (3) ─────────────────────────────────────────────────
+  // ── NSFW (4) ─────────────────────────────────────────────────
+  slow_burn: {
+    label: "🕯️ Slow Burn",
+    hint:  "The starting scenario begins as fully SFW — focus on character connection, emotional tension, and growing intimacy. Do NOT introduce explicit content at the start. Let attraction and desire build naturally through conversation and meaningful interaction. Explicit adult content is unlocked and expected to emerge gradually as the relationship deepens. 18+ only.",
+    nsfw:  true,
+  },
   steamy: {
     label: "🔥 Steamy Encounters",
     hint:  "The starting scenario is explicitly adult and sensual — build richly toward intimate encounters using layered sensory detail. Explicit content is expected. 18+ only.",
