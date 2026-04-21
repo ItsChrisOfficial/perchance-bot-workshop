@@ -522,6 +522,66 @@ function extractPhysicalTraits(text) {
     "piercing", "piercings", "pierced",
     "nose ring", "lip ring", "septum", "tongue ring",
     "belly ring", "navel piercing",
+
+    // ── NSFW — explicit nudity / exposure state ───────────────
+    "nude", "naked", "topless", "bottomless", "bare", "exposed",
+    "undressed", "unclothed", "undraped", "disrobed",
+    "fully nude", "completely naked", "in the nude",
+    "uncovered", "revealing",
+
+    // ── NSFW — intimate / lingerie clothing ───────────────────
+    "lingerie", "bra", "panties", "underwear", "thong", "g-string",
+    "bikini", "swimsuit", "swimwear", "one-piece", "two-piece",
+    "stockings", "thigh-highs", "fishnet stockings", "fishnet",
+    "garter", "garter belt", "garter straps",
+    "corset", "bustier", "bodice",
+    "negligee", "nightgown", "nightie", "babydoll",
+    "pasties", "nipple covers",
+    "crotchless", "see-through", "sheer", "mesh",
+    "latex", "leather outfit", "pvc",
+    "bodysuit", "teddy",
+
+    // ── NSFW — breast detail descriptors ─────────────────────
+    "nipple", "nipples", "areola", "areolae",
+    "perky nipples", "hard nipples", "erect nipples",
+    "large nipples", "small nipples", "puffy nipples",
+    "dark areola", "pink areola",
+    "sagging", "perky breasts", "heavy breasts", "firm breasts",
+    "teardrop breasts", "round breasts", "natural breasts", "fake breasts",
+    "implants", "breast implants",
+
+    // ── NSFW — genitalia / intimate anatomy ───────────────────
+    "vagina", "vulva", "labia", "clitoris", "clit",
+    "pussy", "sex", "groin", "pubic",
+    "penis", "cock", "shaft", "glans", "foreskin", "uncircumcised", "circumcised",
+    "balls", "testicles", "scrotum",
+    "buttocks", "butt", "ass", "rear", "bottom", "backside",
+    "bubble butt", "big butt", "round butt", "perky butt", "flat butt",
+    "anus", "anal",
+    "thighs", "inner thighs", "crotch",
+
+    // ── NSFW — body hair (intimate) ───────────────────────────
+    "pubic hair", "bush", "landing strip", "brazillian wax",
+    "shaved pubic", "trimmed pubic", "hairy",
+    "armpit hair", "body hair",
+    "chest hair", "leg hair",
+
+    // ── NSFW — arousal / physical state ──────────────────────
+    "aroused", "turned on", "flushed", "blushing",
+    "wet", "glistening", "slick", "slippery",
+    "swollen", "engorged", "erect", "hard", "stiff",
+    "throbbing", "pulsing",
+    "breathless", "panting",
+    "cum", "semen", "creampie", "dripping",
+
+    // ── NSFW — body proportions / adult build descriptors ─────
+    "thick thighs", "thunder thighs", "meaty thighs",
+    "wide hips", "childbearing hips", "narrow hips",
+    "big ass", "fat ass", "huge ass", "jiggly",
+    "huge breasts", "massive breasts", "giant breasts", "small breasts",
+    "flat chest", "nearly flat", "mosquito bites",
+    "toned abs", "six-pack", "defined abs", "soft belly", "chubby belly",
+    "innie", "outie", "belly button",
   ];
 
   // Narrative / non-visual patterns to strip from surviving fragments.
