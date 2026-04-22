@@ -1284,18 +1284,47 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       `IMAGE PROMPT: <a concise Stable Diffusion scene prompt for a background image that fits the scenario>`,
     ].join("\n");
 
-    const response = await oc.generateText({
-      instruction: instructionLines,
-      startWith: `NAME:`,
-      stopSequences: ["IMAGE PROMPT:"],
-    });
+    // ── Multi-pass generation (up to 4 AI calls) ──────────────────────────────
+    // The Perchance model has an 800-token output limit per call.  A full
+    // character sheet often exceeds that.  When a call is cut short the loop
+    // detects the truncation and issues a continuation call, re-presenting all
+    // accumulated text as `startWith` so the AI picks up exactly where it left
+    // off without repeating already-written fields.
+    const MAX_GEN_PASSES = 4;
+    // MOOD is the last required field before the stop-sequence "IMAGE PROMPT:"
+    // — its presence means the sheet is complete.
+    const COMPLETION_SENTINEL = "MOOD:";
 
-    // Accept partial responses too
-    if (response.stopReason === "error" && !response.text.includes("DESCRIPTION:")) {
+    let rawAccumulated = "";
+    let lastStopReason = "";
+
+    for (let pass = 1; pass <= MAX_GEN_PASSES; pass++) {
+      const response = await oc.generateText({
+        instruction: instructionLines,
+        startWith:   "NAME:" + rawAccumulated,
+        stopSequences: ["IMAGE PROMPT:"],
+      });
+
+      rawAccumulated += response.text;
+      lastStopReason  = response.stopReason;
+
+      // Hard error — abort immediately.
+      if (lastStopReason === "error") break;
+      // Natural completion or stop-sequence hit — done.
+      if (lastStopReason === "stop" || lastStopReason === "endTurn") break;
+      // All required fields present — done regardless of stopReason.
+      if (rawAccumulated.includes(COMPLETION_SENTINEL)) break;
+      // Otherwise the output was truncated by the token limit; loop for
+      // another pass to continue filling remaining fields.
+    }
+
+    // Accept partial responses (e.g. only NAME + DESCRIPTION present) but
+    // require at minimum DESCRIPTION so the character is usable.
+    if (lastStopReason === "error" && !rawAccumulated.includes("DESCRIPTION:")) {
       throw new Error("Generation failed — no usable content returned.");
     }
 
-    const raw   = response.text;
+    const raw   = rawAccumulated;
     const lines = raw.split(/\n+/).map(l => l.trim());
 
     const pick = (prefix) =>
