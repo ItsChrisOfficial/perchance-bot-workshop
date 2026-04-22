@@ -2035,9 +2035,11 @@ async function resizeDataURLWidth(dataURL, newWidth) {
 // ── HUMANIZATION / ANTI-TEMPLATE POST-TRANSFORM HANDLER ──────
 //
 //  Runs ONLY after an AI message has been added to the thread.
-//  Performs structural analysis of recent messages, rewrites the last
-//  AI message for natural variation, and conditionally updates the
-//  editable portion of reminderMessage to reflect the latest state.
+//  Performs deep structural and rhetorical-cadence analysis of recent
+//  messages by the same character, detects "same skeleton / different
+//  wording" repetition patterns, rewrites the last AI message for
+//  natural variation, and conditionally updates the editable portion of
+//  reminderMessage to reflect the latest state.
 //  All analysis is purely heuristic — no canned phrase banks or
 //  template libraries are used.
 //
@@ -2077,22 +2079,117 @@ oc.thread.on("MessageAdded", async function () {
       .filter(Boolean);
   }
 
+  // Split text into rough sentences by terminal punctuation.
+  // Avoids lookbehind for maximum engine compatibility.
+  function splitSentences(text) {
+    return text
+      .split(/[.!?]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
   function analyzeMessageStructure(text) {
     const t = String(text || "").trim();
     const parts = splitParagraphs(t);
     const lines = t.split(/\n/).map(s => s.trim()).filter(Boolean);
 
+    // ── Basic token counts ──────────────────────────────────────
     const quoteMatches    = t.match(/\u201c[^\u201d]*\u201d|"[^"]*"/g) || [];
     const questionCount   = (t.match(/\?/g) || []).length;
     const exclaimCount    = (t.match(/!/g) || []).length;
     const ellipsisCount   = (t.match(/\.{3,}|\u2026/g) || []).length;
     const actionStarCount = (t.match(/\*[^*]+\*/g) || []).length;
-    // Parenthetical thoughts: (content in parens, up to 160 chars)
     const thoughtParenCount = (t.match(/\([^\)]{1,160}\)/g) || []).length;
     const dialogueLineCount = lines.filter(l => /^[\u201c"]/.test(l)).length;
 
     const wordCount = t ? t.split(/\s+/).filter(Boolean).length : 0;
 
+    // ── Sentence-level signals ──────────────────────────────────
+    const sentences    = splitSentences(t);
+    const sentenceCount = Math.max(1, sentences.length);
+    const avgSentenceLen = wordCount / sentenceCount;
+
+    // Fragment: sentence with fewer than 6 words
+    const fragmentSentences = sentences.filter(
+      s => s.split(/\s+/).filter(Boolean).length < 6
+    );
+    const fragmentRatio = fragmentSentences.length / sentenceCount;
+
+    // ── Punctuation style ───────────────────────────────────────
+    // Em-dash / en-dash / double-hyphen (stylistic rhythm signal)
+    const emDashCount = (t.match(/\u2014|\u2013|--/g) || []).length;
+    const colonCount  = (t.match(/:/g) || []).length;
+
+    // ── Terminal signals ────────────────────────────────────────
+    const lastSentence      = sentences.filter(Boolean).at(-1) || "";
+    const lastSentenceWords = lastSentence.trim().split(/\s+/).filter(Boolean);
+    const lastSentenceWordCount = lastSentenceWords.length;
+
+    // Clipped terminal: final sentence is very short (≤ 4 words)
+    const clippedTerminal = lastSentenceWordCount <= 4 &&
+      !lastSentence.trim().endsWith("?");
+
+    // Negation ending: clipped final sentence that reads as a denial or restraint
+    const negationEnding = clippedTerminal &&
+      /\b(no|not|never|won\u2019t|won't|can\u2019t|can't|doesn\u2019t|doesn't|don\u2019t|don't|refuses|remains|stays|holds|still|silent|nothing|stops)\b/i
+        .test(lastSentence);
+
+    // ── Quote / prose ratio ─────────────────────────────────────
+    const quotedText      = quoteMatches.join(" ");
+    const quotedWordCount = quotedText
+      ? quotedText.split(/\s+/).filter(Boolean).length
+      : 0;
+    const quoteProseRatio = wordCount > 0 ? quotedWordCount / wordCount : 0;
+
+    // Dialogue fully suppressed: no quoted speech at all
+    const dialogueSuppressed = quoteMatches.length === 0 && quoteProseRatio < 0.02;
+
+    // ── Possessive density (proxy for object/scent/body callback) ──
+    // Counts `word's` / `word's` constructions without a word list
+    const possessiveCount = (t.match(/\b\w+\u2019s\b|\b\w+'s\b/g) || []).length;
+    const possessiveDensity = wordCount > 0 ? possessiveCount / wordCount : 0;
+
+    // ── Lyrical compression ─────────────────────────────────────
+    // Heuristic: 2–4 paragraphs, moderate word density per paragraph,
+    // very low quoted speech, some fragment usage — resembles a
+    // literary micro-scene regardless of wording.
+    const wordsPerParagraph = parts.length > 0 ? wordCount / parts.length : wordCount;
+    const lyricalCompression = parts.length >= 2 && parts.length <= 4 &&
+      wordsPerParagraph >= 12 && wordsPerParagraph <= 55 &&
+      quoteProseRatio < 0.15 && fragmentRatio > 0.08;
+
+    // ── Opener analysis (extended taxonomy) ─────────────────────
+    const firstPara = (parts[0] || lines[0] || t).trim();
+    const firstParaWords = firstPara.split(/\s+/).filter(Boolean).length;
+
+    let openerType = "narration";
+    if (/^\*[^*]+\*/.test(firstPara))               openerType = "action";
+    else if (/^[\u201c"]/.test(firstPara))           openerType = "dialogue";
+    else if (/^\([^\)]{1,160}\)/.test(firstPara))   openerType = "thought";
+    else if (firstParaWords > 6 && quoteProseRatio < 0.05) {
+      // Distinguish environment/sensory narration from generic narration:
+      // environment-led opener = no quotes, no action star, longer first para
+      openerType = "environment";
+    }
+
+    // Body-reaction led: opens with an action beat (*…*) that is very short
+    const bodyReactionOpener = openerType === "action" && firstParaWords <= 8;
+
+    // ── Ending type (extended) ───────────────────────────────────
+    let endingType = "statement";
+    if (/\?\s*$/.test(t)) {
+      endingType = "question";
+    } else if (negationEnding) {
+      endingType = "clipped-negation";
+    } else if (clippedTerminal) {
+      endingType = "clipped";
+    } else if (/(\*[^*]+\*|\([^\)]{1,160}\)|\u201c[^\u201d]*\u201d|"[^"]*")\s*$/.test(t)) {
+      endingType = "styled";
+    } else if (/!\s*$/.test(t)) {
+      endingType = "exclamation";
+    }
+
+    // ── Block-type ratio analysis (existing) ────────────────────
     let actionLike    = 0;
     let dialogueLike  = 0;
     let thoughtLike   = 0;
@@ -2101,10 +2198,10 @@ oc.thread.on("MessageAdded", async function () {
     for (const p of parts.length ? parts : [t]) {
       const s = p.trim();
       if (!s) continue;
-      const hasQuote   = /\u201c[^\u201d]*\u201d|"[^"]*"/.test(s);
-      const hasAction  = /\*[^*]+\*/.test(s);
-      const hasThought = /\([^\)]{1,160}\)/.test(s) ||
-                         /\b(thinks|thought|wondered|felt|feels|feeling|internally)\b/i.test(s);
+      const hasQuote      = /\u201c[^\u201d]*\u201d|"[^"]*"/.test(s);
+      const hasAction     = /\*[^*]+\*/.test(s);
+      const hasThought    = /\([^\)]{1,160}\)/.test(s) ||
+                            /\b(thinks|thought|wondered|felt|feels|feeling|internally)\b/i.test(s);
       const looksDialogue = /^[\u201c"]/.test(s) || hasQuote;
       if (hasAction)       actionLike++;
       if (looksDialogue)   dialogueLike++;
@@ -2112,27 +2209,27 @@ oc.thread.on("MessageAdded", async function () {
       if (!hasAction && !looksDialogue && !hasThought) narrationLike++;
     }
 
-    let endingType = "statement";
-    if (/\?\s*$/.test(t)) {
-      endingType = "question";
-    } else if (/(\*[^*]+\*|\([^\)]{1,160}\)|\u201c[^\u201d]*\u201d|"[^"]*")\s*$/.test(t)) {
-      endingType = "styled";
-    } else if (/!\s*$/.test(t)) {
-      endingType = "exclamation";
-    }
-
-    let openerType = "narration";
-    const first = (parts[0] || lines[0] || t).trim();
-    if (/^\*[^*]+\*/.test(first))        openerType = "action";
-    else if (/^[\u201c"]/.test(first))   openerType = "dialogue";
-    else if (/^\([^\)]{1,160}\)/.test(first)) openerType = "thought";
-
     const totalBlocks = Math.max(1, actionLike + dialogueLike + thoughtLike + narrationLike);
+
     return {
       raw:              t,
       wordCount,
       partsCount:       parts.length || 1,
       linesCount:       lines.length,
+      sentenceCount,
+      avgSentenceLen,
+      fragmentRatio,
+      emDashCount,
+      colonCount,
+      clippedTerminal,
+      negationEnding,
+      quoteProseRatio,
+      dialogueSuppressed,
+      possessiveDensity,
+      lyricalCompression,
+      openerType,
+      bodyReactionOpener,
+      endingType,
       questionCount,
       exclaimCount,
       ellipsisCount,
@@ -2140,50 +2237,85 @@ oc.thread.on("MessageAdded", async function () {
       actionStarCount,
       thoughtParenCount,
       dialogueLineCount,
-      actionRatio:      actionLike   / totalBlocks,
-      dialogueRatio:    dialogueLike / totalBlocks,
-      thoughtRatio:     thoughtLike  / totalBlocks,
+      actionRatio:      actionLike    / totalBlocks,
+      dialogueRatio:    dialogueLike  / totalBlocks,
+      thoughtRatio:     thoughtLike   / totalBlocks,
       narrationRatio:   narrationLike / totalBlocks,
-      openerType,
-      endingType,
       mixed: [actionLike, dialogueLike, thoughtLike, narrationLike].filter(n => n > 0).length >= 3,
     };
   }
 
+  // Score structural + rhetorical-cadence similarity between two analyses.
+  // Max possible ≈ 18. Threshold for "nearly the same skeleton" is ≥ 11.
   function similarityScore(a, b) {
     let score = 0;
+    // Core structure (existing)
     if (a.openerType === b.openerType)                              score += 2;
     if (a.endingType === b.endingType)                              score += 2;
     if (a.mixed === b.mixed)                                        score += 1;
-    if (Math.abs(a.dialogueRatio - b.dialogueRatio) < 0.2)         score += 1;
-    if (Math.abs(a.actionRatio   - b.actionRatio)   < 0.2)         score += 1;
-    if (Math.abs(a.thoughtRatio  - b.thoughtRatio)  < 0.15)        score += 1;
-    if (Math.abs(a.partsCount    - b.partsCount)    <= 1)          score += 1;
+    if (Math.abs(a.dialogueRatio   - b.dialogueRatio)   < 0.2)    score += 1;
+    if (Math.abs(a.actionRatio     - b.actionRatio)     < 0.2)    score += 1;
+    if (Math.abs(a.thoughtRatio    - b.thoughtRatio)    < 0.15)   score += 1;
+    if (Math.abs(a.partsCount      - b.partsCount)      <= 1)     score += 1;
     if ((a.questionCount > 0) === (b.questionCount > 0))           score += 1;
+    // Rhetorical cadence (new)
+    if (a.lyricalCompression === b.lyricalCompression)             score += 1;
+    if (Math.abs(a.fragmentRatio   - b.fragmentRatio)   < 0.2)    score += 1;
+    if (Math.abs(a.quoteProseRatio - b.quoteProseRatio) < 0.1)    score += 1;
+    if (a.clippedTerminal === b.clippedTerminal)                   score += 1;
+    if (a.negationEnding === b.negationEnding)                     score += 1;
+    if (a.dialogueSuppressed === b.dialogueSuppressed)             score += 1;
+    if (a.bodyReactionOpener === b.bodyReactionOpener)             score += 1;
+    if (Math.abs(a.avgSentenceLen  - b.avgSentenceLen)  < 4)      score += 1;
     return score;
   }
 
-  // Use stripped content so hidden decoration doesn't skew structure analysis
-  const visibleContent    = stripHiddenMarkup(lastMessage.content);
-  const recentAnalyses    = sameSpeaker.map(m => analyzeMessageStructure(stripHiddenMarkup(m.content)));
-  const currentAnalysis   = analyzeMessageStructure(visibleContent);
+  // ── Analysis ────────────────────────────────────────────────────
+  const visibleContent  = stripHiddenMarkup(lastMessage.content);
+  const recentAnalyses  = sameSpeaker.map(m => analyzeMessageStructure(stripHiddenMarkup(m.content)));
+  const currentAnalysis = analyzeMessageStructure(visibleContent);
 
-  const repetitiveEndings = recentAnalyses.filter(a => a.endingType === currentAnalysis.endingType).length >= 3;
-  const repetitiveOpeners = recentAnalyses.filter(a => a.openerType === currentAnalysis.openerType).length >= 3;
-  const repetitiveQuestions =
-    recentAnalyses.filter(a => a.questionCount > 0).length >= Math.max(3, recentAnalyses.length - 1);
-  const repetitiveThoughts =
-    recentAnalyses.filter(a => a.thoughtRatio > 0.24 || a.thoughtParenCount > 0).length >= 3;
-  const repetitiveActionHeavy =
-    recentAnalyses.filter(a => a.actionRatio > 0.45 || a.actionStarCount >= 2).length >= 3;
-  const repetitiveDialogueHeavy =
-    recentAnalyses.filter(a => a.dialogueRatio > 0.72).length >= 4;
-  const repetitiveMixedTemplate =
-    recentAnalyses.filter(a => a.mixed).length >= 4;
+  // ── Repetition detection (existing signals) ──────────────────────
+  const repetitiveEndings = recentAnalyses.filter(
+    a => a.endingType === currentAnalysis.endingType).length >= 3;
+  const repetitiveOpeners = recentAnalyses.filter(
+    a => a.openerType === currentAnalysis.openerType).length >= 3;
+  const repetitiveQuestions = recentAnalyses.filter(
+    a => a.questionCount > 0).length >= Math.max(3, recentAnalyses.length - 1);
+  const repetitiveThoughts = recentAnalyses.filter(
+    a => a.thoughtRatio > 0.24 || a.thoughtParenCount > 0).length >= 3;
+  const repetitiveActionHeavy = recentAnalyses.filter(
+    a => a.actionRatio > 0.45 || a.actionStarCount >= 2).length >= 3;
+  const repetitiveDialogueHeavy = recentAnalyses.filter(
+    a => a.dialogueRatio > 0.72).length >= 4;
+  const repetitiveMixedTemplate = recentAnalyses.filter(
+    a => a.mixed).length >= 4;
 
-  const cadenceSimilarityHits = recentAnalyses.filter(a => similarityScore(a, currentAnalysis) >= 6).length;
+  // ── Repetition detection (rhetorical cadence / skeleton signals) ──
+  const repetitiveClippedTerminal = recentAnalyses.filter(
+    a => a.clippedTerminal).length >= 3;
+  const repetitiveNegationEnding = recentAnalyses.filter(
+    a => a.negationEnding).length >= 3;
+  const repetitiveLyricalCompression = recentAnalyses.filter(
+    a => a.lyricalCompression).length >= 3;
+  const repetitiveEnvironmentLedOpener = recentAnalyses.filter(
+    a => a.openerType === "environment").length >= 4;
+  const repetitiveBodyReactionOpener = recentAnalyses.filter(
+    a => a.bodyReactionOpener).length >= 3;
+  const repetitiveDialogueSuppressed = recentAnalyses.filter(
+    a => a.dialogueSuppressed).length >= 3;
+  const repetitiveFragmentHeavy = recentAnalyses.filter(
+    a => a.fragmentRatio > 0.35).length >= 3;
+  const repetitiveHighPossessiveDensity = recentAnalyses.filter(
+    a => a.possessiveDensity > 0.06).length >= 3;
 
-  // Build scene window without hidden markup so the AI never sees HTML comments
+  // Full-skeleton similarity (new higher threshold using extended scoring)
+  const cadenceSimilarityHits = recentAnalyses.filter(
+    a => similarityScore(a, currentAnalysis) >= 6).length;
+  const skeletonSimilarityHits = recentAnalyses.filter(
+    a => similarityScore(a, currentAnalysis) >= 11).length;
+
+  // ── Build scene window ────────────────────────────────────────────
   const sceneWindow = recentMessages.slice(-10)
     .map(m => `${m.name || m.author}: ${stripHiddenMarkup(m.content)}`)
     .join("\n\n");
@@ -2195,9 +2327,12 @@ oc.thread.on("MessageAdded", async function () {
       ? reminderParts.slice(1).join("---").trim()
       : reminderMessage.trim();
 
+  // ── Collect structural pressure signals ────────────────────────────
   const structuralPressure = [];
+
+  // Existing flags
   if (cadenceSimilarityHits >= 3)
-    structuralPressure.push("Recent messages by this character are structurally too similar.");
+    structuralPressure.push("Recent messages are structurally too similar at a basic level.");
   if (repetitiveMixedTemplate)
     structuralPressure.push("The character is overusing a mixed narration/action/dialogue/thought template.");
   if (repetitiveQuestions)
@@ -2215,6 +2350,27 @@ oc.thread.on("MessageAdded", async function () {
   if (currentAnalysis.wordCount > 140 && currentAnalysis.mixed)
     structuralPressure.push("This message is overstuffed and should likely be simplified.");
 
+  // New cadence / skeleton flags
+  if (skeletonSimilarityHits >= 2)
+    structuralPressure.push("CRITICAL: The character is reusing the same underlying prose skeleton — same paragraph architecture, same beat sequence, different words only. Break the skeleton entirely.");
+  if (repetitiveLyricalCompression)
+    structuralPressure.push("The character is repeatedly producing lyrical micro-scenes with the same 2–4 paragraph compression. Not every moment needs poetic packaging — allow plain, direct responses.");
+  if (repetitiveClippedTerminal)
+    structuralPressure.push("The character repeatedly ends messages with a clipped short sentence. Vary the resolution — allow fuller syntax or a different close.");
+  if (repetitiveNegationEnding)
+    structuralPressure.push("The character repeatedly ends with restraint/denial/negation beats. Allow endings that do something other than refuse or hold back.");
+  if (repetitiveEnvironmentLedOpener)
+    structuralPressure.push("The character keeps opening with environmental/sensory narration. Try opening with direct speech, a reaction, or an action that skips the atmospheric setup.");
+  if (repetitiveBodyReactionOpener)
+    structuralPressure.push("The character repeatedly opens with a short physical body-reaction beat. Try opening with dialogue or a sentence that skips the somatic setup.");
+  if (repetitiveDialogueSuppressed)
+    structuralPressure.push("The character has been consistently avoiding quoted speech. If the moment naturally calls for the character to say something, let them speak plainly.");
+  if (repetitiveFragmentHeavy)
+    structuralPressure.push("The character has been overusing sentence fragments. Allow fuller, more natural sentence structures — not every line needs to be clipped or truncated.");
+  if (repetitiveHighPossessiveDensity)
+    structuralPressure.push("The character is overusing possessive constructions (word's/character's) as emotional or symbolic callbacks. Reduce reliance on object/attribute-as-emotion proxies.");
+
+  // ── Steering rules for the rewrite prompt ───────────────────────
   const steeringRules = [
     `Structural steering goals for this rewrite:`,
     `- Keep only content that belongs to ${SELF}.`,
@@ -2224,14 +2380,21 @@ oc.thread.on("MessageAdded", async function () {
     `- Decide what should dominate based on the conversational state inferred from recent context, reminder text, lore/memory signals, and this exact message.`,
     `- If the moment is best served by mostly dialogue, let dialogue dominate.`,
     `- If the moment is best served by mostly action, let action dominate.`,
-    `- If the moment is best served by brevity, be brief.`,
+    `- If the moment is best served by brevity, be brief — but brevity does not always mean a fragment.`,
     `- If internal thought is not strongly justified, reduce or remove it.`,
     `- Do not append a question unless this character would naturally ask one here.`,
     `- Avoid repeating the same opener, same ending, same cadence, or same block order recently overused by this character.`,
     `- Vary structure naturally without becoming random or out of character.`,
+    `- CRITICAL — avoid "same skeleton, different wording": do not let every response follow the same assembly pattern (e.g. sensory opener → body beat → symbolic object callback → clipped negation closer). If this character has been building responses the same way, break that architecture in this rewrite.`,
+    `- Sometimes the best response is mostly spoken dialogue with minimal or no narration.`,
+    `- Sometimes the best response is one plain, direct sentence with nothing ornate.`,
+    `- Sometimes the best response is blunt, reactive, or inelegant — not every moment is a literary micro-scene.`,
+    `- Allow fuller, natural sentence syntax when fragments have dominated recent messages.`,
+    `- Do not convert emotion into object/scent/body symbolism unless it is specifically called for by the moment.`,
+    `- Do not end every response with a restraint beat or a hard denial.`,
     structuralPressure.length
-      ? `- Additional pressure:\n- ${structuralPressure.join("\n- ")}`
-      : `- Additional pressure: no major repetition detected; only clean ownership and improve naturalness where needed.`,
+      ? `- Active pressure flags (address ALL of these):\n  - ${structuralPressure.join("\n  - ")}`
+      : `- No major repetition patterns detected. Focus on clean character ownership and naturalness.`,
   ].join("\n");
 
   const rewriteInstruction = [
@@ -2282,11 +2445,18 @@ oc.thread.on("MessageAdded", async function () {
     const stateSignal = [
       `Recent inferred scene/state signals:`,
       `- Current message length: ${updatedCurrentAnalysis.wordCount} words`,
+      `- Paragraph count: ${updatedCurrentAnalysis.partsCount}`,
+      `- Average sentence length: ${updatedCurrentAnalysis.avgSentenceLen.toFixed(1)} words`,
+      `- Fragment ratio: ${updatedCurrentAnalysis.fragmentRatio.toFixed(2)}`,
       `- Dialogue ratio estimate: ${updatedCurrentAnalysis.dialogueRatio.toFixed(2)}`,
+      `- Quote-to-prose ratio: ${updatedCurrentAnalysis.quoteProseRatio.toFixed(2)}`,
       `- Action ratio estimate: ${updatedCurrentAnalysis.actionRatio.toFixed(2)}`,
       `- Thought ratio estimate: ${updatedCurrentAnalysis.thoughtRatio.toFixed(2)}`,
+      `- Lyrical compression pattern: ${updatedCurrentAnalysis.lyricalCompression ? "yes" : "no"}`,
+      `- Ends with negation/restraint: ${updatedCurrentAnalysis.negationEnding ? "yes" : "no"}`,
+      `- Clipped terminal: ${updatedCurrentAnalysis.clippedTerminal ? "yes" : "no"}`,
       `- Ends with question: ${updatedCurrentAnalysis.questionCount > 0 ? "yes" : "no"}`,
-      `- Overused structure pressure just applied: ${structuralPressure.length ? "yes" : "no"}`,
+      `- Structural pressure applied: ${structuralPressure.length ? "yes" : "no"}`,
     ].join("\n").trim();
 
     const reminderInstruction = [
