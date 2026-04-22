@@ -1269,7 +1269,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       `Respond using this EXACT template — do not add extra fields, do not skip any:`,
       ``,
       `NAME: <character name>`,
-      `DESCRIPTION: <rich, detailed description of your character covering their physical appearance, personality, backstory, mannerisms, and motivations — write at least 3 paragraphs and up to 2000 characters; do not summarise, be vivid and specific>`,
+      `DESCRIPTION: <rich, detailed description of your character covering their physical appearance, personality, backstory, mannerisms, and motivations — write at least 3-4 detailed paragraphs; the description MUST be a minimum of 1250 characters and a maximum of 2000 characters; do not summarise, be vivid and specific>`,
       `TRAITS: <three comma-separated personality traits>`,
       `QUIRK: <one memorable quirk or habit>`,
       `WORLD: <one sentence describing the setting/world>`,
@@ -1302,8 +1302,25 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       (lines.find(l => l.startsWith(prefix + ":")) || "")
         .replace(prefix + ":", "").trim();
 
+    // Captures multi-line content for a field: everything between `prefix:` and
+    // the next known section header (or end of response).
+    const FIELD_HEADERS = ["NAME", "DESCRIPTION", "TRAITS", "QUIRK", "WORLD",
+                           "USER NAME", "USER DESCRIPTION", "ROLEPLAY STARTER",
+                           "TIME OF DAY", "MOOD", "IMAGE PROMPT"];
+    const pickBlock = (prefix) => {
+      const stopPattern = FIELD_HEADERS
+        .filter(h => h !== prefix)
+        .map(h => h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ":")
+        .join("|");
+      const regex = new RegExp(
+        `${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*([\\s\\S]*?)(?=\\n(?:${stopPattern})|$)`
+      );
+      const match = raw.match(regex);
+      return match ? match[1].trim() : "";
+    };
+
     const charName        = pick("NAME");
-    const charDescription = pick("DESCRIPTION").slice(0, 2000);
+    const charDescription = pickBlock("DESCRIPTION").slice(0, 2000);
     const charTraits      = pick("TRAITS");
     const charQuirk       = pick("QUIRK");
     const worldDesc       = pick("WORLD");
@@ -1312,6 +1329,14 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     const starter         = pick("ROLEPLAY STARTER");
     const mood            = pick("MOOD");
     const imagePrompt     = pick("IMAGE PROMPT") || `${worldDesc}, atmospheric, detailed, cinematic`;
+
+    if (charDescription.length < 1250) {
+      throw new Error(
+        `The AI returned a character description that is too short ` +
+        `(${charDescription.length} / 1250 characters minimum). ` +
+        `Please try generating again.`
+      );
+    }
 
     // Fallback: AI sometimes omits "USER DESCRIPTION:" prefix
     if (!userDescription) {
