@@ -1269,7 +1269,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       `Respond using this EXACT template — do not add extra fields, do not skip any:`,
       ``,
       `NAME: <character name>`,
-      `DESCRIPTION: <detailed one-paragraph description of your character's appearance, personality, and background>`,
+      `DESCRIPTION: <rich, detailed description of your character covering their physical appearance, personality, backstory, mannerisms, and motivations — write at least 3 paragraphs and up to 2000 characters; do not summarise, be vivid and specific>`,
       `TRAITS: <three comma-separated personality traits>`,
       `QUIRK: <one memorable quirk or habit>`,
       `WORLD: <one sentence describing the setting/world>`,
