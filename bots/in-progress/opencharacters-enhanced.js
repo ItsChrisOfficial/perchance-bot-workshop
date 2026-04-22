@@ -2031,3 +2031,296 @@ async function resizeDataURLWidth(dataURL, newWidth) {
   canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/jpeg");
 }
+
+// ── HUMANIZATION / ANTI-TEMPLATE POST-TRANSFORM HANDLER ──────
+//
+//  Runs ONLY after an AI message has been added to the thread.
+//  Performs structural analysis of recent messages, rewrites the last
+//  AI message for natural variation, and conditionally updates the
+//  editable portion of reminderMessage to reflect the latest state.
+//  All analysis is purely heuristic — no canned phrase banks or
+//  template libraries are used.
+//
+//  Integration notes:
+//  • stripHiddenMarkup() ensures hidden-from-ai HTML (e.g. the emotion-
+//    avatar tag appended by appendEmotionReaction) is stripped from
+//    content before it reaches the rewrite prompt, and is re-captured
+//    and restored after the rewrite so no existing decoration is lost.
+//  • The scene window passed to the AI also strips hidden markup so
+//    HTML comments never bleed into AI prompts.
+
+oc.thread.on("MessageAdded", async function () {
+  const lastMessage = oc.thread.messages.at(-1);
+  if (!lastMessage || lastMessage.author !== "ai") return;
+
+  // Strip <!--hidden-from-ai-start-->…<!--hidden-from-ai-end--> blocks so
+  // hidden decorations (emotion avatars, choice buttons, etc.) are never
+  // sent to the AI or included in structural analysis.
+  function stripHiddenMarkup(text) {
+    return String(text || "")
+      .replace(/<!--hidden-from-ai-start-->[\s\S]*?<!--hidden-from-ai-end-->/g, "")
+      .trim();
+  }
+
+  const SELF = lastMessage.name || oc.character?.name || "AI";
+  const USER = oc.thread.userCharacter?.name || "User";
+
+  const recentMessages = oc.thread.messages.slice(-18);
+  const sameSpeaker = recentMessages.filter(
+    m => m?.author === "ai" && (m?.name || "") === SELF && m !== lastMessage
+  ).slice(-8);
+
+  function splitParagraphs(text) {
+    return String(text || "")
+      .split(/\n{2,}/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  function analyzeMessageStructure(text) {
+    const t = String(text || "").trim();
+    const parts = splitParagraphs(t);
+    const lines = t.split(/\n/).map(s => s.trim()).filter(Boolean);
+
+    const quoteMatches    = t.match(/\u201c[^\u201d]*\u201d|"[^"]*"/g) || [];
+    const questionCount   = (t.match(/\?/g) || []).length;
+    const exclaimCount    = (t.match(/!/g) || []).length;
+    const ellipsisCount   = (t.match(/\.{3,}|\u2026/g) || []).length;
+    const actionStarCount = (t.match(/\*[^*]+\*/g) || []).length;
+    // Parenthetical thoughts: (content in parens, up to 160 chars)
+    const thoughtParenCount = (t.match(/\([^\)]{1,160}\)/g) || []).length;
+    const dialogueLineCount = lines.filter(l => /^[\u201c"]/.test(l)).length;
+
+    const wordCount = t ? t.split(/\s+/).filter(Boolean).length : 0;
+
+    let actionLike    = 0;
+    let dialogueLike  = 0;
+    let thoughtLike   = 0;
+    let narrationLike = 0;
+
+    for (const p of parts.length ? parts : [t]) {
+      const s = p.trim();
+      if (!s) continue;
+      const hasQuote   = /\u201c[^\u201d]*\u201d|"[^"]*"/.test(s);
+      const hasAction  = /\*[^*]+\*/.test(s);
+      const hasThought = /\([^\)]{1,160}\)/.test(s) ||
+                         /\b(thinks|thought|wondered|felt|feels|feeling|internally)\b/i.test(s);
+      const looksDialogue = /^[\u201c"]/.test(s) || hasQuote;
+      if (hasAction)       actionLike++;
+      if (looksDialogue)   dialogueLike++;
+      if (hasThought)      thoughtLike++;
+      if (!hasAction && !looksDialogue && !hasThought) narrationLike++;
+    }
+
+    let endingType = "statement";
+    if (/\?\s*$/.test(t)) {
+      endingType = "question";
+    } else if (/(\*[^*]+\*|\([^\)]{1,160}\)|\u201c[^\u201d]*\u201d|"[^"]*")\s*$/.test(t)) {
+      endingType = "styled";
+    } else if (/!\s*$/.test(t)) {
+      endingType = "exclamation";
+    }
+
+    let openerType = "narration";
+    const first = (parts[0] || lines[0] || t).trim();
+    if (/^\*[^*]+\*/.test(first))        openerType = "action";
+    else if (/^[\u201c"]/.test(first))   openerType = "dialogue";
+    else if (/^\([^\)]{1,160}\)/.test(first)) openerType = "thought";
+
+    const totalBlocks = Math.max(1, actionLike + dialogueLike + thoughtLike + narrationLike);
+    return {
+      raw:              t,
+      wordCount,
+      partsCount:       parts.length || 1,
+      linesCount:       lines.length,
+      questionCount,
+      exclaimCount,
+      ellipsisCount,
+      quoteMatches:     quoteMatches.length,
+      actionStarCount,
+      thoughtParenCount,
+      dialogueLineCount,
+      actionRatio:      actionLike   / totalBlocks,
+      dialogueRatio:    dialogueLike / totalBlocks,
+      thoughtRatio:     thoughtLike  / totalBlocks,
+      narrationRatio:   narrationLike / totalBlocks,
+      openerType,
+      endingType,
+      mixed: [actionLike, dialogueLike, thoughtLike, narrationLike].filter(n => n > 0).length >= 3,
+    };
+  }
+
+  function similarityScore(a, b) {
+    let score = 0;
+    if (a.openerType === b.openerType)                              score += 2;
+    if (a.endingType === b.endingType)                              score += 2;
+    if (a.mixed === b.mixed)                                        score += 1;
+    if (Math.abs(a.dialogueRatio - b.dialogueRatio) < 0.2)         score += 1;
+    if (Math.abs(a.actionRatio   - b.actionRatio)   < 0.2)         score += 1;
+    if (Math.abs(a.thoughtRatio  - b.thoughtRatio)  < 0.15)        score += 1;
+    if (Math.abs(a.partsCount    - b.partsCount)    <= 1)          score += 1;
+    if ((a.questionCount > 0) === (b.questionCount > 0))           score += 1;
+    return score;
+  }
+
+  // Use stripped content so hidden decoration doesn't skew structure analysis
+  const visibleContent    = stripHiddenMarkup(lastMessage.content);
+  const recentAnalyses    = sameSpeaker.map(m => analyzeMessageStructure(stripHiddenMarkup(m.content)));
+  const currentAnalysis   = analyzeMessageStructure(visibleContent);
+
+  const repetitiveEndings = recentAnalyses.filter(a => a.endingType === currentAnalysis.endingType).length >= 3;
+  const repetitiveOpeners = recentAnalyses.filter(a => a.openerType === currentAnalysis.openerType).length >= 3;
+  const repetitiveQuestions =
+    recentAnalyses.filter(a => a.questionCount > 0).length >= Math.max(3, recentAnalyses.length - 1);
+  const repetitiveThoughts =
+    recentAnalyses.filter(a => a.thoughtRatio > 0.24 || a.thoughtParenCount > 0).length >= 3;
+  const repetitiveActionHeavy =
+    recentAnalyses.filter(a => a.actionRatio > 0.45 || a.actionStarCount >= 2).length >= 3;
+  const repetitiveDialogueHeavy =
+    recentAnalyses.filter(a => a.dialogueRatio > 0.72).length >= 4;
+  const repetitiveMixedTemplate =
+    recentAnalyses.filter(a => a.mixed).length >= 4;
+
+  const cadenceSimilarityHits = recentAnalyses.filter(a => similarityScore(a, currentAnalysis) >= 6).length;
+
+  // Build scene window without hidden markup so the AI never sees HTML comments
+  const sceneWindow = recentMessages.slice(-10)
+    .map(m => `${m.name || m.author}: ${stripHiddenMarkup(m.content)}`)
+    .join("\n\n");
+
+  const reminderMessage = oc.character.reminderMessage || "";
+  const reminderParts   = reminderMessage.split("---");
+  const editableReminder =
+    reminderParts.length >= 2
+      ? reminderParts.slice(1).join("---").trim()
+      : reminderMessage.trim();
+
+  const structuralPressure = [];
+  if (cadenceSimilarityHits >= 3)
+    structuralPressure.push("Recent messages by this character are structurally too similar.");
+  if (repetitiveMixedTemplate)
+    structuralPressure.push("The character is overusing a mixed narration/action/dialogue/thought template.");
+  if (repetitiveQuestions)
+    structuralPressure.push("The character has been ending too many messages with questions.");
+  if (repetitiveThoughts)
+    structuralPressure.push("The character has been overusing visible internal thought.");
+  if (repetitiveActionHeavy)
+    structuralPressure.push("The character has been overusing physical/action beats.");
+  if (repetitiveDialogueHeavy)
+    structuralPressure.push("The character has been too dialogue-heavy without enough situational variation.");
+  if (repetitiveOpeners)
+    structuralPressure.push(`The character keeps opening messages the same way (${currentAnalysis.openerType}).`);
+  if (repetitiveEndings)
+    structuralPressure.push(`The character keeps ending messages the same way (${currentAnalysis.endingType}).`);
+  if (currentAnalysis.wordCount > 140 && currentAnalysis.mixed)
+    structuralPressure.push("This message is overstuffed and should likely be simplified.");
+
+  const steeringRules = [
+    `Structural steering goals for this rewrite:`,
+    `- Keep only content that belongs to ${SELF}.`,
+    `- Remove actions, narration, implications, or follow-on behavior belonging to ${USER} or any other character.`,
+    `- Preserve meaning, intent, tone, and character voice.`,
+    `- Do NOT default to a balanced mix of narration + action + dialogue + thought.`,
+    `- Decide what should dominate based on the conversational state inferred from recent context, reminder text, lore/memory signals, and this exact message.`,
+    `- If the moment is best served by mostly dialogue, let dialogue dominate.`,
+    `- If the moment is best served by mostly action, let action dominate.`,
+    `- If the moment is best served by brevity, be brief.`,
+    `- If internal thought is not strongly justified, reduce or remove it.`,
+    `- Do not append a question unless this character would naturally ask one here.`,
+    `- Avoid repeating the same opener, same ending, same cadence, or same block order recently overused by this character.`,
+    `- Vary structure naturally without becoming random or out of character.`,
+    structuralPressure.length
+      ? `- Additional pressure:\n- ${structuralPressure.join("\n- ")}`
+      : `- Additional pressure: no major repetition detected; only clean ownership and improve naturalness where needed.`,
+  ].join("\n");
+
+  const rewriteInstruction = [
+    `You are editing a roleplay/chat message for natural humanlike variation while preserving the character.`,
+    ``,
+    `Character name: ${SELF}`,
+    `User name: ${USER}`,
+    ``,
+    `Recent thread context:`,
+    `---`,
+    sceneWindow,
+    `---`,
+    ``,
+    `Editable reminder / current character state:`,
+    `---`,
+    editableReminder,
+    `---`,
+    ``,
+    steeringRules,
+    ``,
+    `Now edit this message using ALL rules above:`,
+    `---`,
+    visibleContent,
+    `---`,
+    ``,
+    `Return only the final edited message. Do not explain anything. Do not add labels.`,
+  ].join("\n").trim();
+
+  const rewritten = await oc.generateText({ instruction: rewriteInstruction });
+
+  // Capture any hidden markup (e.g. emotion-avatar span) that may have been
+  // appended concurrently by appendEmotionReaction, then restore it after
+  // the rewrite so the decoration is not lost.
+  const hiddenSections = (lastMessage.content.match(/<!--hidden-from-ai-start-->[\s\S]*?<!--hidden-from-ai-end-->/g) || []).join(" ");
+  const rewriteClean   = String(rewritten || "")
+    .trim()
+    .replace(/^---\s*|\s*---$/g, "")
+    .replace(/<!--hidden-from-ai-start-->[\s\S]*?<!--hidden-from-ai-end-->/g, "")
+    .trim();
+  lastMessage.content = rewriteClean + (hiddenSections ? " " + hiddenSections : "");
+
+  const updatedCurrentAnalysis = analyzeMessageStructure(rewriteClean);
+
+  if (reminderParts.length >= 2) {
+    const nonEditablePart = reminderParts.shift().trim();
+    const editablePart    = reminderParts.join("---").trim();
+
+    const stateSignal = [
+      `Recent inferred scene/state signals:`,
+      `- Current message length: ${updatedCurrentAnalysis.wordCount} words`,
+      `- Dialogue ratio estimate: ${updatedCurrentAnalysis.dialogueRatio.toFixed(2)}`,
+      `- Action ratio estimate: ${updatedCurrentAnalysis.actionRatio.toFixed(2)}`,
+      `- Thought ratio estimate: ${updatedCurrentAnalysis.thoughtRatio.toFixed(2)}`,
+      `- Ends with question: ${updatedCurrentAnalysis.questionCount > 0 ? "yes" : "no"}`,
+      `- Overused structure pressure just applied: ${structuralPressure.length ? "yes" : "no"}`,
+    ].join("\n").trim();
+
+    const reminderInstruction = [
+      `You are updating only the editable personality / emotional-state section for a character.`,
+      ``,
+      `Stable character identity must be preserved.`,
+      `Only update short-term emotional state, interpersonal stance, tension, confidence, vulnerability, agitation, warmth, restraint, fixation, suspicion, or similar state if the latest message genuinely indicates a change.`,
+      `Do NOT reward or reinforce templated prose habits.`,
+      `Do NOT turn this into a generic AI summary.`,
+      `Do NOT restate permanent traits unless needed.`,
+      `If nothing materially changed, return the existing editable text exactly verbatim.`,
+      ``,
+      `Current editable state:`,
+      `---`,
+      editablePart,
+      `---`,
+      ``,
+      `Recent conversation context:`,
+      `---`,
+      sceneWindow,
+      `---`,
+      ``,
+      `Latest message from ${SELF}:`,
+      `---`,
+      `${SELF}: ${rewriteClean}`,
+      `---`,
+      ``,
+      stateSignal,
+      ``,
+      `Return only the rewritten editable state text, or the exact original text if unchanged.`,
+    ].join("\n").trim();
+
+    const updatedReminder = await oc.generateText({ instruction: reminderInstruction });
+    oc.character.reminderMessage =
+      `${nonEditablePart}\n---\n${String(updatedReminder || "").trim()}`;
+  }
+});
