@@ -1303,7 +1303,7 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
         .replace(prefix + ":", "").trim();
 
     const charName        = pick("NAME");
-    const charDescription = pick("DESCRIPTION");
+    const charDescription = pick("DESCRIPTION").slice(0, 2000);
     const charTraits      = pick("TRAITS");
     const charQuirk       = pick("QUIRK");
     const worldDesc       = pick("WORLD");
