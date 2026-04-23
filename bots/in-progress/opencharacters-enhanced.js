@@ -1212,6 +1212,110 @@ oc.thread.on("MessageEdited", function ({ message }) {
   if (message.author === "ai") renderChoiceButtons();
 });
 
+// ── NAME EXTRACTION HEURISTIC ────────────────────────────────
+//
+// Identifies the first (bot) and second (user) proper names in a free-text
+// character brief WITHOUT a name dictionary.  Instead it uses four structural
+// patterns ranked by confidence, then sorts all hits by their position in the
+// text so the first name mentioned is always the bot and the second is the user.
+//
+// Excluded via a grammar-class list (pronouns, articles, conjunctions, common
+// adverbs) — NOT a list of known names.
+
+const _NON_NAME_WORDS = new Set([
+  "The","This","That","These","Those","There","Here",
+  "They","Them","Their","She","Her","Him","His",
+  "It","Its","We","Our","You","Your","He","Who",
+  "What","When","Where","Why","How","Which",
+  "If","But","And","Or","So","Yet","For","Nor",
+  "An","A","In","On","At","By","To","Of","As",
+  "With","From","About","Then","Than","Now","Just",
+  "Very","Most","Some","Many","Much","Such","Each",
+  "Both","Even","Also","Only","Well","Still","Back",
+  "More","Less","Once","After","Before","While",
+  "Until","Though","Although","Since","Because",
+]);
+
+function _isNameCandidate(word) {
+  // At least 3 chars, starts with uppercase, not a structural function-word.
+  return word.length >= 3 && /^[A-Z]/.test(word) && !_NON_NAME_WORDS.has(word);
+}
+
+function _collectNameCandidates(text) {
+  // Collect all hits as {name, index} then sort by index ascending so that
+  // whichever name appears first in the text comes out first.
+  const hits = new Map(); // name → first index seen
+
+  function addHit(name, index) {
+    if (_isNameCandidate(name) && !hits.has(name)) hits.set(name, index);
+  }
+
+  let m;
+
+  // Pattern A — Subject-verb: "Naomi is a 32 year old woman" / "Sean works…"
+  // Catches CapWord immediately before a copular or common action verb.
+  const subjectVerbRe = /\b([A-Z][a-zA-Z'-]{2,24})\s+(?:is|was|are|were|has|have|had|will|would|can|could|should|does|did|seems|appears|works|lives|loves|hates|wants|helps|knows|feels|looks|gets|becomes|starts|runs|walks|stands|sits|waits|watches|speaks|says|tells|asks|shows|smiles|laughs|cries|sighs|drinks|eats|reads|writes|plays|leads|teaches|studies|manages|owns)\b/g;
+  while ((m = subjectVerbRe.exec(text)) !== null) addHit(m[1], m.index);
+
+  // Pattern B — Possessive: "Naomi's apartment" / "Sean's landlord"
+  const possessiveRe = /\b([A-Z][a-zA-Z'-]{2,24})'s\b/g;
+  while ((m = possessiveRe.exec(text)) !== null) addHit(m[1], m.index);
+
+  // Pattern C — Sentence-initial CapWord not followed by a colon (header guard).
+  // Covers "Naomi, a 32-year-old…" where no verb follows immediately.
+  // Matches: start-of-string OR after sentence-ending punctuation.
+  const sentenceStartRe = /(?:^|[.!?\u2026\n]\s{0,4})([A-Z][a-zA-Z'-]{2,24})\b(?!\s*:)/g;
+  while ((m = sentenceStartRe.exec(text)) !== null) {
+    // m[1] is captured inside the non-capturing group boundary.  exec() sets
+    // m.index to the start of the full match, so the name index is offset by
+    // however many chars the leading punctuation + whitespace consumed.
+    const nameIndex = m.index + m[0].indexOf(m[1]);
+    addHit(m[1], nameIndex);
+  }
+
+  return [...hits.entries()]
+    .sort((a, b) => a[1] - b[1])
+    .map(([name]) => name);
+}
+
+/**
+ * Heuristically extract the bot character name (first) and user character name
+ * (second) from the raw user instruction string.
+ *
+ * Resolution order:
+ *   1. Explicit "Name: X" header (case-insensitive).
+ *   2. "named / called X" phrase.
+ *   3. Structural scan for CapWord patterns (subject-verb, possessive,
+ *      sentence-initial), sorted by first occurrence in text.
+ *
+ * Returns { botName: string|null, userName: string|null }.
+ */
+function extractNamesFromInstruction(instruction) {
+  const text = instruction.trim();
+
+  // 1. Explicit header — e.g. "Name: Naomi" or "Character Name: Naomi"
+  const explicitBotMatch = text.match(/^\s*(?:character\s+)?name\s*:\s*([A-Z][a-zA-Z'-]{1,29})/im);
+  if (explicitBotMatch) {
+    const botName = explicitBotMatch[1];
+    const explicitUserMatch = text.match(/\b(?:user|player|my)\s*name\s*:\s*([A-Z][a-zA-Z'-]{1,29})/i);
+    const userName = explicitUserMatch
+      ? explicitUserMatch[1]
+      : _collectNameCandidates(text).find(n => n !== botName) || null;
+    return { botName, userName };
+  }
+
+  // 2. "named/called X" phrase — e.g. "a woman named Naomi"
+  const namedMatch = text.match(/\b(?:named?|called)\s+([A-Z][a-zA-Z'-]{2,29})\b/);
+  if (namedMatch) {
+    const botName = namedMatch[1];
+    return { botName, userName: _collectNameCandidates(text).find(n => n !== botName) || null };
+  }
+
+  // 3. General structural scan
+  const candidates = _collectNameCandidates(text);
+  return { botName: candidates[0] || null, userName: candidates[1] || null };
+}
+
 // ── CHARACTER GENERATION ─────────────────────────────────────
 
 window.generateCharactersAndScenario = async function (userInstruction = null) {
@@ -1257,6 +1361,20 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       avatar: { url: GENERATOR_AVATAR },
     });
 
+    // ── Extract names from user instruction (heuristic) ──
+    // Identifies the first proper name in the brief as the bot character and
+    // the second as the user character, without any name dictionary.
+    const { botName: hintBotName, userName: hintUserName } =
+      extractNamesFromInstruction(userInstruction);
+
+    // Build name-constraint hints to inject into the instruction prompt.
+    const botNameHint  = hintBotName
+      ? `IMPORTANT — CHARACTER NAME: The character you portray MUST be named "${hintBotName}". Use this exact name in the NAME field.`
+      : "";
+    const userNameHint = hintUserName
+      ? `IMPORTANT — USER NAME: The user's character MUST be named "${hintUserName}". Use this exact name in the USER NAME field.`
+      : "";
+
     // ── Generation ──
     const instructionLines = [
       `The user wants to engage in a fun, creative roleplay. Your task is to CREATE a character for yourself and a scenario, based on the "USER INSTRUCTION" below.`,
@@ -1265,16 +1383,18 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
       toneHint,
       ``,
       `USER INSTRUCTION: ${userInstruction}`,
+      botNameHint,
+      userNameHint,
       ``,
       `Respond using this EXACT template — do not add extra fields, do not skip any:`,
       ``,
-      `NAME: <character name>`,
+      `NAME: ${hintBotName ? hintBotName : "<character name>"}`,
       `DESCRIPTION: <rich, detailed description of your character covering their physical appearance, personality, backstory, mannerisms, and motivations — write at least 3-4 detailed paragraphs; the description MUST be a minimum of 1250 characters and a maximum of 2000 characters; do not summarise, be vivid and specific>`,
       `TRAITS: <three comma-separated personality traits>`,
       `QUIRK: <one memorable quirk or habit>`,
       `WORLD: <one sentence describing the setting/world>`,
       ``,
-      `USER NAME: <user's character name>`,
+      `USER NAME: ${hintUserName ? hintUserName : "<user's character name>"}`,
       `USER DESCRIPTION: <one-paragraph description of the user's character>`,
       ``,
       `ROLEPLAY STARTER: <an engaging, vivid, one-paragraph opening scene involving both characters>`,
@@ -1298,10 +1418,14 @@ window.generateCharactersAndScenario = async function (userInstruction = null) {
     let rawAccumulated = "";
     let lastStopReason = "";
 
+    // The `startWith` seed for pass 1. If we already know the bot name, we
+    // anchor it immediately so the AI cannot substitute a different name.
+    const startWithSeed = hintBotName ? ` ${hintBotName}\n` : "";
+
     for (let pass = 1; pass <= MAX_GEN_PASSES; pass++) {
       const response = await oc.generateText({
         instruction: instructionLines,
-        startWith:   "NAME:" + rawAccumulated,
+        startWith:   "NAME:" + (rawAccumulated || startWithSeed),
         stopSequences: ["IMAGE PROMPT:"],
       });
 
