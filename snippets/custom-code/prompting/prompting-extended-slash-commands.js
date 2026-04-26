@@ -40,13 +40,15 @@
  *
  * Immediate behavior when pasted:
  *   - Applies the persisted communication mode to reminderMessage on load.
- *   - On each user message starting with "/", checks the command name.
- *   - Dispatches to the matching handler or exits silently (passes through).
- *   - /hidden: removes command message, injects hidden AI note, confirms to user.
- *   - /image-now and /image-pov: remove command, generate image, insert it with
- *     expectsReply:true so the AI continues the scene.
- *   - /toggle-comm: removes command, swaps reminder, injects hidden AI note,
- *     confirms to user.
+ *   - On each user message starting with "/", the `MessageAdded` handler
+ *     receives the message directly via the `{message}` parameter (not via
+ *     `.at(-1)` which can race). It checks the command name and, for commands
+ *     we own, immediately calls `oc.thread.messages.pop()` to remove the raw
+ *     command text before any async work begins. This prevents the platform
+ *     from triggering an AI/Narrator reply to the unhandled command text.
+ *   - If the command is not in our dispatch table (e.g. /ai, /nar, /user,
+ *     /image), the handler returns without touching the message so native
+ *     Perchance processing works unchanged.
  *
  * Customization points:
  *   - COMM_REMINDERS: edit the "remote" and "face2face" reminder strings.
@@ -137,16 +139,6 @@
   oc.character.reminderMessage = COMM_REMINDERS[state.commMode] || COMM_REMINDERS.face2face;
 
   // ─── Internal Helpers ────────────────────────────────────────────────
-
-  /** Remove the most-recent user message from the thread. */
-  function removeLastUserMessage() {
-    for (let i = oc.thread.messages.length - 1; i >= 0; i--) {
-      if (oc.thread.messages[i].author === "user") {
-        oc.thread.messages.splice(i, 1);
-        return;
-      }
-    }
-  }
 
   /**
    * Push a system message that is hidden from the AI and does not trigger
@@ -286,9 +278,10 @@
   /**
    * /hidden <text>
    *
-   * Removes the command message, injects the supplied text as a system note
-   * visible to the AI only (hiddenFrom:["user"], expectsReply:false), and
-   * confirms the action to the user via a hidden-from-AI note.
+   * The command message is already removed by the dispatcher before this
+   * handler is called. Injects the supplied text as a system note visible
+   * to the AI only (hiddenFrom:["user"], expectsReply:false), and confirms
+   * the action to the user via a hidden-from-AI note.
    */
   async function handleHidden(args) {
     const text = args.join(" ").trim();
@@ -299,7 +292,6 @@
       );
       return;
     }
-    removeLastUserMessage();
     pushAiNote(text);
     pushUserNote("🔒 Hidden note injected (visible to the AI only, not shown in chat).");
   }
@@ -307,13 +299,13 @@
   /**
    * /image-now
    *
-   * Generates a third-person scene image mid-action: extracts a visual
-   * description from recent context, generates the image, and inserts it
-   * before the AI's next reply so the image appears in the current action
-   * flow rather than as a post-action annotation.
+   * The command message is already removed by the dispatcher. Generates a
+   * third-person scene image mid-action: extracts a visual description from
+   * recent context, generates the image, and inserts it before the AI's
+   * next reply so the image appears in the current action flow rather than
+   * as a post-action annotation.
    */
   async function handleImageNow() {
-    removeLastUserMessage();
     const context = buildContextBlock(6);
 
     let prompt;
@@ -333,12 +325,12 @@
   /**
    * /image-pov
    *
-   * Generates an image from the AI character's first-person point of view:
-   * extracts a POV description from recent context, generates the image, and
-   * inserts it before the AI's next reply (same mid-action timing as /image-now).
+   * The command message is already removed by the dispatcher. Generates an
+   * image from the AI character's first-person point of view: extracts a
+   * POV description from recent context, generates the image, and inserts
+   * it before the AI's next reply (same mid-action timing as /image-now).
    */
   async function handleImagePov() {
-    removeLastUserMessage();
     const context = buildContextBlock(6);
 
     let prompt;
@@ -358,14 +350,13 @@
   /**
    * /toggle-comm
    *
-   * Toggles oc.character.reminderMessage between "remote" (text / call) and
+   * The command message is already removed by the dispatcher. Toggles
+   * oc.character.reminderMessage between "remote" (text / call) and
    * "face2face" (in-person) communication modes. Persists the new mode to
    * oc.thread.customData. Injects a hidden AI note so the model updates its
    * writing style immediately, and confirms the change to the user.
    */
   async function handleToggleComm() {
-    removeLastUserMessage();
-
     const next = state.commMode === "face2face" ? "remote" : "face2face";
     state.commMode = next;
     oc.character.reminderMessage = COMM_REMINDERS[next];
@@ -389,12 +380,12 @@
     "toggle-comm": handleToggleComm,
   };
 
-  oc.thread.on("MessageAdded", async () => {
+  oc.thread.on("MessageAdded", async function ({ message }) {
     try {
-      const last = oc.thread.messages.at(-1);
-      if (!last || last.author !== "user") return;
+      const m = message;
+      if (!m || m.author !== "user") return;
 
-      const content = (last.content || "").trim();
+      const content = (m.content || "").trim();
       if (!content.startsWith("/")) return;
 
       // Parse: /command-name [optional args...]
@@ -402,9 +393,17 @@
       const cmdName = parts[0].toLowerCase();
       const args    = parts.slice(1);
 
-      // Only intercept commands we own; silently pass everything else through.
+      // Only intercept commands we own; silently pass everything else through
+      // so native Perchance commands (/ai, /nar, /user, /image, etc.) work
+      // without interference.
       const handler = CUSTOM_COMMANDS[cmdName];
       if (!handler) return;
+
+      // Remove the command message immediately — before any async work —
+      // so the platform cannot trigger an AI/Narrator reply to the raw
+      // command text. This mirrors the documented Perchance slash-command
+      // pattern: check the message, then pop() it, then act.
+      oc.thread.messages.pop();
 
       await handler(args);
       console.log(`[pcbw-extSlash] Executed: /${cmdName}`);
