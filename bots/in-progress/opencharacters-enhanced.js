@@ -1261,10 +1261,13 @@ function _collectNameCandidates(text) {
   const possessiveRe = /\b([A-Z][a-zA-Z'-]{2,24})'s\b/g;
   while ((m = possessiveRe.exec(text)) !== null) addHit(m[1], m.index);
 
-  // Pattern C — Sentence-initial CapWord not followed by a colon (header guard).
-  // Covers "Naomi, a 32-year-old…" where no verb follows immediately.
+  // Pattern C — Sentence-initial CapWord not followed by a colon or slash
+  // (header guard). Covers "Naomi, a 32-year-old…" where no verb follows.
+  // The `[:\\/]` lookahead blocks both simple headers ("Age:") and compound
+  // header labels ("Race/Species:", "Type/Class:", etc.) from being mistaken
+  // for names.
   // Matches: start-of-string OR after sentence-ending punctuation.
-  const sentenceStartRe = /(?:^|[.!?\u2026\n]\s{0,4})([A-Z][a-zA-Z'-]{2,24})\b(?!\s*:)/g;
+  const sentenceStartRe = /(?:^|[.!?\u2026\n]\s{0,4})([A-Z][a-zA-Z'-]{2,24})\b(?!\s*[:\\/])/g;
   while ((m = sentenceStartRe.exec(text)) !== null) {
     // m[1] is captured inside the non-capturing group boundary.  exec() sets
     // m.index to the start of the full match, so the name index is offset by
