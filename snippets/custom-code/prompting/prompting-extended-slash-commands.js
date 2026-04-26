@@ -16,8 +16,10 @@
  *   /image-now
  *     Generates a scene image MID-ACTION — before the AI writes its next reply —
  *     rather than post-action. Extracts a third-person visual description from
- *     recent context via oc.getInstructCompletion(), calls oc.textToImage(),
- *     and inserts the result into the thread. The AI then responds naturally
+ *     recent context via oc.getInstructCompletion() and inserts an
+ *     <image>prompt</image> tag into the thread. The Perchance text-to-image
+ *     plugin renders the tag and exposes quick-regeneration, prompt-editing, and
+ *     multi-image generation UI automatically. The AI then responds naturally
  *     to the thread state (expectsReply:true on the image message).
  *
  *   /image-pov [character name]
@@ -40,12 +42,14 @@
  * Why realistic:
  *   Uses oc.thread.on("MessageAdded") (documented event), oc.thread.messages
  *   array mutation (documented), oc.getInstructCompletion() (documented LLM
- *   helper), oc.textToImage() (documented image helper),
- *   oc.character.reminderMessage (documented writable field), and
+ *   helper), oc.character.reminderMessage (documented writable field), and
  *   oc.character.imagePromptTriggers / oc.userCharacter.imagePromptTriggers
  *   (documented string fields for character-specific image appearance keywords).
- *   Network is required only for the image and LLM calls; all other logic is
- *   offline-safe.
+ *   Images are inserted as <image>prompt</image> tags recognised by the
+ *   Perchance text-to-image plugin, which handles rendering and provides
+ *   quick-regeneration, prompt-editing, and multi-image generation UI without
+ *   any extra code. Network is required only for the LLM context-extraction
+ *   call; all other logic is offline-safe.
  *
  * Immediate behavior when pasted:
  *   - Applies the persisted communication mode to reminderMessage on load.
@@ -71,9 +75,10 @@
  *     style keywords (quality boosters, art style, etc.).
  *
  * Caveats:
- *   - oc.textToImage() is rate-limited and slow (5–15 s per call). A temporary
- *     placeholder message is inserted and removed around the call so the user
- *     knows generation is in progress.
+ *   - Images are inserted as <image>prompt</image> tags. The Perchance
+ *     text-to-image plugin renders the tag and provides quick-regeneration,
+ *     prompt-editing, and multi-image generation UI automatically. These
+ *     features are NOT available when embedding a raw base64 data URL.
  *   - /image-now uses imagePromptTriggers from both oc.character and
  *     oc.userCharacter (third-person scene — both are visible). /image-pov
  *     resolves a POV character by name, excludes that character's own triggers
@@ -85,8 +90,6 @@
  *     other snippets that also write to that field — only one owner at a time.
  *   - Command messages are spliced from oc.thread.messages so the AI never
  *     sees raw "/command" text in its context window.
- *   - The image data URL is wrapped in <!--hidden-from-ai-start/end--> so the
- *     model does not receive the raw base64 string in its prompt.
  *
  * Companion file:
  *   extended-slash-commands-shortcuts.txt  — shortcut button definitions for
@@ -248,78 +251,37 @@
   }
 
   /**
-   * Build a styled image prompt, call oc.textToImage(), and push the
-   * resulting image into the thread.
+   * Build a styled image prompt and push an <image>prompt</image> tag into the
+   * thread. The Perchance text-to-image plugin renders the tag and exposes
+   * quick-regeneration, prompt-editing, and multi-image generation UI
+   * automatically — none of which are available when embedding a raw base64
+   * data URL.
    *
-   * The image message is visible to the user via an <img> tag wrapped in
-   * <!--hidden-from-ai-start/end--> so the model does not receive the raw
-   * base64 data URL. A plain-text description IS pushed as a hidden AI note
-   * so the model has context for what appears at this point in the scene.
+   * A plain-text description is also pushed as a hidden AI note so the model
+   * has context for what appears at this point in the scene.
    * expectsReply is set to true so the AI continues the narrative naturally.
    *
    * @param {string} rawPrompt    - scene description from the LLM extraction call
-   * @param {string} label        - short label shown in the placeholder, e.g. "🖼️ Scene"
+   * @param {string} label        - short label used in the AI context note, e.g. "🖼️ Scene"
    * @param {string} [triggers]   - character imagePromptTriggers to append before
    *                                the style suffix (e.g. LoRA trigger words or
    *                                appearance keywords). Pass "" to omit.
    */
-  async function generateAndInsertImage(rawPrompt, label, triggers = "") {
+  function generateAndInsertImage(rawPrompt, label, triggers = "") {
     const triggerPart = triggers ? `, ${triggers}` : "";
     const styledPrompt = IMAGE_STYLE_PREFIX + rawPrompt.trim() + triggerPart + IMAGE_STYLE_SUFFIX;
-
-    // Record the insertion index so we can remove the placeholder reliably
-    // even if the thread has been mutated by the time generation completes.
-    const placeholderIdx = oc.thread.messages.length;
-    const placeholder = {
-      author:       "system",
-      content:      `${label} *(generating image — please wait…)*`,
-      hiddenFrom:   ["ai"],
-      expectsReply: false,
-    };
-    oc.thread.messages.push(placeholder);
-
-    let dataUrl;
-    try {
-      const result = await oc.textToImage({ prompt: styledPrompt });
-      dataUrl = result.dataUrl;
-    } catch (err) {
-      console.error("[pcbw-extSlash] Image generation failed:", err);
-      placeholder.content = `${label} *(image generation failed — the scene continues without an image)*`;
-      return;
-    }
-
-    // Validate that oc.textToImage() returned a proper image data URL before
-    // embedding it into HTML. Any unexpected value is treated as a failure.
-    if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) {
-      console.error("[pcbw-extSlash] Unexpected dataUrl format from oc.textToImage()");
-      placeholder.content = `${label} *(image generation returned an unexpected format — continuing without an image)*`;
-      return;
-    }
-
-    // Remove the placeholder using the stored index first; fall back to
-    // indexOf() in case messages were inserted before the placeholder index.
-    const removeIdx =
-      oc.thread.messages[placeholderIdx] === placeholder
-        ? placeholderIdx
-        : oc.thread.messages.indexOf(placeholder);
-    if (removeIdx >= 0) oc.thread.messages.splice(removeIdx, 1);
 
     // Insert a hidden AI note with the text description so the model has
     // awareness of what the image represents in the scene.
     pushAiNote(`[A scene image was generated at this point in the story. Description: ${rawPrompt.trim()}]`);
 
-    // Insert the image visible to the user (data URL hidden from AI via the
-    // <!--hidden-from-ai--> wrapper so the raw base64 string does not enter
-    // the LLM context window). dataUrl is validated above to be a data:image/
-    // URL from oc.textToImage(), a trusted platform API.
+    // Use the Perchance text-to-image plugin's native <image> tag so the
+    // platform renders the image and provides quick-regeneration,
+    // prompt-editing, and multi-image generation UI out of the box.
     // expectsReply:true so the AI continues the scene after this message.
     oc.thread.messages.push({
       author:       "system",
-      content:
-        `<!--hidden-from-ai-start-->` +
-        `<img src="${dataUrl}" alt="Generated scene" ` +
-        `style="max-width:100%;border-radius:8px;margin:4px 0 8px;">` +
-        `<!--hidden-from-ai-end-->`,
+      content:      `<image>${styledPrompt}</image>`,
       hiddenFrom:   [],
       expectsReply: true,
     });
@@ -376,7 +338,7 @@
     const triggers = collectImageTriggers(
       [oc.character, oc.userCharacter].filter(Boolean)
     );
-    await generateAndInsertImage(prompt, "🖼️ Scene", triggers);
+    generateAndInsertImage(prompt, "🖼️ Scene", triggers);
   }
 
   /**
@@ -440,7 +402,7 @@
       return;
     }
 
-    await generateAndInsertImage(prompt, `🖼️ ${povName}'s POV`, triggers);
+    generateAndInsertImage(prompt, `🖼️ ${povName}'s POV`, triggers);
   }
 
   /**
