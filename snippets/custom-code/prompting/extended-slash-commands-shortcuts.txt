@@ -1,0 +1,66 @@
+# Extended Slash Commands — Shortcut Buttons
+#
+# Paste these definitions into the Perchance shortcut buttons editor
+# (Options → Shortcut Buttons). Each @property must appear on its own line.
+# Leave one blank line between button definitions.
+#
+# This file contains:
+#   • The 4 default shortcut buttons (/ai, /user, /nar, /image) — unchanged.
+#   • 4 new shortcut buttons for the custom commands handled by
+#     prompting-extended-slash-commands.js:
+#       /hidden       — inject an AI-visible, user-hidden note
+#       /image-now    — generate a scene image mid-action (3rd-person)
+#       /image-pov    — generate a scene image mid-action (character POV)
+#       /toggle-comm  — toggle reminder between text/call and face-to-face
+#
+# NOTE: /ai, /user, /nar, and /image are native Perchance commands and do
+# NOT need any custom JavaScript. /hidden, /image-now, /image-pov, and
+# /toggle-comm require prompting-extended-slash-commands.js to be active.
+
+@name=🗣️ {{char}}
+@message=/ai <optional writing instruction>
+@insertionType=replace
+@autoSend=no
+@clearAfterSend=no
+
+@name=🗣️ {{user}}
+@message=/user <optional writing instruction>
+@insertionType=replace
+@autoSend=no
+@clearAfterSend=no
+
+@name=🗣️ Narrator
+@message=/nar <optional writing instruction>
+@insertionType=replace
+@autoSend=no
+@clearAfterSend=no
+
+@name=🖼️ Image
+@message=/image --num=3
+@insertionType=replace
+@autoSend=no
+@clearAfterSend=no
+
+@name=🔒 Hidden Note
+@message=/hidden <your note here>
+@insertionType=replace
+@autoSend=no
+@clearAfterSend=no
+
+@name=🖼️ Image Now
+@message=/image-now
+@insertionType=replace
+@autoSend=yes
+@clearAfterSend=yes
+
+@name=🖼️ Image (POV)
+@message=/image-pov
+@insertionType=replace
+@autoSend=yes
+@clearAfterSend=yes
+
+@name=🔄 Toggle: Text/Call ↔ Face to Face
+@message=/toggle-comm
+@insertionType=replace
+@autoSend=yes
+@clearAfterSend=yes

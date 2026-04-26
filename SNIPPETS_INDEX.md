@@ -53,6 +53,7 @@ Every snippet entry must include:
 | Context Packer | `snippets/custom-code/prompting/prompting-context-packer.js` | custom-code-prompting | Periodic context summarization as hidden system messages | no (LLM call) | messages, state | Summaries consume context space |
 | Dynamic Reminder Router | `snippets/custom-code/prompting/prompting-dynamic-reminder-router.js` | custom-code-prompting | Intent-based dynamic reminderMessage switching | no (LLM call) | prompts, state | Overwrites reminderMessage |
 | Slash Command Interpreter | `snippets/custom-code/prompting/prompting-slash-command-interpreter.js` | custom-code-prompting | Parse and handle custom ! commands from user messages | yes | messages | Command messages are removed from thread |
+| Extended Slash Commands | `snippets/custom-code/prompting/prompting-extended-slash-commands.js` | custom-code-prompting | Adds /hidden, /image-now, /image-pov, /toggle-comm without touching native /ai /user /nar /image | no (LLM + image calls) | messages, prompts, state | Overwrites reminderMessage; oc.textToImage rate-limited; companion shortcuts in extended-slash-commands-shortcuts.txt |
 
 ## Index entries — UI/UX
 
