@@ -57,6 +57,7 @@ Every catalog entry must include:
 | name | lifecycle state | path | purpose | status | verification state | notes |
 |---|---|---|---|---|---|---|
 | Nyx — The Archivist | in-progress | `bots/in-progress/nyx-archivist/` | Atmospheric RP archivist bot with state machine, lore injection, context packing, slash commands, toast notifications, regen guard, and postprocessor | active | passed | Validator and unittest passed; 8 features composed from snippet library; customCode syntax verified |
+| OpenCharacters Enhanced | in-progress | `bots/in-progress/opencharacters-enhanced/` | Feature-rich character generator with multi-genre selector, 15 image styles, emotion-avatar reactions, memory digest, slash commands, URL reader, and choice buttons | active | passed | Validator passed; 4 shortcut buttons (/ai, /user, /nar, /image) defined; customCode sourced from opencharacters-enhanced.js |
 
 ## Completed bots
 
