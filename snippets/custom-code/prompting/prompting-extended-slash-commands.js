@@ -34,9 +34,12 @@
  * Why realistic:
  *   Uses oc.thread.on("MessageAdded") (documented event), oc.thread.messages
  *   array mutation (documented), oc.getInstructCompletion() (documented LLM
- *   helper), oc.textToImage() (documented image helper), and
- *   oc.character.reminderMessage (documented writable field). Network is
- *   required only for the image and LLM calls; all other logic is offline-safe.
+ *   helper), oc.textToImage() (documented image helper),
+ *   oc.character.reminderMessage (documented writable field), and
+ *   oc.character.imagePromptTriggers / oc.userCharacter.imagePromptTriggers
+ *   (documented string fields for character-specific image appearance keywords).
+ *   Network is required only for the image and LLM calls; all other logic is
+ *   offline-safe.
  *
  * Immediate behavior when pasted:
  *   - Applies the persisted communication mode to reminderMessage on load.
@@ -64,6 +67,11 @@
  *   - oc.textToImage() is rate-limited and slow (5–15 s per call). A temporary
  *     placeholder message is inserted and removed around the call so the user
  *     knows generation is in progress.
+ *   - /image-now uses imagePromptTriggers from both oc.character and
+ *     oc.userCharacter (third-person scene — both are visible). /image-pov
+ *     uses only oc.userCharacter.imagePromptTriggers (the AI character is
+ *     the camera and is not visible in the image). Either field is safely
+ *     skipped when empty, null, or absent.
  *   - /toggle-comm overwrites oc.character.reminderMessage entirely, and the
  *     persisted mode is also re-applied on every page load. Coordinate with
  *     other snippets that also write to that field — only one owner at a time.
@@ -170,6 +178,24 @@
   }
 
   /**
+   * Collect imagePromptTriggers from each supplied character object (e.g.
+   * oc.character, oc.userCharacter) and return them as a single
+   * comma-separated string ready to insert into an image prompt.
+   * Entries that are empty, null, or not a string are silently skipped.
+   *
+   * @param {object[]} characters - character objects to inspect
+   * @returns {string} combined triggers, or "" if none are set
+   */
+  function collectImageTriggers(characters) {
+    return characters
+      .map(c => (c && typeof c.imagePromptTriggers === "string"
+        ? c.imagePromptTriggers.trim()
+        : ""))
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  /**
    * Extract plain text from an HTML string using the browser DOM so that
    * all tags and comments are removed without fragile regex patterns.
    * The returned string is safe to pass to an LLM instruction.
@@ -212,11 +238,15 @@
    * so the model has context for what appears at this point in the scene.
    * expectsReply is set to true so the AI continues the narrative naturally.
    *
-   * @param {string} rawPrompt - scene description from the LLM extraction call
-   * @param {string} label     - short label shown in the placeholder, e.g. "🖼️ Scene"
+   * @param {string} rawPrompt    - scene description from the LLM extraction call
+   * @param {string} label        - short label shown in the placeholder, e.g. "🖼️ Scene"
+   * @param {string} [triggers]   - character imagePromptTriggers to append before
+   *                                the style suffix (e.g. LoRA trigger words or
+   *                                appearance keywords). Pass "" to omit.
    */
-  async function generateAndInsertImage(rawPrompt, label) {
-    const styledPrompt = IMAGE_STYLE_PREFIX + rawPrompt.trim() + IMAGE_STYLE_SUFFIX;
+  async function generateAndInsertImage(rawPrompt, label, triggers = "") {
+    const triggerPart = triggers ? `, ${triggers}` : "";
+    const styledPrompt = IMAGE_STYLE_PREFIX + rawPrompt.trim() + triggerPart + IMAGE_STYLE_SUFFIX;
 
     // Record the insertion index so we can remove the placeholder reliably
     // even if the thread has been mutated by the time generation completes.
@@ -322,7 +352,12 @@
       return;
     }
 
-    await generateAndInsertImage(prompt, "🖼️ Scene");
+    // Append imagePromptTriggers for both characters — third-person scene
+    // images typically show both the AI character and the user character.
+    const triggers = collectImageTriggers(
+      [oc.character, oc.userCharacter].filter(Boolean)
+    );
+    await generateAndInsertImage(prompt, "🖼️ Scene", triggers);
   }
 
   /**
@@ -347,7 +382,12 @@
       return;
     }
 
-    await generateAndInsertImage(prompt, "🖼️ POV");
+    // In a POV shot the AI character is the camera (not visible); only the
+    // user character appears as the subject, so append their triggers only.
+    const triggers = collectImageTriggers(
+      [oc.userCharacter].filter(Boolean)
+    );
+    await generateAndInsertImage(prompt, "🖼️ POV", triggers);
   }
 
   /**
