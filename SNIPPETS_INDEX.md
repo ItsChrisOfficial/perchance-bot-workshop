@@ -71,6 +71,7 @@ Every snippet entry must include:
 | Shortcut Button Orchestrator | `snippets/custom-code/ui-ux/ui-shortcut-button-orchestrator.js` | custom-code-ui | Dynamically manage shortcut buttons based on state | yes | state, UI | Overwrites shortcutButtons |
 | Debug Console Panel | `snippets/custom-code/ui-ux/ui-debug-console-panel.js` | custom-code-ui | In-iframe debug console with log capture | yes | UI | Overrides console methods in iframe |
 | Comms & Image Controls | `snippets/custom-code/ui-ux/ui-comms-image-controls.js` | custom-code-ui | `/hidden` slash command (AI-only injection), mid-action scene & character-POV image shortcuts, and communication-mode reminder toggle | no (LLM + image calls) | messages, state, UI, prompts | Owns `shortcutButtons` and `reminderMessage`; coordinate with other snippets that write either field |
+| Image Shortcut | `snippets/custom-code/ui-ux/ui-image-shortcut.js` | custom-code-ui | Registers `/ai`, `/user`, `/nar`, `/image --num=N` shortcut buttons; handles `/image` command to generate 1–6 images from conversation context | no (LLM + image calls) | messages, UI | Owns `shortcutButtons`; see companion `ui-image-shortcut.txt` for paste-ready button definitions |
 
 ## Index entries — Pregeneration / Prewarming / Preformatting / Prebaking
 
