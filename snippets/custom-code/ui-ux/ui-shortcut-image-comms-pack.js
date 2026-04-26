@@ -139,6 +139,11 @@
   }
   const state = oc.thread.customData[NAMESPACE];
 
+  // Validate persisted commsMode; reset to default if corrupted.
+  if (!COMMS_MODES[state.commsMode]) {
+    state.commsMode = DEFAULT_COMMS_MODE;
+  }
+
   // Apply the persisted comms reminder on load.
   oc.character.reminderMessage = COMMS_MODES[state.commsMode].reminder;
 
@@ -197,6 +202,50 @@
   }
 
   /**
+   * Safely strip HTML tags from a string using DOM textContent extraction.
+   * This avoids the incomplete-sanitization pitfall of regex-based tag stripping.
+   */
+  function stripHtml(html) {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
+
+  /**
+   * Build a standard scene image prompt from a scene description string.
+   * Centralises the prompt template used by /image, 📸 Scene, and 📸 POV.
+   */
+  function createImagePrompt(description, povPrefix) {
+    const base = povPrefix ? povPrefix + description : description;
+    return "detailed digital painting, " + base + ", cinematic lighting, high quality, 8k";
+  }
+
+  /**
+   * Build the HTML block used inside narrator/showImageToUser messages.
+   * Centralises the image + caption markup.
+   */
+  function createImageHTML(dataUrl, caption) {
+    return (
+      `<div style="margin:4px 0;">` +
+      `<em style="font-size:11px;color:light-dark(#888,#666);">${caption}</em>` +
+      `<img src="${dataUrl}" ` +
+      `style="max-width:100%;border-radius:8px;display:block;margin-top:4px;">` +
+      `</div>`
+    );
+  }
+
+  /**
+   * Find the most recent system message whose content contains searchText and
+   * remove it from the thread. Used to clear transient loading-state messages.
+   */
+  function findAndRemoveLoadingMsg(searchText) {
+    const msg = oc.thread.messages.findLast(
+      m => m.author === "system" && (m.content || "").includes(searchText)
+    );
+    if (msg) removeMessage(msg);
+  }
+
+  /**
    * Build a concise visual scene description from recent messages using the
    * LLM. Returns a plain-text string, or null on failure.
    */
@@ -204,12 +253,13 @@
     const recent = oc.thread.messages
       .filter(m => m.author === "ai" || m.author === "user")
       .slice(-IMAGE_CONTEXT_MSGS)
-      .map(m =>
-        `[${m.author}]: ${(m.content || "")
-          .replace(/<!--hidden-from-ai-start-->[\s\S]*?<!--hidden-from-ai-end-->/g, "")
-          .replace(/<[^>]+>/g, "")
-          .slice(0, 300)}`
-      )
+      .map(m => {
+        // Strip HTML comments and tags safely via DOM to prevent CodeQL
+        // incomplete-multi-character-sanitization on message content.
+        const raw = (m.content || "")
+          .replace(/<!--hidden-from-ai-start-->[\s\S]*?<!--hidden-from-ai-end-->/g, "");
+        return `[${m.author}]: ${stripHtml(raw).slice(0, 300)}`;
+      })
       .join("\n");
 
     if (!recent.trim()) return null;
@@ -254,12 +304,7 @@
   function showImageToUser(dataUrl, caption) {
     oc.thread.messages.push({
       author: "system",
-      content:
-        `<div style="margin:4px 0;">` +
-        `<em style="font-size:11px;color:light-dark(#888,#666);">${caption}</em>` +
-        `<img src="${dataUrl}" ` +
-        `style="max-width:100%;border-radius:8px;display:block;margin-top:4px;">` +
-        `</div>`,
+      content: createImageHTML(dataUrl, caption),
       hiddenFrom: ["ai"],
       expectsReply: false
     });
@@ -342,18 +387,12 @@
             const sceneDesc = await buildSceneDescription();
             const suffix = payload ? " " + payload : "";
             const finalDesc = (sceneDesc || "a scene from the story") + suffix;
-            const imgPrompt =
-              "detailed digital painting, " + finalDesc +
-              ", cinematic lighting, high quality, 8k";
+            const imgPrompt = createImagePrompt(finalDesc);
 
             const dataUrl = await generateImage(imgPrompt);
             state.generating = false;
 
-            const loadMsg = oc.thread.messages.findLast(
-              m => m.author === "system" &&
-                   (m.content || "").includes("Generating narrator image")
-            );
-            if (loadMsg) removeMessage(loadMsg);
+            findAndRemoveLoadingMsg("Generating narrator image");
 
             if (!dataUrl) {
               pushUserOnlyMsg("❌ Image generation failed. Try again.");
@@ -363,14 +402,7 @@
             // Narrator reply: image only, no extra narrative text.
             oc.thread.messages.push({
               author: "system",
-              content:
-                `<div style="margin:4px 0;">` +
-                `<em style="font-size:11px;color:light-dark(#888,#666);">` +
-                `📖 ${finalDesc}` +
-                `</em>` +
-                `<img src="${dataUrl}" ` +
-                `style="max-width:100%;border-radius:8px;display:block;margin-top:4px;">` +
-                `</div>`,
+              content: createImageHTML(dataUrl, `📖 ${finalDesc}`),
               hiddenFrom: ["ai"],
               expectsReply: false
             });
@@ -398,25 +430,16 @@
         const sceneDesc = await buildSceneDescription();
         if (!sceneDesc) {
           state.generating = false;
-          // Replace the loading message with the error.
-          const loadMsg = oc.thread.messages.findLast(
-            m => m.author === "system" && (m.content || "").includes("Generating scene image")
-          );
-          if (loadMsg) removeMessage(loadMsg);
+          findAndRemoveLoadingMsg("Generating scene image");
           pushUserOnlyMsg("❌ Could not extract scene description — try again after more messages.");
           return;
         }
 
-        const prompt =
-          "detailed digital painting, " + sceneDesc +
-          ", cinematic lighting, high quality, 8k";
+        const prompt = createImagePrompt(sceneDesc);
         const dataUrl = await generateImage(prompt);
         state.generating = false;
 
-        const loadMsg = oc.thread.messages.findLast(
-          m => m.author === "system" && (m.content || "").includes("Generating scene image")
-        );
-        if (loadMsg) removeMessage(loadMsg);
+        findAndRemoveLoadingMsg("Generating scene image");
 
         if (!dataUrl) {
           pushUserOnlyMsg("❌ Image generation failed. Try again.");
@@ -445,25 +468,19 @@
         const sceneDesc = await buildSceneDescription();
         if (!sceneDesc) {
           state.generating = false;
-          const loadMsg = oc.thread.messages.findLast(
-            m => m.author === "system" && (m.content || "").includes("Generating character POV image")
-          );
-          if (loadMsg) removeMessage(loadMsg);
+          findAndRemoveLoadingMsg("Generating character POV image");
           pushUserOnlyMsg("❌ Could not extract scene description — try again after more messages.");
           return;
         }
 
-        const prompt =
-          "first-person point of view, seen through the character's eyes, " +
-          sceneDesc +
-          ", immersive POV perspective, highly detailed, cinematic, 8k";
+        const prompt = createImagePrompt(
+          sceneDesc,
+          "first-person point of view, seen through the character's eyes, "
+        );
         const dataUrl = await generateImage(prompt);
         state.generating = false;
 
-        const loadMsg = oc.thread.messages.findLast(
-          m => m.author === "system" && (m.content || "").includes("Generating character POV image")
-        );
-        if (loadMsg) removeMessage(loadMsg);
+        findAndRemoveLoadingMsg("Generating character POV image");
 
         if (!dataUrl) {
           pushUserOnlyMsg("❌ Image generation failed. Try again.");
