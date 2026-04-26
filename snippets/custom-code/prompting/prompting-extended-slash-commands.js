@@ -20,10 +20,16 @@
  *     and inserts the result into the thread. The AI then responds naturally
  *     to the thread state (expectsReply:true on the image message).
  *
- *   /image-pov
- *     Same flow as /image-now but rewrites the prompt into the AI character's
- *     first-person point of view — what the character sees with their own eyes —
- *     rather than a third-person shot of the scene.
+ *   /image-pov [character name]
+ *     Same flow as /image-now but rewrites the prompt into the named character's
+ *     first-person point of view — what that character sees with their own eyes.
+ *     The character name is optional; if omitted the AI character is used.
+ *     The name is matched case-insensitively against oc.character.name and
+ *     oc.userCharacter.name (100% name-agnostic — no hardcoded names). The
+ *     POV holder's own imagePromptTriggers are omitted from the image prompt
+ *     (they cannot see themselves), while all other characters' triggers are
+ *     included. Example: "/image-pov Dave" renders the scene through Dave's
+ *     eyes; "/image-pov Lisa" renders it through Lisa's eyes.
  *
  *   /toggle-comm
  *     Flips oc.character.reminderMessage between "text / call" (remote) and
@@ -59,7 +65,8 @@
  * Customization points:
  *   - COMM_REMINDERS: edit the "remote" and "face2face" reminder strings.
  *   - IMAGE_PROMPT_INSTRUCTION: tune the LLM prompt for third-person extraction.
- *   - IMAGE_POV_INSTRUCTION: tune the LLM prompt for first-person POV extraction.
+ *   - buildPovInstruction(povName): tune the LLM prompt template for first-person
+ *     POV extraction (receives the resolved character's name at call time).
  *   - IMAGE_STYLE_PREFIX / IMAGE_STYLE_SUFFIX: wrap generated prompts in
  *     style keywords (quality boosters, art style, etc.).
  *
@@ -69,9 +76,10 @@
  *     knows generation is in progress.
  *   - /image-now uses imagePromptTriggers from both oc.character and
  *     oc.userCharacter (third-person scene — both are visible). /image-pov
- *     uses only oc.userCharacter.imagePromptTriggers (the AI character is
- *     the camera and is not visible in the image). Either field is safely
- *     skipped when empty, null, or absent.
+ *     resolves a POV character by name, excludes that character's own triggers
+ *     (they cannot see themselves), and includes all other characters' triggers.
+ *     If no name is supplied, oc.character is used as the default POV holder.
+ *     Either field is safely skipped when empty, null, or absent.
  *   - /toggle-comm overwrites oc.character.reminderMessage entirely, and the
  *     persisted mode is also re-applied on every page load. Coordinate with
  *     other snippets that also write to that field — only one owner at a time.
@@ -119,13 +127,24 @@
     "expression), setting and environment, mood and lighting, and the key ongoing action. " +
     "Output ONLY the description — 1 to 2 sentences, no extra commentary, no character names.";
 
-  /** LLM instruction for extracting a first-person character-POV image prompt. */
-  const IMAGE_POV_INSTRUCTION =
-    "From the conversation below, write a first-person point-of-view image prompt that " +
-    "describes exactly what the AI character is currently seeing with their own eyes. " +
-    "Begin with 'First-person POV, looking at' and include: what occupies the foreground, " +
-    "the background environment, mood, and lighting. " +
-    "Output ONLY the prompt — 1 to 2 sentences, no extra commentary, no character names.";
+  /**
+   * Build a first-person POV LLM instruction for a named character.
+   * Parameterizing the name lets the LLM orient itself to the correct
+   * perspective regardless of who the user selects. No character names are
+   * hardcoded here; the value is resolved at call time.
+   *
+   * @param {string} povName - display name of the character whose POV to use
+   * @returns {string} complete instruction string ready for oc.getInstructCompletion
+   */
+  function buildPovInstruction(povName) {
+    return (
+      `From the conversation below, write a first-person point-of-view image prompt ` +
+      `describing exactly what ${povName} is currently seeing with their own eyes. ` +
+      `Begin with 'First-person POV, looking at' and include: what occupies the foreground, ` +
+      `the background environment, mood, and lighting. ` +
+      `Output ONLY the prompt — 1 to 2 sentences, no extra commentary, no character names.`
+    );
+  }
 
   /** Style keywords prepended to every generated image prompt. */
   const IMAGE_STYLE_PREFIX = "detailed digital illustration, ";
@@ -361,20 +380,59 @@
   }
 
   /**
-   * /image-pov
+   * /image-pov [character name]
    *
    * The command message is already removed by the dispatcher. Generates an
-   * image from the AI character's first-person point of view: extracts a
-   * POV description from recent context, generates the image, and inserts
-   * it before the AI's next reply (same mid-action timing as /image-now).
+   * image from a specific character's first-person point of view.
+   *
+   * The optional [character name] argument is matched case-insensitively
+   * against oc.character.name and oc.userCharacter.name. If omitted (or not
+   * matched), oc.character is used as the default POV holder.
+   *
+   * The POV holder's own imagePromptTriggers are excluded from the image
+   * prompt (they cannot see themselves unless reflected). All other known
+   * characters' triggers are included as they are visible to the camera.
+   *
+   * @param {string[]} args - command arguments; first element is character name
    */
-  async function handleImagePov() {
-    const context = buildContextBlock(6);
+  async function handleImagePov(args) {
+    // ── Resolve POV character ────────────────────────────────────────────
+    const allChars = [oc.character, oc.userCharacter].filter(Boolean);
+    const nameArg  = args.join(" ").trim();
+
+    let povChar;
+    if (nameArg) {
+      const lower = nameArg.toLowerCase();
+      povChar = allChars.find(c => c.name && c.name.trim().toLowerCase() === lower);
+      if (!povChar) {
+        const known = allChars.map(c => c.name || "(unnamed)").join(", ");
+        pushUserNote(
+          `❌ /image-pov: no character named "${nameArg}" found. ` +
+          `Known names: ${known}. ` +
+          `Falling back to the AI character's POV.`
+        );
+        povChar = oc.character;
+      }
+    } else {
+      // No name supplied — default to the AI character (original behaviour).
+      povChar = oc.character || allChars[0];
+    }
+
+    // ── Build trigger string ─────────────────────────────────────────────
+    // The POV holder is the camera: they cannot see themselves, so their own
+    // imagePromptTriggers are excluded. All other characters are visible.
+    const visibleChars = allChars.filter(c => c !== povChar);
+    const triggers = collectImageTriggers(visibleChars);
+
+    // ── Extract POV description from context ────────────────────────────
+    const povName   = (povChar.name || "Unknown Character").trim();
+    const context   = buildContextBlock(6);
+    const instruction = buildPovInstruction(povName);
 
     let prompt;
     try {
       prompt = await oc.getInstructCompletion({
-        instruction: IMAGE_POV_INSTRUCTION + "\n\nConversation:\n" + context,
+        instruction: instruction + "\n\nConversation:\n" + context,
       });
     } catch (err) {
       console.error("[pcbw-extSlash] /image-pov prompt extraction failed:", err);
@@ -382,12 +440,7 @@
       return;
     }
 
-    // In a POV shot the AI character is the camera (not visible); only the
-    // user character appears as the subject, so append their triggers only.
-    const triggers = collectImageTriggers(
-      [oc.userCharacter].filter(Boolean)
-    );
-    await generateAndInsertImage(prompt, "🖼️ POV", triggers);
+    await generateAndInsertImage(prompt, `🖼️ ${povName}'s POV`, triggers);
   }
 
   /**
