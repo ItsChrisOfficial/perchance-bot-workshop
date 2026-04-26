@@ -147,13 +147,13 @@
   }
 
   /** Style keywords prepended to every generated image prompt. */
-  const IMAGE_STYLE_PREFIX = "detailed digital illustration, ";
+  const IMAGE_STYLE_PREFIX = oc.character.imagePromptPrefix ?? "";
 
   /** Style keywords appended to every generated image prompt. */
-  const IMAGE_STYLE_SUFFIX = ", high quality, dramatic lighting, vivid colors";
+  const IMAGE_STYLE_SUFFIX = oc.character.imagePromptSuffix ?? "";
 
   /** Maximum characters taken from each message for the LLM context block. */
-  const MAX_CONTEXT_CHARS = 400;
+  const MAX_CONTEXT_CHARS = 2500;
 
   // ─── State Initialization ────────────────────────────────────────────
 
