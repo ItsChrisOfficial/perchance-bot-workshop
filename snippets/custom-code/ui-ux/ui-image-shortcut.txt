@@ -3,8 +3,11 @@ Shortcut button definitions for ui-image-shortcut.js
 Paste these into the "Shortcut Buttons" field of your Perchance character.
 Each property is on its own line. Separate buttons with a blank line.
 
-The /ai, /user, and /nar commands are handled natively by Perchance.
-The /image command is handled by ui-image-shortcut.js.
+The /ai, /user, and /nar commands are default Perchance slash commands
+handled natively by the platform — no custom code required for those buttons.
+
+The /image command is handled by ui-image-shortcut.js, which must be pasted
+into your character's Custom Code field for that button to work.
 
 Usage for /image:
   - Click 🖼️ Image to pre-fill /image --num=3 in the input box.
@@ -15,6 +18,8 @@ Usage for /image:
 Usage for /ai, /user, /nar:
   - Click the button to pre-fill the command in the input box.
   - Type an optional writing instruction after the command, then send.
+  - Use <angle brackets> as editable placeholders; they are auto-selected
+    on insertion so you can type over them without extra clicks.
 
 -------------------------------------------------------------------------------
 
