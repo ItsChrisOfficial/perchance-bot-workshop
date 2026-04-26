@@ -125,7 +125,7 @@
     "From the conversation below, write a single concise visual scene description " +
     "suitable for an AI image generator. Include: visible characters (appearance, pose, " +
     "expression), setting and environment, mood and lighting, and the key ongoing action. " +
-    "Output ONLY the description — 1 to 2 sentences, no extra commentary, no character names.";
+    "Output ONLY the description — 1 to 3 paragraphs, no extra commentary, no character names.";
 
   /**
    * Build a first-person POV LLM instruction for a named character.
@@ -142,7 +142,7 @@
       `describing exactly what ${povName} is currently seeing with their own eyes. ` +
       `Begin with 'First-person POV, looking at' and include: what occupies the foreground, ` +
       `the background environment, mood, and lighting. ` +
-      `Output ONLY the prompt — 1 to 2 sentences, no extra commentary, no character names.`
+      `Output ONLY the prompt — 1 to 3 paragraphs, no extra commentary, no character names.`
     );
   }
 
