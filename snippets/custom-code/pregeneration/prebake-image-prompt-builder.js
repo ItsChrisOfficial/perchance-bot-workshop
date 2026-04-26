@@ -36,10 +36,13 @@
   const PROMPT_SUFFIX = ", high quality, dramatic lighting";
 
   const EXTRACT_INSTRUCTION =
-    "From the following text, extract a concise visual scene description " +
-    "suitable for an image generator. Include: characters (appearance, not names), " +
-    "setting/environment, mood/atmosphere, key action or pose. " +
-    "Output ONLY the scene description, 1-2 sentences max.";
+    "From the following text, write a verbose and detailed visual scene description " +
+    "suitable for an image generator. Include: characters present " +
+    "(appearance, clothing, expression, and pose), setting and environment, " +
+    "mood, atmosphere, and key action or pose. " +
+    "Write between 1 and 3 detailed, descriptive paragraphs. " +
+    "Wrap your entire response in <image> and </image> tags. " +
+    "Output ONLY the wrapped description, no commentary.";
   // ─────────────────────────────────────────────────────────────────────
 
   let lastBuiltPrompt = "";
@@ -47,7 +50,10 @@
   async function buildPrompt(text) {
     const instruction = EXTRACT_INSTRUCTION + "\n\nText:\n" + text.slice(0, 800);
     const extraction = await oc.getInstructCompletion({ instruction });
-    const cleaned = extraction.trim();
+    const raw = extraction.trim();
+    // Strip <image>...</image> wrapper produced by the extraction instruction
+    const tagMatch = raw.match(/<image>([\s\S]*?)<\/image>/i);
+    const cleaned = tagMatch ? tagMatch[1].trim() : raw;
     if (!cleaned || cleaned.length < 10) return null;
     return PROMPT_PREFIX + cleaned + PROMPT_SUFFIX;
   }

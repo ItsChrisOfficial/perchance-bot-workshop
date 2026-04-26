@@ -86,17 +86,23 @@
   const PROMPT_SUFFIX = ", high quality, dramatic lighting, vivid colors";
 
   const EXTRACT_INSTRUCTION =
-    "From the following roleplay excerpt, extract a concise visual scene description " +
-    "suitable for an image generator. Include: characters present (appearance, not names), " +
-    "setting/environment, lighting, mood, and key action or pose. " +
-    "Output ONLY the scene description, 1–2 sentences max, no commentary.";
+    "From the following roleplay excerpt, write a verbose and detailed visual scene " +
+    "description suitable for an image generator. Include: characters present " +
+    "(appearance, clothing, expression, and pose), setting and environment, " +
+    "lighting, mood, atmosphere, and key action or interaction. " +
+    "Write between 1 and 3 detailed, descriptive paragraphs. " +
+    "Wrap your entire response in <image> and </image> tags. " +
+    "Output ONLY the wrapped description, no commentary.";
 
   const POV_INSTRUCTION =
-    "From the following roleplay excerpt, describe what the viewpoint character " +
-    "sees from their own first-person perspective. Include: what is directly in " +
-    "their line of sight, the environment, any other characters visible, lighting " +
-    "and mood. Write as a visual scene, not as dialogue. " +
-    "Output ONLY the 1–2 sentence description, no commentary.";
+    "From the following roleplay excerpt, describe in detail what the viewpoint " +
+    "character sees from their own first-person perspective. Include: everything " +
+    "directly in their line of sight, the environment and surroundings, any other " +
+    "characters visible (appearance, expression, pose), lighting, mood, and " +
+    "atmosphere. Write between 1 and 3 detailed, descriptive paragraphs as a " +
+    "visual scene — not as dialogue. " +
+    "Wrap your entire response in <image> and </image> tags. " +
+    "Output ONLY the wrapped description, no commentary.";
   // ──────────────────────────────────────────────────────────────────────
 
   // ─── State init ───────────────────────────────────────────────────────
@@ -180,7 +186,10 @@
     const extraction = await oc.getInstructCompletion({
       instruction: instruction + "\n\nText:\n" + recentText
     });
-    const cleaned = extraction.trim();
+    const raw = extraction.trim();
+    // Strip <image>...</image> wrapper produced by the extraction instruction
+    const tagMatch = raw.match(/<image>([\s\S]*?)<\/image>/i);
+    const cleaned = tagMatch ? tagMatch[1].trim() : raw;
     return cleaned.length >= 10 ? cleaned : null;
   }
 
