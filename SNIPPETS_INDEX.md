@@ -69,7 +69,7 @@ Every snippet entry must include:
 | Confirmation Dialog | `snippets/custom-code/ui-ux/ui-confirmation-dialog.js` | custom-code-ui | Yes/No confirmation dialog with promise API | yes | UI | One dialog at a time |
 | Theme Adaptive Message Style | `snippets/custom-code/ui-ux/ui-theme-adaptive-message-style.js` | custom-code-ui | Apply theme-aware CSS per-author via wrapperStyle | yes | messages | May conflict with other wrapperStyle snippets |
 | Shortcut Button Orchestrator | `snippets/custom-code/ui-ux/ui-shortcut-button-orchestrator.js` | custom-code-ui | Dynamically manage shortcut buttons based on state | yes | state, UI | Overwrites shortcutButtons |
-| Shortcut Image & Comms Pack | `snippets/custom-code/ui-ux/ui-shortcut-image-comms-pack.js` | custom-code-ui | /hidden slash command, mid-action scene/POV image shortcuts, comms-mode reminder toggle | no (LLM + image calls) | messages, state, prompts, UI | Overwrites shortcutButtons and reminderMessage; image generation is rate-limited (5–15 s) |
+| Shortcut Image & Comms Pack | `snippets/custom-code/ui-ux/ui-shortcut-image-comms-pack.js` | custom-code-ui | Reply-as slash commands (/sys /ai /user /image), mid-action scene/POV image shortcuts, comms-mode reminder toggle | no (LLM + image calls) | messages, state, prompts, UI | Overwrites shortcutButtons and reminderMessage; image generation is rate-limited (5–15 s); empty-payload /ai falls through to preserve base button |
 | Debug Console Panel | `snippets/custom-code/ui-ux/ui-debug-console-panel.js` | custom-code-ui | In-iframe debug console with log capture | yes | UI | Overrides console methods in iframe |
 
 ## Index entries — Pregeneration / Prewarming / Preformatting / Prebaking

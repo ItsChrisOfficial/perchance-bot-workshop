@@ -2,61 +2,76 @@
  * Snippet: ui-shortcut-image-comms-pack
  *
  * Purpose:
- *   Adds four capabilities to any bot:
- *   1. /hidden [text] slash command — creates a system message that is hidden
- *      from the user (hiddenFrom: ["user"]) with expectsReply: false, letting
- *      you inject AI-only context without surfacing it in the chat log.
- *   2. 📸 Scene shortcut — generates a scene image mid-action (triggered by the
- *      user before the AI's next reply) using oc.textToImage(). The image is
- *      shown to the user and hidden from the AI to avoid wasting context tokens.
- *   3. 📸 {{char}} POV shortcut — generates the same scene from the character's
- *      first-person point of view, also mid-action and hidden from the AI.
- *   4. Comms toggle shortcut — toggles oc.character.reminderMessage between a
- *      text/call communication style and a face-to-face communication style.
- *      The injected toggle notification is hidden from the user (hiddenFrom:
- *      ["user"]) so only the AI sees the mode-change instruction.
+ *   Adds five capabilities to any bot:
+ *
+ *   Slash command reply-as router (/ prefix):
+ *     /sys [text]   — reply as system: push { author:"system" }, visible to
+ *                     both user and AI, expectsReply:false.
+ *     /ai [text]    — reply as AI: push { author:"ai" }, visible to both,
+ *                     expectsReply:false. Useful for pre-writing AI turns or
+ *                     injecting fake AI context.
+ *     /user [text]  — reply as user: push { author:"user" }, visible to both,
+ *                     expectsReply:true — the AI will respond to the injected
+ *                     user message as it would to any real user turn.
+ *     /image [text] — reply as narrator: build a scene-image prompt from
+ *                     recent context (+ optional extra text), generate the
+ *                     image via oc.textToImage(), and push it as a narrator
+ *                     (system) message that contains ONLY the image. The
+ *                     message is hiddenFrom:["ai"] so the raw data URL does
+ *                     not waste AI context tokens.
+ *
+ *   Empty-text commands (e.g. "/ai " with no payload) are NOT intercepted,
+ *   preserving the base 🗣️ {{char}} shortcut button's fall-through behavior.
+ *
+ *   Shortcut buttons (in addition to the preserved base button):
+ *     📸 Scene        — mid-action scene image (same logic as /image but
+ *                       triggered by button, no extra text).
+ *     📸 {{char}} POV — same scene re-generated from character's first-person
+ *                       POV before the AI's next reply.
+ *     Comms toggle    — toggles oc.character.reminderMessage between text/call
+ *                       and face-to-face communication styles. The notification
+ *                       pushed into the thread is hiddenFrom:["user"] so only
+ *                       the AI sees the mode-change instruction.
  *
  * Why realistic:
  *   Uses oc.thread.on("MessageAdded") (documented), oc.thread.messages (splice/
  *   push — documented), oc.thread.shortcutButtons (documented, writable),
  *   oc.character.reminderMessage (documented, writable), oc.textToImage()
  *   (documented), oc.getInstructCompletion() (documented), and
- *   oc.thread.customData (documented persistence). All gracefully degraded.
+ *   oc.thread.customData (documented persistence). All paths gracefully degraded.
  *
  * Immediate behavior when pasted:
- *   - /hidden command: removes user message, injects hiddenFrom:["user"] system
- *     message with expectsReply:false so only the AI receives it.
- *   - Three buttons are added to oc.thread.shortcutButtons alongside the
+ *   - Slash commands: /sys, /ai, /user, /image intercepted in MessageAdded;
+ *     the triggering user message is spliced out and the appropriate reply
+ *     is injected in its place.
+ *   - Three extra buttons added to oc.thread.shortcutButtons alongside the
  *     existing 🗣️ {{char}} base button: 📸 Scene, 📸 {{char}} POV, and the
- *     active comms-mode toggle button.
- *   - Image buttons: build scene description via oc.getInstructCompletion(),
- *     call oc.textToImage(), display the result as a hiddenFrom:["ai"] system
- *     message so the user sees the image but the AI does not.
+ *     active comms-mode toggle label.
+ *   - Image generation: scene description extracted via oc.getInstructCompletion(),
+ *     image generated via oc.textToImage(), result shown as hiddenFrom:["ai"]
+ *     narrator message.
  *   - Comms toggle: flips between "textcall" and "facetoface" reminder modes,
- *     updates oc.character.reminderMessage, refreshes the toggle button label,
- *     and pushes a hiddenFrom:["user"] system message so the AI adapts its
- *     communication style.
+ *     updates oc.character.reminderMessage, refreshes toggle button label, and
+ *     pushes a hiddenFrom:["user"] system message so the AI adapts its style.
  *
  * Customization points:
- *   - HIDDEN_CMD: command prefix for the hidden-message slash command.
  *   - COMMS_MODES: reminder text and labels for each communication style.
  *   - DEFAULT_COMMS_MODE: starting communication mode key.
  *   - BASE_BUTTONS: existing shortcut buttons to preserve alongside new ones.
- *   - IMAGE_CONTEXT_MSGS: how many recent messages to feed the image-prompt
+ *   - IMAGE_CONTEXT_MSGS: how many recent messages feed the image-prompt
  *     builder (more = richer but slower extraction call).
  *
  * Caveats:
  *   - oc.textToImage() is rate-limited and slow (5–15 s per image). A
- *     generating flag prevents duplicate concurrent calls; pending requests
- *     surface a user-visible warning.
+ *     generating flag prevents duplicate concurrent calls.
  *   - Overwrites oc.thread.shortcutButtons; coordinate with other snippets
  *     that write to shortcutButtons (e.g. ui-shortcut-button-orchestrator).
  *   - Overwrites oc.character.reminderMessage on every comms toggle; do not
  *     combine with prompting-dynamic-reminder-router without merging their
  *     reminder-write logic into a single owner.
- *   - /hidden command messages are permanently spliced from the thread.
- *   - Image buttons do NOT trigger an automatic AI reply — the user continues
- *     the conversation by clicking the 🗣️ {{char}} button or typing normally.
+ *   - Intercepted slash-command messages are permanently spliced from the thread.
+ *   - Image shortcut buttons do NOT trigger an automatic AI reply — continue
+ *     by clicking 🗣️ {{char}} or typing normally.
  */
 (async () => {
   if (window.__pcbw_imgCommsPack_init) return;
@@ -64,9 +79,12 @@
 
   // ─── Customization Points ────────────────────────────────────────────
   const NAMESPACE = "__pcbw_imgCommsPack";
-  const HIDDEN_CMD = "/hidden";
   const IMAGE_CONTEXT_MSGS = 6;
   const DEFAULT_COMMS_MODE = "facetoface";
+
+  // Slash commands handled as "reply-as" prompters.
+  // Keys must be lowercase; values are matched against trimmed user input.
+  const REPLY_AS_CMDS = ["/sys", "/ai", "/user", "/image"];
 
   const COMMS_MODES = {
     textcall: {
@@ -255,21 +273,110 @@
 
       const content = (lastMsg.content || "").trim();
 
-      // ── /hidden slash command ─────────────────────────────────────
-      // Usage: /hidden [text to inject as AI-only context]
-      // Removes the user message and injects a hiddenFrom:["user"] system
-      // message with expectsReply:false so only the AI receives the text.
-      if (content.toLowerCase().startsWith(HIDDEN_CMD + " ") || content.toLowerCase() === HIDDEN_CMD) {
-        const text = content.slice(HIDDEN_CMD.length).trim();
+      // ── Reply-as slash command router ────────────────────────────
+      // Intercepts /sys, /ai, /user, /image and pushes a message under the
+      // requested author. Commands with no payload text are NOT intercepted
+      // so that the base "🗣️ {{char}}" button (/ai with empty text) keeps
+      // triggering normal AI responses.
+      const lowerContent = content.toLowerCase();
+      const matchedCmd = REPLY_AS_CMDS.find(
+        cmd => lowerContent === cmd || lowerContent.startsWith(cmd + " ")
+      );
+
+      if (matchedCmd) {
+        const payload = content.slice(matchedCmd.length).trim();
+
+        // Empty payload → fall through (don't intercept).
+        if (!payload && matchedCmd !== "/image") return;
+
         removeMessage(lastMsg);
-        if (text) {
-          oc.thread.messages.push({
-            author: "system",
-            content: text,
-            hiddenFrom: ["user"],
-            expectsReply: false
-          });
-          console.log("[pcbw-imgCommsPack] Hidden system message injected.");
+
+        switch (matchedCmd) {
+          // /sys [text] — system message visible to AI and user.
+          case "/sys":
+            oc.thread.messages.push({
+              author: "system",
+              content: payload,
+              hiddenFrom: [],
+              expectsReply: false
+            });
+            console.log("[pcbw-imgCommsPack] /sys message injected.");
+            break;
+
+          // /ai [text] — fake AI turn injected directly into the thread.
+          case "/ai":
+            oc.thread.messages.push({
+              author: "ai",
+              content: payload,
+              hiddenFrom: [],
+              expectsReply: false
+            });
+            console.log("[pcbw-imgCommsPack] /ai message injected.");
+            break;
+
+          // /user [text] — user-attributed message; expectsReply:true so the
+          // AI will respond to it as a real user turn.
+          case "/user":
+            oc.thread.messages.push({
+              author: "user",
+              content: payload,
+              hiddenFrom: [],
+              expectsReply: true
+            });
+            console.log("[pcbw-imgCommsPack] /user message injected.");
+            break;
+
+          // /image [optional text] — narrator image reply.
+          // Builds a scene description from recent context, appends any extra
+          // text from the command payload, generates the image, and pushes it
+          // as a narrator (system) message that shows ONLY the image.
+          // hiddenFrom:["ai"] prevents the data URL wasting context tokens.
+          case "/image": {
+            if (state.generating) {
+              pushUserOnlyMsg("⏳ Image already generating — please wait.");
+              return;
+            }
+            state.generating = true;
+            pushUserOnlyMsg("📸 Generating narrator image…");
+
+            const sceneDesc = await buildSceneDescription();
+            const suffix = payload ? " " + payload : "";
+            const finalDesc = (sceneDesc || "a scene from the story") + suffix;
+            const imgPrompt =
+              "detailed digital painting, " + finalDesc +
+              ", cinematic lighting, high quality, 8k";
+
+            const dataUrl = await generateImage(imgPrompt);
+            state.generating = false;
+
+            const loadMsg = oc.thread.messages.findLast(
+              m => m.author === "system" &&
+                   (m.content || "").includes("Generating narrator image")
+            );
+            if (loadMsg) removeMessage(loadMsg);
+
+            if (!dataUrl) {
+              pushUserOnlyMsg("❌ Image generation failed. Try again.");
+              return;
+            }
+
+            // Narrator reply: image only, no extra narrative text.
+            oc.thread.messages.push({
+              author: "system",
+              content:
+                `<div style="margin:4px 0;">` +
+                `<em style="font-size:11px;color:light-dark(#888,#666);">` +
+                `📖 ${finalDesc}` +
+                `</em>` +
+                `<img src="${dataUrl}" ` +
+                `style="max-width:100%;border-radius:8px;display:block;margin-top:4px;">` +
+                `</div>`,
+              hiddenFrom: ["ai"],
+              expectsReply: false
+            });
+            console.log("[pcbw-imgCommsPack] /image narrator message injected.");
+            break;
+          }
         }
         return;
       }
