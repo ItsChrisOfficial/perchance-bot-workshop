@@ -41,12 +41,9 @@
     "appearance of every character present, fine visual details, and the " +
     "perspective or point of view of the scene. " +
     "Write between 1 and 3 verbose, descriptive paragraphs. " +
-    "Your response MUST follow this exact format — open with <image> on its own " +
-    "line, then the paragraphs, then </image> on its own line:\n" +
-    "<image>\n" +
-    "1-3 verbose paragraphs about the action, setting, clothing, appearance, " +
-    "details, and perspective/point of view of the image\n" +
-    "</image>\n" +
+    "Your response MUST follow this exact format:\n" +
+    "<image> 1-3 verbose paragraphs about the action, setting, clothing, " +
+    "appearance, details, and perspective/point of view of the image</image>\n" +
     "Output ONLY the wrapped description. No commentary, no extra text.";
   // ─────────────────────────────────────────────────────────────────────
 
