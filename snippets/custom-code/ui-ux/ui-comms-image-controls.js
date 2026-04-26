@@ -86,23 +86,34 @@
   const PROMPT_SUFFIX = ", high quality, dramatic lighting, vivid colors";
 
   const EXTRACT_INSTRUCTION =
-    "From the following roleplay excerpt, write a verbose and detailed visual scene " +
-    "description suitable for an image generator. Include: characters present " +
-    "(appearance, clothing, expression, and pose), setting and environment, " +
-    "lighting, mood, atmosphere, and key action or interaction. " +
-    "Write between 1 and 3 detailed, descriptive paragraphs. " +
-    "Wrap your entire response in <image> and </image> tags. " +
-    "Output ONLY the wrapped description, no commentary.";
+    "From the following roleplay excerpt, generate a visual image description " +
+    "that covers: the key action taking place, the setting and environment, " +
+    "the clothing and appearance of every character present, fine visual details, " +
+    "and the perspective or point of view of the scene. " +
+    "Write between 1 and 3 verbose, descriptive paragraphs. " +
+    "Your response MUST follow this exact format — open with <image> on its own " +
+    "line, then the paragraphs, then </image> on its own line:\n" +
+    "<image>\n" +
+    "1-3 verbose paragraphs about the action, setting, clothing, appearance, " +
+    "details, and perspective/point of view of the image\n" +
+    "</image>\n" +
+    "Output ONLY the wrapped description. No commentary, no extra text.";
 
   const POV_INSTRUCTION =
-    "From the following roleplay excerpt, describe in detail what the viewpoint " +
-    "character sees from their own first-person perspective. Include: everything " +
-    "directly in their line of sight, the environment and surroundings, any other " +
-    "characters visible (appearance, expression, pose), lighting, mood, and " +
-    "atmosphere. Write between 1 and 3 detailed, descriptive paragraphs as a " +
-    "visual scene — not as dialogue. " +
-    "Wrap your entire response in <image> and </image> tags. " +
-    "Output ONLY the wrapped description, no commentary.";
+    "From the following roleplay excerpt, generate a visual image description " +
+    "from the viewpoint character's first-person perspective — describe exactly " +
+    "what they see through their own eyes. Cover: the action unfolding in front " +
+    "of them, the setting and environment, the clothing and appearance of every " +
+    "character visible, fine visual details, and the first-person point of view. " +
+    "Write between 1 and 3 verbose, descriptive paragraphs as a visual scene — " +
+    "not as dialogue. " +
+    "Your response MUST follow this exact format — open with <image> on its own " +
+    "line, then the paragraphs, then </image> on its own line:\n" +
+    "<image>\n" +
+    "1-3 verbose paragraphs about the action, setting, clothing, appearance, " +
+    "details, and perspective/point of view of the image\n" +
+    "</image>\n" +
+    "Output ONLY the wrapped description. No commentary, no extra text.";
   // ──────────────────────────────────────────────────────────────────────
 
   // ─── State init ───────────────────────────────────────────────────────

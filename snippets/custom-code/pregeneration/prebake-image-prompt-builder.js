@@ -36,13 +36,18 @@
   const PROMPT_SUFFIX = ", high quality, dramatic lighting";
 
   const EXTRACT_INSTRUCTION =
-    "From the following text, write a verbose and detailed visual scene description " +
-    "suitable for an image generator. Include: characters present " +
-    "(appearance, clothing, expression, and pose), setting and environment, " +
-    "mood, atmosphere, and key action or pose. " +
-    "Write between 1 and 3 detailed, descriptive paragraphs. " +
-    "Wrap your entire response in <image> and </image> tags. " +
-    "Output ONLY the wrapped description, no commentary.";
+    "From the following text, generate a visual image description that covers: " +
+    "the key action taking place, the setting and environment, the clothing and " +
+    "appearance of every character present, fine visual details, and the " +
+    "perspective or point of view of the scene. " +
+    "Write between 1 and 3 verbose, descriptive paragraphs. " +
+    "Your response MUST follow this exact format — open with <image> on its own " +
+    "line, then the paragraphs, then </image> on its own line:\n" +
+    "<image>\n" +
+    "1-3 verbose paragraphs about the action, setting, clothing, appearance, " +
+    "details, and perspective/point of view of the image\n" +
+    "</image>\n" +
+    "Output ONLY the wrapped description. No commentary, no extra text.";
   // ─────────────────────────────────────────────────────────────────────
 
   let lastBuiltPrompt = "";
