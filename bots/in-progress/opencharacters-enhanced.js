@@ -496,7 +496,7 @@ async function generateDynamicPointers() {
       .filter(m => !m.customData?.__pcbw_isLore && !m.customData?.__pcbw_isPointer
                    && (m.author !== "system" || !m.hiddenFrom?.includes("ai")))
       .slice(-6)
-      .map(m => `${m.name || m.author}: ${m.content.replace(/<[^>]+>/g, "").slice(0, 400)}`)
+      .map(m => `${m.name || m.author}: ${m.content.replace(/<[^>]+>/g, "").slice(0, 2500)}`)
       .join("\n");
 
     if (!recent.trim()) return;
@@ -1064,7 +1064,7 @@ async function maybeDigestMemory() {
     const recentMessages = oc.thread.messages
       .filter(m => m.author !== "system" || !m.hiddenFrom?.includes("ai"))
       .slice(-MEMORY_DIGEST_EVERY)
-      .map(m => `${m.name || m.author}: ${m.content.replace(/<[^>]+>/g, "").slice(0, 400)}`)
+      .map(m => `${m.name || m.author}: ${m.content.replace(/<[^>]+>/g, "").slice(0, 2500)}`)
       .join("\n\n");
 
     const summary = await oc.getChatCompletion({
