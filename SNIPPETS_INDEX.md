@@ -89,6 +89,7 @@ Every snippet entry must include:
 
 | name | path | category | purpose | offline-safe | modifies | caveats |
 |---|---|---|---|---|---|---|
+| Image Tag Renderer | `snippets/custom-code/ai-response/ai-response-image-tag-renderer.js` | custom-code-ai-response | Detect `<image>…</image>` blocks in AI messages and render them as generated images via `oc.textToImage()` | no (image API) | messages | Requires companion roleInstruction addon (`ai-response-image-tag-renderer.txt`); AI must close every tag |
 | Postprocessor | `snippets/custom-code/ai-response/ai-response-postprocessor.js` | custom-code-ai-response | Extensible post-processing pipeline for AI messages | yes | messages | Processor errors caught individually |
 | Regeneration Guard | `snippets/custom-code/ai-response/ai-response-regeneration-guard.js` | custom-code-ai-response | Detect and remove duplicate AI responses | yes | messages | Simple hash comparison; near-dupes may pass |
 | Stream Monitor | `snippets/custom-code/ai-response/ai-response-stream-monitor.js` | custom-code-ai-response | Monitor streaming AI messages in real-time | yes | UI | Heavy processing may degrade performance |

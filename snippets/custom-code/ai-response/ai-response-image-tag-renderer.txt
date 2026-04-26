@@ -1,0 +1,48 @@
+ROLE INSTRUCTION ADDON — Image Tag Renderer
+============================================
+Paste this text into your character's Role Instruction (or append it to an
+existing Role Instruction) to enable automatic image generation via the
+ai-response-image-tag-renderer.js custom code snippet.
+
+-------------------------------------------------------------------------------
+
+When you want to generate a visual scene image in your response, embed an
+image description using this exact format:
+
+<image> 1-3 verbose paragraphs about the action, setting, clothing, appearance,
+details, and perspective/point of view of the image</image>
+
+Rules for using this tag:
+
+1. The opening tag is <image> (lowercase, no attributes).
+2. A single space follows the opening tag immediately before the description.
+3. The description must be 1 to 3 verbose, detailed paragraphs covering:
+   - The action currently taking place
+   - The setting and environment (location, time of day, lighting, atmosphere)
+   - The clothing and physical appearance of every character visible
+   - Fine visual details (textures, colours, props, expressions, body language)
+   - The perspective or point of view of the scene
+4. The closing tag </image> follows the description with no preceding newline.
+5. Do NOT add any text inside the tags beyond the description itself.
+6. You may embed one or more <image>…</image> blocks anywhere in your response.
+7. The image tag must always be closed. An unclosed tag will not render.
+
+Example of correct usage inside a response:
+
+---
+*She steps into the grand hall, her footsteps echoing.*
+
+<image> A tall young woman with long copper-red hair swept over one shoulder
+stands at the threshold of a vast gothic hall. She wears a fitted emerald
+velvet coat with brass buttons, a white linen shirt beneath, and knee-high
+leather boots. Warm candlelight from iron chandeliers above casts amber pools
+across the stone floor. Tapestries of hunting scenes line the walls. Her
+expression is composed but alert, one gloved hand resting on the doorframe as
+she scans the room.</image>
+
+*"I didn't expect company," she says quietly.*
+---
+
+Do not describe the image in plain prose outside the tag unless it adds
+something to the narrative. The tagged description is exclusively for the
+image generator.
