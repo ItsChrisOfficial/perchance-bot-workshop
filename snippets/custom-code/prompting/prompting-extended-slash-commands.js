@@ -40,12 +40,15 @@
  *
  * Immediate behavior when pasted:
  *   - Applies the persisted communication mode to reminderMessage on load.
- *   - On each user message starting with "/", the `MessageAdded` handler
- *     receives the message directly via the `{message}` parameter (not via
- *     `.at(-1)` which can race). It checks the command name and, for commands
- *     we own, immediately calls `oc.thread.messages.pop()` to remove the raw
- *     command text before any async work begins. This prevents the platform
- *     from triggering an AI/Narrator reply to the unhandled command text.
+ *   - Perchance routes ALL unrecognised "/" messages to the Narrator before
+ *     MessageAdded fires; the message arrives with author:"narrator" and its
+ *     content is the raw slash-command text the user typed (e.g. "/hidden …").
+ *     The handler therefore accepts both author:"user" and author:"narrator"
+ *     for messages whose content starts with "/".
+ *   - The `{message}` parameter gives a direct reference to the added message
+ *     (not `.at(-1)`, which can race). For commands we own, the handler calls
+ *     `splice` with that reference to remove it before any async work begins,
+ *     preventing the platform from scheduling an AI reply to the raw command text.
  *   - If the command is not in our dispatch table (e.g. /ai, /nar, /user,
  *     /image), the handler returns without touching the message so native
  *     Perchance processing works unchanged.
@@ -383,7 +386,10 @@
   oc.thread.on("MessageAdded", async function ({ message }) {
     try {
       const m = message;
-      if (!m || m.author !== "user") return;
+      // Perchance routes all unrecognised "/" messages to the Narrator, so the
+      // message arrives with author:"narrator" (not "user"). Accept both so that
+      // custom commands work regardless of how the platform routes the input.
+      if (!m || (m.author !== "user" && m.author !== "narrator")) return;
 
       const content = (m.content || "").trim();
       if (!content.startsWith("/")) return;
@@ -399,11 +405,12 @@
       const handler = CUSTOM_COMMANDS[cmdName];
       if (!handler) return;
 
-      // Remove the command message immediately — before any async work —
-      // so the platform cannot trigger an AI/Narrator reply to the raw
-      // command text. This mirrors the documented Perchance slash-command
-      // pattern: check the message, then pop() it, then act.
-      oc.thread.messages.pop();
+      // Remove the command message immediately — before any async work — so the
+      // platform cannot schedule an AI reply to the raw command text.
+      // Use indexOf+splice with the direct message reference rather than pop()
+      // so that removal is reliable even if the message is not the last one.
+      const removeIdx = oc.thread.messages.indexOf(m);
+      if (removeIdx >= 0) oc.thread.messages.splice(removeIdx, 1);
 
       await handler(args);
       console.log(`[pcbw-extSlash] Executed: /${cmdName}`);
