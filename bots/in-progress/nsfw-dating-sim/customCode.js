@@ -1498,7 +1498,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     const is = `width:100%;padding:10px;border-radius:8px;background:#1e1e3a;border:1px solid #444;color:#eee;font-size:14px;box-sizing:border-box;`;
 
     // ── STEP 1: Gender / Name / Description ──
-    function step1() {
+    function step1(opts = {}) {
+      const pfG = opts.gender || "female";
+      const pfN = JSON.stringify(opts.name || "");
+      const pfD = JSON.stringify(opts.desc || "");
       oc.window.show(`
         <div style="${ss}">
           <h2 style="text-align:center;color:#ff6b9d;margin:0 0 6px;">⚔️ Chronicles of the Void King</h2>
@@ -1508,16 +1511,26 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
             <button id="gM" onclick="sel('male')"   style="${bs("#1565c0,#42a5f5")}">♂ Male Companions</button>
           </div>
           <label style="font-size:13px;color:#aaa;">Your name</label>
-          <input id="pName" placeholder="Traveler" style="${is}margin-bottom:10px;" />
+          <input id="pName" placeholder="Traveler" value=${pfN} style="${is}margin-bottom:10px;" />
           <label style="font-size:13px;color:#aaa;">Your appearance (optional)</label>
-          <textarea id="pDesc" placeholder="Short description of how you look..." style="${is}height:70px;resize:vertical;margin-bottom:10px;"></textarea>
+          <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:10px;">
+            <textarea id="pDesc" placeholder="Short description of how you look..." style="${is}height:70px;resize:vertical;flex:1;">${pfD.slice(1,-1)}</textarea>
+            <button id="aiBtn" onclick="aiGen()" title="AI will expand your notes into a full description" style="padding:8px 10px;border:none;border-radius:8px;background:linear-gradient(135deg,#7b1fa2,#ab47bc);color:white;font-size:12px;cursor:pointer;white-space:nowrap;align-self:flex-start;">✨ AI<br>Generate</button>
+          </div>
           <button onclick="go()" style="${bs("#2e7d32,#66bb6a")}">Next → Preferences</button>
         </div>
         <script>
-          let _g='female';
+          let _g=${JSON.stringify(pfG)};
           function sel(g){_g=g;document.getElementById('gF').style.opacity=g==='female'?'1':'0.5';document.getElementById('gM').style.opacity=g==='male'?'1':'0.5';}
-          sel('female');
+          sel(_g);
           function go(){oc.sendMessage('/setup_step2 '+JSON.stringify({gender:_g,name:document.getElementById('pName').value.trim()||'Traveler',desc:document.getElementById('pDesc').value.trim()}));}
+          function aiGen(){
+            const btn=document.getElementById('aiBtn');
+            btn.textContent='⏳…';btn.disabled=true;
+            const name=document.getElementById('pName').value.trim()||'Traveler';
+            const notes=document.getElementById('pDesc').value.trim();
+            oc.sendMessage('/setup_ai_desc '+JSON.stringify({gender:_g,name,notes}));
+          }
         </script>
       `);
     }
@@ -1617,6 +1630,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     }
 
     // Expose step callbacks for message handler
+    cd._uiStep1 = step1;
     cd._uiStep2 = step2;
     cd._uiStep3 = step3;
     cd._uiStep4 = step4;
@@ -1671,44 +1685,54 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
   // Pregenerate world: background image + companion portraits + intro text
   async function pregenerate(data) {
-    oc.window.hide();
-    oc.thread.messages.push({ author: "system", content: "🌀 Generating your world — please wait a moment…" });
+    // Loading overlay — stays visible until everything is ready
+    oc.window.show(`
+      <div style="font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:40px;border-radius:14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;">
+        <div style="font-size:52px;margin-bottom:14px;">🌀</div>
+        <h2 style="color:#ff6b9d;margin:0 0 8px;">Weaving Your World…</h2>
+        <p style="color:#aaa;font-size:13px;margin:0;">Generating characters &amp; world — please wait…</p>
+      </div>
+    `);
 
-    // World cues for image generation
     const worldCues = (data.worldSettings || ["medieval_fantasy"])
       .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
     const worldLabel = (data.worldSettings || [])
       .map(id => WORLD_SETTINGS.find(w => w.id === id)?.label || id).join(" & ");
-    const toneLabel = (data.storyTones || [])
+    const toneLabel  = (data.storyTones || [])
       .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
+    const chars = data.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
 
-    // 1. Background image
-    try {
-      const bg = await oc.generateImage({
+    // 1. Character prompt triggers — prime AI lore for each companion in this world/tone
+    for (const ch of chars) {
+      oc.thread.messages.push({
+        author: "system",
+        content: `[Character context: ${ch.name} | ${ch.archetype}] In a ${worldLabel} world with ${toneLabel} tone: ${ch.nsfwPersonality}`,
+        hiddenFrom: [], expectsReply: false
+      });
+    }
+
+    // 2. All images in parallel — portraits + background
+    cd._portraits = {};
+    await Promise.all([
+      oc.generateImage({
         prompt: `${worldCues} atmospheric scenic establishing shot wide angle cinematic digital art no people`,
         negativePrompt: "people, characters, portraits, text, ui"
-      });
-      if (bg?.url) oc.thread.character.scene.background.url = bg.url;
-    } catch(e) { console.warn("bg image failed:", e?.message); }
-
-    // 2. Companion portraits — store in customData for later use
-    const chars = data.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
-    cd._portraits = {};
-    for (const ch of chars) {
-      try {
-        const r = await oc.generateImage({
+      }).then(r => { if (r?.url) oc.thread.character.scene.background.url = r.url; })
+        .catch(e => console.warn("bg image failed:", e?.message)),
+      ...chars.map(ch =>
+        oc.generateImage({
           prompt: `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`,
           negativePrompt: "nsfw, explicit, nude"
-        });
-        if (r?.url) cd._portraits[ch.id] = r.url;
-      } catch(e) { console.warn(`portrait failed (${ch.id}):`, e?.message); }
-    }
+        }).then(r => { if (r?.url) cd._portraits[ch.id] = r.url; })
+          .catch(e => console.warn(`portrait failed (${ch.id}):`, e?.message))
+      )
+    ]);
 
     // 3. Init game state
     initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones);
     const g = cd.game;
 
-    // 4. Build intro (3-4 paragraphs, world-setting-aware)
+    // 4. World narrative — 3-4 paragraphs; last = what player sees around them
     const arrivals = [
       `A blinding rift of light deposited you here without warning — the portal already collapsed before you could gather your bearings.`,
       `You awoke on cold stone, the last thing you remember being a trembling in reality itself and then: silence, and this.`,
@@ -1716,7 +1740,6 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       `A voice that was not quite a voice said your name, and then you were here, as though you had always been meant to arrive.`
     ];
     const arrival = arrivals[g.time.day % arrivals.length];
-
     const worldDescLine = (data.worldSettings || []).map(id => {
       const w = WORLD_SETTINGS.find(x => x.id === id);
       return w ? `${w.label} — ${w.desc}` : id;
@@ -1729,16 +1752,16 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       `You stand at the fountain's edge${data.desc ? `, ${data.desc}` : ""}, the morning young and the world wide open. A cold wind off the castle hill carries the smell of ${worldCues.split(" ").slice(0, 2).join(" and ")}. Your first lead awaits — and the realm is watching to see what kind of person you are.`
     ].join("\n\n");
 
-    // Remove the "generating" placeholder
-    const idx = oc.thread.messages.findLastIndex(m => m.content?.includes("Generating your world"));
-    if (idx >= 0) oc.thread.messages.splice(idx, 1);
-
     oc.thread.messages.push({ author: "system",
-      content: `✨ **World ready!**  Setting: ${worldLabel}  |  Tone: ${toneLabel}\n🔞 ${g.enabledKinks.length} kink(s) enabled. Type /kinks to adjust consent at any time.` });
-    oc.thread.messages.push({ author: "ai", content: intro });
+      content: `✨ **World ready!**  Setting: ${worldLabel}  |  Tone: ${toneLabel}\n🔞 ${g.enabledKinks.length} kink(s) enabled. Type /kinks to adjust consent at any time.`,
+      expectsReply: false });
+    oc.thread.messages.push({ author: "ai", content: intro, expectsReply: false });
 
     updateReminder();
     updateShortcutButtons();
+
+    // 5. Pop loading screen — fully removes the window (hide() leaves an invisible overlay)
+    oc.window.pop();
   }
 
   // Add missing fields for older save states
@@ -1789,6 +1812,27 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       // Setup wizard message routing
       const text = message.content?.trim() || "";
 
+      // AI description response — capture while awaiting AI desc generation
+      if (message.author === "ai" && cd._awaitingAiDesc) {
+        const d = cd._awaitingAiDesc;
+        cd._awaitingAiDesc = null;
+        if (cd._uiStep1) cd._uiStep1({ gender: d.gender, name: d.name, desc: message.content?.trim() || "" });
+        return;
+      }
+
+      if (text.startsWith("/setup_ai_desc ")) {
+        try {
+          const d = JSON.parse(text.slice(15));
+          cd._awaitingAiDesc = d;
+          // Guide the AI to respond with a character description only
+          oc.thread.messages.push({
+            author: "system",
+            content: `[Setup task] Write a vivid 2-3 sentence physical appearance description for a character named "${d.name}" based on these notes: "${d.notes || "mysterious traveler"}". Reply ONLY with the description — no greetings, no roleplay.`,
+            expectsReply: false
+          });
+        } catch(_) {}
+        return;
+      }
       if (text.startsWith("/setup_step2 ")) {
         try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep2?.(d); } catch(_) {}
         return;
@@ -1841,13 +1885,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       } else {
         prompt = `${loc.name} scene ${wc} atmospheric cinematic digital art establishing shot`;
       }
-      oc.thread.messages.push({ author: "system", content: `\uD83C\uDFA8 Generating image (${mode})…` });
+      oc.thread.messages.push({ author: "system", content: `\uD83C\uDFA8 Generating image (${mode})…`, expectsReply: false });
       try {
         const r = await oc.generateImage({ prompt, negativePrompt: "text, watermark, ui, hud" });
-        if (r?.url) oc.thread.messages.push({ author: "system", content: `![${mode} image](${r.url})` });
-        else oc.thread.messages.push({ author: "system", content: "Image generation returned no result." });
+        if (r?.url) oc.thread.messages.push({ author: "system", content: `![${mode} image](${r.url})`, expectsReply: false });
+        else oc.thread.messages.push({ author: "system", content: "Image generation returned no result.", expectsReply: false });
       } catch(e) {
-        oc.thread.messages.push({ author: "system", content: "Image generation failed." });
+        oc.thread.messages.push({ author: "system", content: "Image generation failed.", expectsReply: false });
       }
       return;
     }
