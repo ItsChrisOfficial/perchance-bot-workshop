@@ -182,9 +182,13 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     // oc.thread.character.roleInstruction is the correct thread-specific override
     oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".`;
 
-    // oc.character.imagePromptSuffix is the documented API for appending to image prompts
-    const kwStr = chars.map(ch => ch.imageKeywords).join("; ") + "; adventurer traveler human portrait fantasy outfit determined eyes";
-    oc.character.imagePromptSuffix = kwStr;
+    // oc.character.imagePromptKeywords — Perchance-specific object that injects per-character
+    // keyword sets into image generation whenever that character is present.
+    // Format: { "Character Name": "keyword, list, here" }
+    // Appends by default; prefix with "@prepend " to prepend instead.
+    const kwMap = {};
+    chars.forEach(ch => { kwMap[ch.name] = ch.imageKeywords; });
+    oc.character.imagePromptKeywords = kwMap;
 
     updateReminder();
     updateShortcutButtons();
@@ -414,11 +418,6 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       }
       charState.met = true;
       g.activeCharacterId = charId;
-      const kwIdx = getActiveChars().findIndex(c => c.id === charId);
-      if (kwIdx !== -1) {
-        // oc.character.imagePromptSuffix is the documented property for image prompt keywords
-        oc.character.imagePromptSuffix = ch.imageKeywords;
-      }
       updateReminder();
       oc.thread.messages.push({ author: "system", content: `💬 You approach **${ch.name}** (${ch.archetype}). Affection: ${charState.affection} | Dialogue stage: ${charState.dialogueStage}.` });
       return true;
@@ -731,8 +730,6 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const detected = detectActiveChar(text);
     if (detected) {
       g.activeCharacterId = detected.id;
-      // oc.character.imagePromptSuffix is the documented API for image prompt keywords
-      oc.character.imagePromptSuffix = detected.imageKeywords;
       if (!g.characters[detected.id].met) {
         g.characters[detected.id].met = true;
       }
