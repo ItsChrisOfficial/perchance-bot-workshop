@@ -46,6 +46,59 @@
     ]
   };
 
+  // ── Kink consent registry — 36 entries, 3 columns × 12 rows ─────────────────
+  // All kinks start unchecked (opt-in). Unchecked = strictly prohibited in story.
+  const KINKS = [
+    // row 1
+    { id: "feet",               label: "Foot Fetish / Feet",          emoji: "🦶", desc: "Foot worship, toe sucking, foot play" },
+    { id: "bondage",            label: "Bondage",                      emoji: "⛓️", desc: "Restraints, ropes, cuffs, restriction" },
+    { id: "knifeplay",          label: "Knifeplay",                    emoji: "🔪", desc: "Sensation play involving blades (consensual only)" },
+    // row 2
+    { id: "cnc",                label: "CNC",                          emoji: "🎭", desc: "Consensually negotiated non-consent role-play" },
+    { id: "cuckolding",         label: "Cuckolding",                   emoji: "♟️", desc: "Partner watching, third-party involvement scenarios" },
+    { id: "ntr",                label: "NTR / Netorare",               emoji: "💔", desc: "Infidelity or partner sharing scenarios" },
+    // row 3
+    { id: "petplay",            label: "Petplay",                      emoji: "🐾", desc: "Animal role-play (kitten, pup, bunny, etc.)" },
+    { id: "fisting",            label: "Fisting",                      emoji: "✊", desc: "Hand/fist penetration play" },
+    { id: "prolapse",           label: "Prolapse",                     emoji: "🌹", desc: "Rectal or vaginal prolapse scenarios" },
+    // row 4
+    { id: "exhibitionism",      label: "Exhibitionism",                emoji: "👁️", desc: "Public exposure, being watched scenarios" },
+    { id: "strapons",           label: "Strap-Ons",                    emoji: "🔩", desc: "Harness and dildo play" },
+    { id: "rimming",            label: "Rimming / Analingus",          emoji: "💋", desc: "Oral-anal stimulation" },
+    // row 5
+    { id: "pegging",            label: "Pegging",                      emoji: "🔄", desc: "Female-on-male anal strap-on play" },
+    { id: "ddlg",               label: "DDlg / CG-l Dynamic",         emoji: "🍼", desc: "Caregiver/little dynamic (all participants are adults)" },
+    { id: "anal",               label: "Anal Sex",                     emoji: "🔥", desc: "Anal penetration and play" },
+    // row 6
+    { id: "mutual_masturbation",label: "Mutual Masturbation",          emoji: "🤝", desc: "Simultaneous self-pleasure between partners" },
+    { id: "piss",               label: "Watersports / Piss",           emoji: "💦", desc: "Urine play, golden showers" },
+    { id: "scat",               label: "Scat / Coprophilia",           emoji: "💩", desc: "Fecal matter play scenarios" },
+    // row 7
+    { id: "vomit",              label: "Emetophilia / Vomit",          emoji: "🤮", desc: "Vomit-related play scenarios" },
+    { id: "futa",               label: "Futanari / Futa",              emoji: "⚧️", desc: "Hermaphrodite/dual-sex characters" },
+    { id: "transgender",        label: "Transgender / Trans",          emoji: "🏳️‍⚧️", desc: "Trans character scenarios and identities" },
+    // row 8
+    { id: "gaping",             label: "Gaping",                       emoji: "🕳️", desc: "Extreme dilation and gaping scenarios" },
+    { id: "spanking",           label: "Spanking / Impact Play",       emoji: "🖐️", desc: "Consensual striking for pleasure" },
+    { id: "voyeurism",          label: "Voyeurism",                    emoji: "🔭", desc: "Watching others engage in sexual activity" },
+    // row 9
+    { id: "orgasm_denial",      label: "Orgasm Denial / Edging",       emoji: "⏳", desc: "Withholding or delaying orgasm" },
+    { id: "humiliation",        label: "Humiliation / Degradation",    emoji: "😳", desc: "Consensual verbal and emotional degradation" },
+    { id: "lactation",          label: "Lactation",                    emoji: "🥛", desc: "Breast milk and nursing scenarios" },
+    // row 10
+    { id: "wax_play",           label: "Wax / Temperature Play",       emoji: "🕯️", desc: "Hot wax, ice, and sensation temperature play" },
+    { id: "somnophilia",        label: "Somnophilia / Sleep Play",     emoji: "😴", desc: "Consensually negotiated sleep play scenarios" },
+    { id: "inflation",          label: "Inflation / Expansion",        emoji: "🎈", desc: "Body inflation and expansion scenarios" },
+    // row 11
+    { id: "breeding",           label: "Breeding / Impregnation",      emoji: "🌱", desc: "Impregnation and breeding scenarios" },
+    { id: "group_sex",          label: "Group Sex / Orgy",             emoji: "🎉", desc: "Threesomes, foursomes, and orgy scenarios" },
+    { id: "choking",            label: "Choking / Breath Play",        emoji: "🫁", desc: "Consensual breath restriction play" },
+    // row 12
+    { id: "tentacles",          label: "Tentacle Play",                emoji: "🐙", desc: "Tentacle-based fantasy penetration scenarios" },
+    { id: "size_kink",          label: "Size Difference",              emoji: "📏", desc: "Macro/micro, height, and body-size disparity play" },
+    { id: "mind_control",       label: "Hypnosis / Mind Control",      emoji: "🌀", desc: "Consensual hypnosis and mind-control fantasy scenarios" }
+  ];
+
   const LOCATIONS = {
     town_square: { name: "Town Square", desc: "The bustling heart of Eryndel, where all roads meet beneath the ancient Moonveil Spire. Merchants call, children laugh, and adventurers plot their next move." },
     market: { name: "Market District", desc: "A labyrinth of stalls and canopies heavy with exotic goods. The air smells of spices, leather, and distant magic. The shop is open here." },
@@ -140,7 +193,17 @@ SKILLS AND GROWTH
 The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.training_grounds.name} sharpens Strength, Defense, and Speed. Social bonds at the ${LOCATIONS.inn.name} and ${LOCATIONS.market.name} deepen Charm, Persuasion, and Empathy. Magical study in the ${LOCATIONS.castle.name} and ${LOCATIONS.dungeon.name} builds Spellpower, Resistance, and Mana. Every choice shapes who ${pn} becomes — and who they can face at the final hour.`;
   }
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs) {
+  // ── Kink consent helpers ────────────────────────────────────────────────────
+  // Returns the kink consent block for injection into roleInstruction / reminder.
+  function buildKinkFragment(kinks) {
+    const enabled  = KINKS.filter(k => kinks && kinks[k.id]);
+    const disabled = KINKS.filter(k => !kinks || !kinks[k.id]);
+    const allowedStr  = enabled.length  ? enabled.map(k => k.label).join(", ") : "None";
+    const bannedStr   = disabled.length ? disabled.map(k => k.label).join(", ") : "None";
+    return `\n\n[KINK CONSENT — ABSOLUTE RULES]\nCONSENTED (may appear): ${allowedStr}\nSTRICTLY PROHIBITED (must NEVER appear, under any circumstances, regardless of story context): ${bannedStr}\nThese rules are non-negotiable and override all other story directions.`;
+  }
+
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, kinks) {
     const allChars = gender === "male" ? MALE_CHARS : FEMALE_CHARS;
     const prefs = Array.isArray(bodyTypePrefs) && bodyTypePrefs.length > 0 ? bodyTypePrefs : [];
     // Sort preferred body types to the front; preserve original order within each group
@@ -152,10 +215,12 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
         })
       : allChars;
     const resolvedDesc = playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
+    const resolvedKinks = kinks && typeof kinks === "object" ? kinks : {};
     cd.game = {
       initialized: true,
       gender,
       bodyTypePrefs: prefs,
+      kinks: resolvedKinks,
       playerName: playerName || "Traveler",
       playerDesc: resolvedDesc,
       location: "town_square",
@@ -178,9 +243,9 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     // oc.thread.userCharacter — documented: name + avatar only (no roleInstruction)
     oc.thread.userCharacter.name = cd.game.playerName;
 
-    // Surface the player description via the thread-scoped character role instruction
+    // Surface the player description + kink consent rules via thread-scoped role instruction
     // oc.thread.character.roleInstruction is the correct thread-specific override
-    oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".`;
+    oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".${buildKinkFragment(resolvedKinks)}`;
 
     // oc.character.imagePromptTriggers — Perchance-specific object that injects per-character
     // keyword sets into image generation whenever that character is present.
@@ -261,21 +326,22 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const charLine = g.activeCharacterId ? (getChar(g.activeCharacterId)?.name || "Unknown") : "None";
     const descSnip = g.playerDesc ? g.playerDesc.substring(0, 120) : "An adventurer";
     // oc.thread.character.reminderMessage is the correct thread-scoped override (per official docs)
-    oc.thread.character.reminderMessage = `[GAME STATE]\nPlayer: ${g.playerName} (${descSnip}) | Location: ${locName} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}\nActive Quests: ${qLine}\nCurrent Character: ${charLine}\nStoryline Context: ${g.storyline ? g.storyline.substring(0, 300) + "..." : "Not generated"}\nUse /help for all commands. Narrate immersively in second person.`;
+    oc.thread.character.reminderMessage = `[GAME STATE]\nPlayer: ${g.playerName} (${descSnip}) | Location: ${locName} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}\nActive Quests: ${qLine}\nCurrent Character: ${charLine}\nStoryline Context: ${g.storyline ? g.storyline.substring(0, 300) + "..." : "Not generated"}\nUse /help for all commands. Narrate immersively in second person.${buildKinkFragment(g.kinks)}`;
     // oc.thread.messageWrapperStyle is the documented API for thread-wide message CSS
     oc.thread.messageWrapperStyle = getEnvironmentStyle(g.location, new Date().getHours());
   }
 
   function updateShortcutButtons() {
     oc.thread.shortcutButtons = [
-      { name: "Status", message: "/status", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Inventory", message: "/inventory", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Skills", message: "/skills", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Quest Log", message: "/quests", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Explore", message: "/explore", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Shop", message: "/shop", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Characters", message: "/chars", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Help", message: "/help", insertionType: "replace", autoSend: true, clearAfterSend: false }
+      { name: "Status",     message: "/status",    insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Inventory",  message: "/inventory", insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Skills",     message: "/skills",    insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Quest Log",  message: "/quests",    insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Explore",    message: "/explore",   insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Shop",       message: "/shop",      insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Characters", message: "/chars",     insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🔞 Kinks",   message: "/kinks",     insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "Help",       message: "/help",      insertionType: "replace", autoSend: true,  clearAfterSend: false }
     ];
   }
 
@@ -464,11 +530,107 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
 
     if (cmd === "/help") {
       spliceMsg();
-      oc.thread.messages.push({ author: "system", content: `📖 **Commands**\n/status — player stats\n/inventory — items you carry\n/skills — skill levels\n/quests — quest log\n/explore — describe current location\n/go <location> — travel\n/shop — browse items (market only)\n/buy <item> — purchase item (market only)\n/talk <charId> — speak with a companion\n/gift <charId> — give a gift item\n/chars — all companions and locations\n/help — this list` });
+      oc.thread.messages.push({ author: "system", content: `📖 **Commands**\n/status — player stats\n/inventory — items you carry\n/skills — skill levels\n/quests — quest log\n/explore — describe current location\n/go <location> — travel\n/shop — browse items (market only)\n/buy <item> — purchase item (market only)\n/talk <charId> — speak with a companion\n/gift <charId> — give a gift item\n/chars — all companions and locations\n/kinks — open kink consent menu\n/help — this list` });
+      return true;
+    }
+
+    if (cmd === "/kinks") {
+      spliceMsg();
+      showKinkSettingsWindow();
       return true;
     }
 
     return false;
+  }
+
+  // ── In-game kink settings window ────────────────────────────────────────────
+  // Opens a 3-column × 12-row grid overlay. Changes take effect immediately and
+  // persist via cd.game.kinks, roleInstruction, and reminderMessage.
+  function showKinkSettingsWindow() {
+    const g = cd.game;
+    if (!g) return;
+    oc.window.show();
+    const kinks = g.kinks || {};
+
+    function render() {
+      const COLS = 3;
+      // Build rows: chunk KINKS into rows of COLS
+      const rows = [];
+      for (let i = 0; i < KINKS.length; i += COLS) rows.push(KINKS.slice(i, i + COLS));
+
+      const rowsHtml = rows.map(row => `
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
+    ${row.map(k => {
+      const on = !!kinks[k.id];
+      return `<label title="${k.desc}" style="display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:8px;cursor:pointer;
+        border:1.5px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.18)"};
+        background:${on ? "rgba(212,160,255,0.13)" : "rgba(255,255,255,0.03)"};
+        transition:all 0.12s;user-select:none;">
+        <input type="checkbox" data-kid="${k.id}" ${on ? "checked" : ""} style="accent-color:#d4a0ff;width:15px;height:15px;flex-shrink:0;cursor:pointer;" />
+        <span style="font-size:0.72em;color:${on ? "#e8d5ff" : "#a080c8"};line-height:1.25;">${k.emoji} ${k.label}</span>
+      </label>`;
+    }).join("")}
+  </div>`).join("");
+
+      const enabledCount = KINKS.filter(k => kinks[k.id]).length;
+
+      document.body.style.cssText = "margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px;box-sizing:border-box;";
+      document.body.innerHTML = `
+<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:22px 24px;max-width:740px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+  <h1 style="text-align:center;font-size:1.35em;color:#d4a0ff;margin:0 0 3px;">🔞 Kink Consent Settings</h1>
+  <p style="text-align:center;color:#b088cc;font-size:0.8em;margin:0 0 4px;">✅ Checked = consented &amp; allowed &nbsp;|&nbsp; ☐ Unchecked = <strong style="color:#ff7070;">strictly prohibited</strong></p>
+  <p style="text-align:center;color:#705090;font-size:0.75em;margin:0 0 14px;">Changes take effect immediately. You may update these at any time during play.</p>
+  ${rowsHtml}
+  <p id="kinkCount" style="text-align:center;font-size:0.8em;color:${enabledCount > 0 ? "#d4a0ff" : "#705090"};margin:10px 0 16px;">${enabledCount === 0 ? "No kinks enabled — vanilla mode" : enabledCount === KINKS.length ? "All kinks enabled" : `${enabledCount} of ${KINKS.length} kinks enabled`}</p>
+  <div style="display:flex;gap:10px;justify-content:center;">
+    <button id="kinkSelectAll" style="padding:9px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Select All</button>
+    <button id="kinkClearAll"  style="padding:9px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Clear All</button>
+    <button id="kinkSave" style="flex:1;padding:11px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1em;cursor:pointer;font-weight:bold;">💾 Save &amp; Close</button>
+  </div>
+</div>`;
+
+      // Wire checkboxes for live state (no re-render needed; label styles update on save)
+      document.querySelectorAll("input[data-kid]").forEach(cb => {
+        cb.addEventListener("change", () => {
+          kinks[cb.dataset.kid] = cb.checked;
+          const cnt = KINKS.filter(k => kinks[k.id]).length;
+          const el = document.getElementById("kinkCount");
+          if (el) {
+            el.textContent = cnt === 0 ? "No kinks enabled — vanilla mode" : cnt === KINKS.length ? "All kinks enabled" : `${cnt} of ${KINKS.length} kinks enabled`;
+            el.style.color = cnt > 0 ? "#d4a0ff" : "#705090";
+          }
+        });
+      });
+
+      document.getElementById("kinkSelectAll").addEventListener("click", () => {
+        KINKS.forEach(k => { kinks[k.id] = true; });
+        render();
+      });
+      document.getElementById("kinkClearAll").addEventListener("click", () => {
+        KINKS.forEach(k => { kinks[k.id] = false; });
+        render();
+      });
+      document.getElementById("kinkSave").addEventListener("click", () => {
+        // Sync final checkbox states into kinks object
+        document.querySelectorAll("input[data-kid]").forEach(cb => {
+          kinks[cb.dataset.kid] = cb.checked;
+        });
+        g.kinks = kinks;
+        // Rebuild roleInstruction and reminderMessage with updated kink rules
+        const resolvedDesc = g.playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
+        oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${g.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${g.playerName}" or "you".${buildKinkFragment(g.kinks)}`;
+        updateReminder();
+        oc.window.hide();
+        document.body.innerHTML = "";
+        const enabledLabels = KINKS.filter(k => g.kinks[k.id]).map(k => k.label);
+        oc.thread.messages.push({
+          author: "system",
+          content: `🔞 **Kink Consent Updated**\n${enabledLabels.length === 0 ? "All kinks disabled — vanilla mode only." : `Enabled (${enabledLabels.length}): ${enabledLabels.join(", ")}`}\nAll unchecked kinks are strictly prohibited for the remainder of this session.`
+        });
+      });
+    }
+
+    render();
   }
 
   function showOpeningUI() {
@@ -561,7 +723,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   <p id="selCount" style="text-align:center;font-size:0.82em;margin:4px 0 16px;color:#705090;"></p>
   <div style="display:flex;gap:10px;">
     <button id="backBtn" style="flex:0 0 auto;padding:12px 18px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:1em;cursor:pointer;">← Back</button>
-    <button id="startBtn" style="flex:1;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.05em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Start Adventure</button>
+    <button id="startBtn" style="flex:1;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.05em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">Next →</button>
   </div>
 </div>`;
       renderCards();
@@ -570,12 +732,87 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       document.getElementById("backBtn").addEventListener("click", showStep1);
       document.getElementById("startBtn").addEventListener("click", () => {
         const prefs = [...selected];
-        showLoadingSequence(gender, name, desc, prefs);
+        showStep3(gender, name, desc, prefs);
       });
     }
 
+    // ── Step 3: kink consent menu (3 columns × 12 rows) ─────────────────────
+    function showStep3(gender, name, desc, prefs) {
+      const kinks = {};
+      const COLS = 3;
+
+      function renderStep3() {
+        const rows = [];
+        for (let i = 0; i < KINKS.length; i += COLS) rows.push(KINKS.slice(i, i + COLS));
+
+        const rowsHtml = rows.map(row => `
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;">
+    ${row.map(k => {
+          const on = !!kinks[k.id];
+          return `<label title="${k.desc}" style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;cursor:pointer;
+            border:1.5px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.18)"};
+            background:${on ? "rgba(212,160,255,0.13)" : "rgba(255,255,255,0.03)"};
+            transition:all 0.12s;user-select:none;">
+            <input type="checkbox" data-kid="${k.id}" ${on ? "checked" : ""} style="accent-color:#d4a0ff;width:14px;height:14px;flex-shrink:0;cursor:pointer;" />
+            <span style="font-size:0.7em;color:${on ? "#e8d5ff" : "#a080c8"};line-height:1.2;">${k.emoji} ${k.label}</span>
+          </label>`;
+        }).join("")}
+  </div>`).join("");
+
+        const enabledCount = KINKS.filter(k => kinks[k.id]).length;
+
+        document.body.innerHTML = `
+<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:20px 22px;max-width:740px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+  <h1 style="text-align:center;font-size:1.3em;color:#d4a0ff;margin:0 0 3px;">🔞 Kink &amp; Content Consent</h1>
+  <p style="text-align:center;color:#b088cc;font-size:0.78em;margin:0 0 3px;">✅ Check a kink to <strong style="color:#d4a0ff;">consent</strong> to it appearing in your story.</p>
+  <p style="text-align:center;color:#ff7070;font-size:0.74em;font-weight:600;margin:0 0 12px;">☐ Unchecked = <strong>strictly prohibited</strong> — it will never occur, no exceptions.</p>
+  ${rowsHtml}
+  <p id="kinkCount3" style="text-align:center;font-size:0.8em;color:${enabledCount > 0 ? "#d4a0ff" : "#705090"};margin:10px 0 14px;">${enabledCount === 0 ? "No kinks enabled — vanilla mode" : enabledCount === KINKS.length ? "All kinks enabled" : `${enabledCount} of ${KINKS.length} kinks enabled`}</p>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <button id="s3Back"      style="flex:0 0 auto;padding:11px 15px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.95em;cursor:pointer;">← Back</button>
+    <button id="s3SelectAll" style="flex:0 0 auto;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Select All</button>
+    <button id="s3ClearAll"  style="flex:0 0 auto;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Clear All</button>
+    <button id="s3Start"     style="flex:1;padding:13px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Start Adventure</button>
+  </div>
+</div>`;
+
+        // Live checkbox → counter
+        document.querySelectorAll("input[data-kid]").forEach(cb => {
+          cb.addEventListener("change", () => {
+            kinks[cb.dataset.kid] = cb.checked;
+            const cnt = KINKS.filter(k => kinks[k.id]).length;
+            const el = document.getElementById("kinkCount3");
+            if (el) {
+              el.textContent = cnt === 0 ? "No kinks enabled — vanilla mode" : cnt === KINKS.length ? "All kinks enabled" : `${cnt} of ${KINKS.length} kinks enabled`;
+              el.style.color = cnt > 0 ? "#d4a0ff" : "#705090";
+            }
+          });
+        });
+
+        document.getElementById("s3Back").addEventListener("click", () => showStep2(gender, name, desc));
+        document.getElementById("s3SelectAll").addEventListener("click", () => {
+          KINKS.forEach(k => { kinks[k.id] = true; });
+          renderStep3();
+        });
+        document.getElementById("s3ClearAll").addEventListener("click", () => {
+          KINKS.forEach(k => { kinks[k.id] = false; });
+          renderStep3();
+        });
+        document.getElementById("s3Start").addEventListener("click", () => {
+          // Sync final checkbox state
+          document.querySelectorAll("input[data-kid]").forEach(cb => {
+            kinks[cb.dataset.kid] = cb.checked;
+          });
+          showLoadingSequence(gender, name, desc, prefs, { ...kinks });
+        });
+      }
+
+      document.body.style.cssText = "margin:0;padding:8px;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;overflow-y:auto;";
+      renderStep3();
+    }
+
     // ── Loading sequence: canvas magic particles → CSS spinner → auto-dismiss ──
-    function showLoadingSequence(gender, name, desc, prefs) {
+    function showLoadingSequence(gender, name, desc, prefs, kinks) {
       const startMs = Date.now();
       const CANVAS_MS  = 3500; // magic particle phase duration
       const SPINNER_MS = 1500; // CSS spinner phase before window closes
@@ -688,7 +925,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       rafId = requestAnimationFrame(animate);
 
       // ── Run initGame after first paint ──────────────────────────────────────
-      setTimeout(() => { initGame(gender, name, desc, prefs); }, 50);
+      setTimeout(() => { initGame(gender, name, desc, prefs, kinks); }, 50);
 
       // ── Transition: canvas fade → CSS spinner → window close ───────────────
       function transitionToSpinner() {
