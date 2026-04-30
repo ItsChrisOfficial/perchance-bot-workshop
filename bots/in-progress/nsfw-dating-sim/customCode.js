@@ -151,11 +151,13 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
           return aP - bP;
         })
       : allChars;
+    const resolvedDesc = playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
     cd.game = {
       initialized: true,
       gender,
       bodyTypePrefs: prefs,
       playerName: playerName || "Traveler",
+      playerDesc: resolvedDesc,
       location: "town_square",
       gold: 100,
       xp: 0,
@@ -173,12 +175,16 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       storyline: buildStoryline(chars, playerName).substring(0, 12500)
     };
 
-    oc.userCharacter.name = cd.game.playerName;
-    oc.userCharacter.roleInstruction = playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
+    // oc.thread.userCharacter — documented: name + avatar only (no roleInstruction)
+    oc.thread.userCharacter.name = cd.game.playerName;
 
-    const kws = chars.map(ch => ch.imageKeywords);
-    kws.push("adventurer traveler human portrait fantasy outfit determined eyes");
-    oc.character.imagePromptKeywords = kws;
+    // Surface the player description via the thread-scoped character role instruction
+    // oc.thread.character.roleInstruction is the correct thread-specific override
+    oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".`;
+
+    // oc.character.imagePromptSuffix is the documented API for appending to image prompts
+    const kwStr = chars.map(ch => ch.imageKeywords).join("; ") + "; adventurer traveler human portrait fantasy outfit determined eyes";
+    oc.character.imagePromptSuffix = kwStr;
 
     updateReminder();
     updateShortcutButtons();
@@ -192,6 +198,56 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     return getActiveChars().find(ch => ch.id === id);
   }
 
+  // ── Environment-reactive message styling ────────────────────────────────────
+  // Sets oc.thread.messageWrapperStyle (documented: CSS applied to all thread messages).
+  // 11+ distinct styles driven by current location × real-world time-of-day.
+  function getEnvironmentStyle(location, hour) {
+    // Time bucket (7 slots)
+    const slot = hour >= 5 && hour < 7   ? "dawn"
+               : hour >= 7 && hour < 11  ? "morning"
+               : hour >= 11 && hour < 14 ? "noon"
+               : hour >= 14 && hour < 17 ? "afternoon"
+               : hour >= 17 && hour < 20 ? "dusk"
+               : hour >= 20 && hour < 22 ? "evening"
+               :                           "night";
+
+    // Fixed indoor locations — style 1 (inn/bar): soft warm white, warm grey, amber
+    if (location === "inn") {
+      return "background:rgba(42,22,8,0.88);color:#f2deb0;border-left:3px solid #b87828;padding-left:4px;";
+    }
+    // Style 2 (dungeon): near-black teal, cold stone
+    if (location === "dungeon") {
+      return "background:rgba(4,10,10,0.93);color:#7ab0a0;border-left:3px solid #285040;padding-left:4px;";
+    }
+    // Style 3 (castle): royal deep navy, silver
+    if (location === "castle") {
+      return "background:rgba(8,12,28,0.91);color:#bccaee;border-left:3px solid #4868b8;padding-left:4px;";
+    }
+
+    // Time-based outdoor palette
+    const TIME = {
+      dawn:      { bg: "rgba(38,12,28,0.84)", text: "#f0c8d0", accent: "#b85870" },
+      morning:   { bg: "rgba(58,38,10,0.78)", text: "#f8e8c0", accent: "#c89830" },
+      noon:      { bg: "rgba(10,28,58,0.75)", text: "#e8f0f8", accent: "#4890d0" },
+      afternoon: { bg: "rgba(14,32,52,0.76)", text: "#f0e8d0", accent: "#70a8d8" },
+      dusk:      { bg: "rgba(40,10,18,0.86)", text: "#f8d0b8", accent: "#c04828" },
+      evening:   { bg: "rgba(8,10,34,0.89)", text: "#c8d0f0", accent: "#3848a8" },
+      night:     { bg: "rgba(4,6,24,0.92)",  text: "#b8c0e8", accent: "#2848a0" }
+    };
+
+    // Location accent overrides for outdoor locations
+    const LOC_ACCENT = {
+      forest:           "#386028",   // Style 4-10: deep emerald, shifts with time
+      market:           "#a07028",   // Style 11-17: warm ochre/brass
+      training_grounds: "#804828",   // Style 18-24: terracotta/iron
+      town_square:      null         // Style 25-31: pure time palette
+    };
+
+    const t = TIME[slot];
+    const accent = LOC_ACCENT[location] || t.accent;
+    return `background:${t.bg};color:${t.text};border-left:3px solid ${accent};padding-left:4px;`;
+  }
+
   function updateReminder() {
     const g = cd.game;
     if (!g) return;
@@ -199,7 +255,11 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const activeQ = g.quests.filter(q => !q.completed && q.progress > 0);
     const qLine = activeQ.length ? activeQ.map(q => q.title + " (" + q.progress + "/" + q.goal + ")").join(", ") : "None active";
     const charLine = g.activeCharacterId ? (getChar(g.activeCharacterId)?.name || "Unknown") : "None";
-    oc.character.reminderMessage = `[GAME STATE]\nPlayer: ${g.playerName} | Location: ${locName} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}\nActive Quests: ${qLine}\nCurrent Character: ${charLine}\nStoryline Context: ${g.storyline ? g.storyline.substring(0, 300) + "..." : "Not generated"}\nUse /help for all commands. Narrate immersively in second person.`;
+    const descSnip = g.playerDesc ? g.playerDesc.substring(0, 120) : "An adventurer";
+    // oc.thread.character.reminderMessage is the correct thread-scoped override (per official docs)
+    oc.thread.character.reminderMessage = `[GAME STATE]\nPlayer: ${g.playerName} (${descSnip}) | Location: ${locName} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}\nActive Quests: ${qLine}\nCurrent Character: ${charLine}\nStoryline Context: ${g.storyline ? g.storyline.substring(0, 300) + "..." : "Not generated"}\nUse /help for all commands. Narrate immersively in second person.`;
+    // oc.thread.messageWrapperStyle is the documented API for thread-wide message CSS
+    oc.thread.messageWrapperStyle = getEnvironmentStyle(g.location, new Date().getHours());
   }
 
   function updateShortcutButtons() {
@@ -355,8 +415,9 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       charState.met = true;
       g.activeCharacterId = charId;
       const kwIdx = getActiveChars().findIndex(c => c.id === charId);
-      if (kwIdx !== -1 && oc.character.imagePromptKeywords?.length > 0) {
-        oc.character.imagePromptKeywords[0] = ch.imageKeywords;
+      if (kwIdx !== -1) {
+        // oc.character.imagePromptSuffix is the documented property for image prompt keywords
+        oc.character.imagePromptSuffix = ch.imageKeywords;
       }
       updateReminder();
       oc.thread.messages.push({ author: "system", content: `💬 You approach **${ch.name}** (${ch.archetype}). Affection: ${charState.affection} | Dialogue stage: ${charState.dialogueStage}.` });
@@ -670,11 +731,8 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const detected = detectActiveChar(text);
     if (detected) {
       g.activeCharacterId = detected.id;
-      const kws = getActiveChars();
-      const idx = kws.findIndex(c => c.id === detected.id);
-      if (idx !== -1 && oc.character.imagePromptKeywords?.length > 0) {
-        oc.character.imagePromptKeywords[0] = detected.imageKeywords;
-      }
+      // oc.character.imagePromptSuffix is the documented API for image prompt keywords
+      oc.character.imagePromptSuffix = detected.imageKeywords;
       if (!g.characters[detected.id].met) {
         g.characters[detected.id].met = true;
       }
