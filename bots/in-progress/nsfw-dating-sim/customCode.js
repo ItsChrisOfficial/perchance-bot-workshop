@@ -182,13 +182,13 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     // oc.thread.character.roleInstruction is the correct thread-specific override
     oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".`;
 
-    // oc.character.imagePromptKeywords — Perchance-specific object that injects per-character
+    // oc.character.imagePromptTriggers — Perchance-specific object that injects per-character
     // keyword sets into image generation whenever that character is present.
     // Format: { "Character Name": "keyword, list, here" }
     // Appends by default; prefix with "@prepend " to prepend instead.
     const kwMap = {};
     chars.forEach(ch => { kwMap[ch.name] = ch.imageKeywords; });
-    oc.character.imagePromptKeywords = kwMap;
+    oc.character.imagePromptTriggers = kwMap;
 
     updateReminder();
     updateShortcutButtons();
