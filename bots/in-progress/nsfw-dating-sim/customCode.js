@@ -99,6 +99,82 @@
     { id: "mind_control",       label: "Hypnosis / Mind Control",      emoji: "🌀", desc: "Consensual hypnosis and mind-control fantasy scenarios" }
   ];
 
+  // ── World settings (15 options, up to 2 selectable) ──────────────────────────
+  const WORLD_SETTINGS = [
+    { id: "medieval_fantasy",   label: "Medieval Fantasy",       emoji: "⚔️",  desc: "Knights, castles, ancient magic, and quests of legend" },
+    { id: "dark_fantasy",       label: "Dark Fantasy",           emoji: "🌑",  desc: "Grim sorcery, morally corrupt realms, shadow and horror" },
+    { id: "high_fantasy",       label: "High Fantasy",           emoji: "🏰",  desc: "Epic magic, noble destinies, world-spanning mythology" },
+    { id: "eastern_fantasy",    label: "Eastern Fantasy",        emoji: "🏮",  desc: "Wuxia cultivation, spirit realms, honour and martial arts" },
+    { id: "mythological",       label: "Mythological / Ancient", emoji: "🏛️",  desc: "Gods, heroes, oracles, and the age of legends" },
+    { id: "steampunk",          label: "Steampunk",              emoji: "⚙️",  desc: "Victorian industry, clockwork airships, and arcane engines" },
+    { id: "cyberpunk",          label: "Cyberpunk",              emoji: "🌆",  desc: "Neon megacities, corporate dystopia, and neural implants" },
+    { id: "modern_day",         label: "Modern Day",             emoji: "🏙️",  desc: "Contemporary world with hidden secrets or supernatural edges" },
+    { id: "near_future",        label: "Near Future / Sci-Fi",   emoji: "🚀",  desc: "Space colonies, AI governance, and post-scarcity tensions" },
+    { id: "space_opera",        label: "Space Opera",            emoji: "🌌",  desc: "Galactic empires, alien civilizations, and star-spanning wars" },
+    { id: "post_apocalyptic",   label: "Post-Apocalyptic",       emoji: "☢️",  desc: "Collapsed civilization, survival culture, and fractured hope" },
+    { id: "solarpunk",          label: "Solarpunk",              emoji: "🌿",  desc: "Eco-utopian society, community bonds, and green technology" },
+    { id: "supernatural_horror",label: "Supernatural Horror",    emoji: "👻",  desc: "Cursed places, eldritch forces, and dread beneath the mundane" },
+    { id: "urban_fantasy",      label: "Urban Fantasy",          emoji: "🌃",  desc: "Hidden magical world beneath a modern city's surface" },
+    { id: "pirate_nautical",    label: "Pirate / Nautical",      emoji: "⚓",  desc: "Sea-faring adventure, buried treasure, and freedom on the waves" }
+  ];
+
+  // ── Story tones (15 options, up to 3 selectable) ──────────────────────────────
+  const STORY_TONES = [
+    { id: "dark_romance",        label: "Dark Romance",              emoji: "🖤",  desc: "Passionate, dangerous love laced with shadow and obsession" },
+    { id: "slow_burn",           label: "Slow Burn",                 emoji: "🕯️",  desc: "Tension that builds agonisingly slowly before igniting" },
+    { id: "enemies_to_lovers",   label: "Enemies to Lovers",        emoji: "⚔️❤️", desc: "Rivals who clash until undeniable feelings surface" },
+    { id: "giddy_friendship",    label: "Giddy Friendship",          emoji: "😄",  desc: "Bright warmth, laughter, and bonds that feel like coming home" },
+    { id: "slice_of_life",       label: "Slice of Life",             emoji: "☀️",  desc: "Quiet, human moments that matter as much as grand quests" },
+    { id: "tragic_love",         label: "Tragic Love",               emoji: "💔",  desc: "Beauty and heartbreak intertwined — love that costs everything" },
+    { id: "action_adventure",    label: "Action & Adventure",        emoji: "⚡",  desc: "Momentum, danger, and the thrill of every next horizon" },
+    { id: "cozy_comfort",        label: "Cozy & Comforting",         emoji: "☕",  desc: "Safe warmth, gentle stakes, and soft-lit intimate moments" },
+    { id: "mystery_thriller",    label: "Mystery & Thriller",        emoji: "🔍",  desc: "Clues, hidden truths, and the satisfaction of revelation" },
+    { id: "forbidden_love",      label: "Forbidden Love",            emoji: "💜",  desc: "Desire that defies rules, duty, or fate itself" },
+    { id: "redemption_arc",      label: "Redemption Arc",            emoji: "✨",  desc: "Broken souls finding their way back to the light" },
+    { id: "found_family",        label: "Found Family",              emoji: "🫂",  desc: "Chosen bonds forged through hardship and unconditional care" },
+    { id: "survival_horror",     label: "Survival & Horror",         emoji: "💀",  desc: "High stakes, genuine fear, and the cost of staying alive" },
+    { id: "political_intrigue",  label: "Political Intrigue",        emoji: "♟️",  desc: "Power, deception, and alliances that shift like sand" },
+    { id: "philosophical",       label: "Philosophical / Introspective", emoji: "🧘", desc: "Questions of meaning, identity, and what we owe each other" }
+  ];
+
+  // ── Arrival scenario pools keyed by world setting ────────────────────────────
+  const ARRIVAL_SCENARIOS = {
+    medieval_fantasy:    ["You awoke in a hay-strewn stable on the outskirts of the city, a Traveler's Brand smoldering on your hand. Farmhands found you at first light — without a horse, a pack, or a name they recognized.", "You materialized in a burst of violet light at the centre of the town square, sending merchants scattering and pigeons wheeling into the sky. A hooded elder pressed a single coin into your palm and vanished before you could speak.", "The last thing you remember was a raging storm at sea. You came to on a riverbank outside the city walls, soaked and barefoot, the brand on your skin still warm."],
+    dark_fantasy:        ["You clawed your way out of a shallow grave at the edge of the Whisperwood. You had no memory of how you came to be there, only the brand on your hand and the faint echo of a ritual chant fading from your ears.", "You woke on an obsidian altar in an abandoned shrine, the sacrificial chalk circle around you already broken by some unseen force that had interceded on your behalf.", "Someone — or something — dragged you from a collapsing dungeon passage and left you at the city gates. You never saw your rescuer, only the claw-mark scores in the stone where you'd been held."],
+    high_fantasy:        ["A rift of golden light split the sky above the city's highest spire and you fell through it, landing in a fountain in the courtyard below. Citizens called it an omen. The old seer called it an answer to a prayer.", "A prophetic storm rolled in from the north without warning. When it cleared, you were standing in the town square, the Traveler's Brand blazing on your skin, as if the world itself had summoned you here.", "The great Astral Gate in the mountain pass opened for the first time in a century and you stepped out of it, blinking, with nothing but the clothes on your back and a name you weren't sure was even yours."],
+    eastern_fantasy:     ["You descended from the spirit realm through a sacred peach blossom tree at the city's eastern gate. The petals that clung to your robes confirmed it to those who knew the signs — you had been sent.", "Your qi condensed from thin air on the steps of the cultivation hall. The grandmaster simply bowed and said the heavens were never wrong about these things.", "You were meditating on a distant mountain when the world folded and you were dropped here without ceremony — a gift or a test, you could not yet tell."],
+    mythological:        ["The Fates cut your thread in your old life and tied it here instead. You awoke on a temple floor, oil lamps still burning around you, the priest wide-eyed and trembling with the certainty that the gods had answered the city's prayers.", "A great oracle fell silent mid-prophecy and when she looked up again, you were standing there — unasked-for, unexplained, and undeniable.", "You fell from a rift in the heavens during a lunar eclipse and landed, unhurt, in the fountain at the forum's heart. Half the city watched. None of them spoke for a long moment."],
+    steampunk:           ["You were found unconscious in the cargo hold of an automated freight dirigible that had no record of taking on a passenger. The dockworkers said the manifest showed an empty hold — right up until the moment you tumbled out of it.", "A faulty aetheric conduit in the lower city crackled and you stepped out of the discharge arc, singed but alive, with no memory of where you had been before the spark took you.", "The grand difference engine in the Academy basement registered an anomalous input at 3:17 a.m. and printed a single card: your name. By morning you were found asleep at the city gates with the card in your pocket."],
+    cyberpunk:           ["You came to in a service corridor behind a neon-lit bar, rain hammering the corrugated roof above. Your neural implant had been wiped clean — no ID, no credit balance, no history. Only the glowing brand on your wrist and the vague sense that someone had gone to great lengths to place you here.", "A waste-collection drone flagged you as an unregistered biological asset and called the authorities. You had no chip, no record, and a message burned into the skin of your wrist: Find them. It wasn't signed.", "The corpo-med clinic two blocks from the transit hub said you were brought in by an anonymous fixer who paid in full and left no name. You had no implants, no ID, and one instruction stored in a disposable data-chip taped to your forearm."],
+    modern_day:          ["You came to on a park bench with no phone, no wallet, and no memory of the past twenty-four hours. The timestamp on the single piece of paper in your pocket matched the exact moment the city's security cameras had a citywide blackout.", "You answered a job listing you don't remember applying for and woke up already seated across from your new employer, who smiled as though your confusion was entirely expected.", "A stranger handed you a key on a crowded subway platform and stepped off the train at the next stop. You followed the key to a locker. Inside was a phone, an address, and a note: 'They're already watching. Start here.'"],
+    near_future:         ["The colony transport listed you as a confirmed fatality in last year's Kepler Station collapse. Yet here you are, standing in the arrivals bay with a brand on your arm and a gap in your memory the size of eleven months.", "A military-grade stasis pod washed up in the harbour with no ship registry and no mission record. You were the only occupant, and according to the bioscan, you had been under for exactly three years.", "The quantum relay station registered a spontaneous entanglement event and you materialized in the operator's chair, coffee mug and all, from a location the system still refuses to display."],
+    space_opera:         ["A derelict escape pod drifted into the spaceport's outer ring with no flight origin in its logs — only you inside, the brand on your arm glowing in the dark of the cockpit.", "The hyperspace lane between Sector 7 and the Velum Expanse spat you out without a ship, without a crew, and without a reasonable explanation. The station medics confirmed you were alive and stable. Physics, they noted, offered no such confirmation.", "A distress beacon activated in the station's lower docking ring. When port security cut open the sealed cargo unit, they found you — alive, branded, and very much unscheduled."],
+    post_apocalyptic:    ["A scavenger crew pulled you out of a pre-collapse cryo-vault two kilometres outside the settlement perimeter. The vault's manifest listed your name under a project with no surviving documentation. Whatever you were preserved for, it begins now.", "You walked out of the irradiated zone to the north without a rad-suit and without a scratch. The checkpoint guards let you through less out of protocol and more out of sheer disbelief.", "Someone left you unconscious at the settlement gate with a supply satchel and a note hammered to a fence post: 'Protect them. They matter.' No one on the gate saw who placed you there."],
+    solarpunk:           ["The community beacon — a solar-powered horn used only for genuine emergencies — activated on its own at dawn. When the collective gathered around it, you were there, sitting cross-legged in the community garden, the brand on your arm already being examined by the head gardener with gentle curiosity.", "An unmapped seed-ship drifted into the harbour with all lights off. You were the only one aboard, tending a greenhouse compartment full of plants no one in the community had ever classified.", "The town's eldest living tree — said to be connected to the root network of the whole valley — dropped a single leaf out of season. You were found asleep beneath it, unmarked in any register, the brand on your skin warm to the touch."],
+    supernatural_horror: ["The priest found you inside a salt circle in the church basement that had not existed the day before. The wards were your own doing, apparently — your hands still smelled of chalk and iron, and you have no memory of drawing them.", "You came to on the floor of a condemned building that locals hadn't entered in a decade. Something had been keeping the darkness at bay around you; the scorch marks on the floorboards suggested it had not been easy.", "Three witnesses saw you step out of a shadow that had no source at 2:33 in the morning. You were awake and upright — but you had no idea where you had been, only that whatever was in there had not wanted to let you go."],
+    urban_fantasy:       ["A hidden door in the subway system — the kind that only appears under certain light conditions — was open when you walked past it. You stepped through without thinking. When you stepped back out, you were in a different part of the city entirely, and there was a market behind you that hadn't existed before.", "The city's unofficial magical registry — maintained by a very discreet office on the fourteenth floor of an unmarked building — flagged a spontaneous Calling in the eastern district. You were the Calling. They sent someone to collect you before you wandered into something irreversible.", "A tattoo appeared on your arm overnight. By morning, strangers on the street were doing double-takes. By noon, a woman in a tailored coat had handed you a card and said, very quietly, 'We've been expecting you for some time.'"],
+    pirate_nautical:     ["A merchant vessel fished you out of the deep water between the islands with no ship in sight and no memory of how you ended up there. The cargo manifest they wrote up simply listed you as 'salvage — status: unclear'.", "You washed up on the harbour breakwater at low tide, the brand on your arm glowing faintly in the pre-dawn dark. The harbour master's daughter found you and decided, with admirable practicality, to keep the discovery between the two of you until she understood what it meant.", "You were below decks on a ship you don't remember boarding when it made port. The captain claimed he'd never seen you before in his life. The ship's log — which he'd kept meticulously for thirty years — had your name pencilled into the crew manifest in handwriting that wasn't his."]
+  };
+
+  // ── Tone-inflected opening lines ─────────────────────────────────────────────
+  const TONE_OPENING_LINES = {
+    dark_romance:       "There is beauty here, undeniable and unsettling — the kind that makes you want to reach for something you already know will leave a mark.",
+    slow_burn:          "Nothing in this place announces itself. Everything worth understanding will have to be earned, slowly, the way a fire earns a room's warmth.",
+    enemies_to_lovers:  "The first faces that find you are not entirely welcoming, and yet something about this place — about them — refuses to let you look away.",
+    giddy_friendship:   "There is an unexpected lightness here, as if the world itself is glad you arrived and is just waiting for you to notice.",
+    slice_of_life:      "For all the strangeness of your arrival, there is something deeply ordinary about this place — and that ordinariness, you sense, is its own kind of gift.",
+    tragic_love:        "Something about the air here tastes of unfinished stories and things left unsaid — a sweetness that carries the faint shadow of cost.",
+    action_adventure:   "You can feel it immediately: this place is moving, always moving, and standing still will not be an option for long.",
+    cozy_comfort:       "Whatever brought you here, whatever lies ahead, there is something in this corner of the world that already feels, improbably, like it might become home.",
+    mystery_thriller:   "The answers are here — you can feel the shape of them — but they are buried beneath layers that will not give themselves up easily.",
+    forbidden_love:     "Even in these first moments, you sense that the connections available to you will not come without a price that someone, somewhere, has decided you should not pay.",
+    redemption_arc:     "There is a feeling here — persistent, quiet — that something broken is being given the raw materials to be rebuilt, if you are willing.",
+    found_family:       "Strangers pass you by, and yet you have the strange conviction that some of them are meant to stop.",
+    survival_horror:    "Beneath the surface of this place, something is watching. You feel it before you see anything, before you understand anything — that familiar animal certainty that the stakes are very, very real.",
+    political_intrigue: "Every smile here is a calculation. Every offered hand holds something back. You are already a move on someone's board, whether you know it yet or not.",
+    philosophical:      "You do not know yet what this place will ask of you — but you already sense it will require you to be more honest with yourself than you have been in some time."
+  };
+
   const LOCATIONS = {
     town_square: { name: "Town Square", desc: "The bustling heart of Eryndel, where all roads meet beneath the ancient Moonveil Spire. Merchants call, children laugh, and adventurers plot their next move." },
     market: { name: "Market District", desc: "A labyrinth of stalls and canopies heavy with exotic goods. The air smells of spices, leather, and distant magic. The shop is open here." },
@@ -218,7 +294,45 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       `These rules are non-negotiable and override all other story directions.`;
   }
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs, kinks) {
+  // Returns the world-setting + tone fragment for roleInstruction / reminder.
+  function buildWorldSettingFragment(worldSettings, tones) {
+    if ((!worldSettings || !worldSettings.length) && (!tones || !tones.length)) return "";
+    const settingLabels = (worldSettings || []).map(id => { const s = WORLD_SETTINGS.find(x => x.id === id); return s ? `${s.emoji} ${s.label}` : id; });
+    const toneLabels    = (tones || []).map(id => { const t = STORY_TONES.find(x => x.id === id); return t ? `${t.emoji} ${t.label}` : id; });
+    return `\n\n[WORLD & TONE CONTEXT]\nWorld Setting${settingLabels.length > 1 ? "s" : ""}: ${settingLabels.join(" + ") || "Unspecified"}\nStory Tone${toneLabels.length > 1 ? "s" : ""}: ${toneLabels.join(", ") || "Unspecified"}\nAll narration, dialogue, and events must honour these settings and tones consistently.`;
+  }
+
+  // Builds the 3-4 paragraph world introduction pushed as the AI's first message.
+  function buildWorldIntro(chars, playerName, playerDesc, worldSettings, tones) {
+    const pn = playerName || "the Traveler";
+    const primaryId    = (worldSettings && worldSettings[0]) || "medieval_fantasy";
+    const secondaryId  = (worldSettings && worldSettings[1]) || null;
+    const primarySW    = WORLD_SETTINGS.find(s => s.id === primaryId) || WORLD_SETTINGS[0];
+    const secondarySW  = secondaryId ? WORLD_SETTINGS.find(s => s.id === secondaryId) : null;
+    const toneObjs     = (tones || []).map(id => STORY_TONES.find(t => t.id === id)).filter(Boolean);
+
+    // ── Para 1: World overview ───────────────────────────────────────────────
+    let worldDesc = `The realm of Eryndel wears the face of a ${primarySW.label.toLowerCase()} world`;
+    if (secondarySW) worldDesc += ` with veins of ${secondarySW.label.toLowerCase()} running beneath its surface`;
+    worldDesc += `. ${primarySW.desc}. Three thousand years ago, the Void King Malachar tore open a rift between worlds, and though seven heroes sealed him away at the cost of their souls, those seals are failing. The tremors that shake the land are not geological — they are the death-rattles of the oldest magic left in existence.`;
+
+    // ── Para 2: Arrival ──────────────────────────────────────────────────────
+    const arrivalPool = ARRIVAL_SCENARIOS[primaryId] || ARRIVAL_SCENARIOS["medieval_fantasy"];
+    const arrival = arrivalPool[Math.floor(Math.random() * arrivalPool.length)];
+    let arrivalPara = arrival + ` The mark on your hand — a faintly luminous sigil that appeared the moment you arrived — is the Traveler's Brand. Scholars who recognise it know what it means. It means the world chose you.`;
+
+    // ── Para 3: Hook ─────────────────────────────────────────────────────────
+    const firstChar = chars[0];
+    const toneOpener = toneObjs.length > 0 ? TONE_OPENING_LINES[toneObjs[0].id] || "" : "";
+    let hookPara = `${toneOpener ? toneOpener + " " : ""}Already, word of your arrival is spreading. ${firstChar ? `A figure matching ${firstChar.name}'s description has been asking about you at the gates — someone who knows about the Brand, who has been waiting for the one it would choose. ` : ""}The first seal to demand your attention is nearby, beneath the forest to the east. You have very little time before what is crumbling becomes what is gone.`;
+
+    // ── Para 4: What you see around you ──────────────────────────────────────
+    let scenePara = `You stand now in the town square of Eryndel. ${LOCATIONS.town_square.desc} Around you: merchants are setting up morning stalls beneath painted awnings, a group of guards change shift at the main gate with the clanking ritual of routine, and somewhere overhead a bell in the Moonveil spire counts the hour. The air smells of bread, stone dust, and something faintly electric — residue from whatever force brought you here. People glance your way with curiosity. Your adventure begins with a single step in any direction.`;
+
+    return [worldDesc, arrivalPara, hookPara, scenePara].join("\n\n");
+  }
+
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, kinks, worldSettings, tones) {
     const allChars = gender === "male" ? MALE_CHARS : FEMALE_CHARS;
     const prefs = Array.isArray(bodyTypePrefs) && bodyTypePrefs.length > 0 ? bodyTypePrefs : [];
     // Sort preferred body types to the front; preserve original order within each group
@@ -231,11 +345,15 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       : allChars;
     const resolvedDesc = playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
     const resolvedKinks = kinks && typeof kinks === "object" ? kinks : {};
+    const resolvedWorldSettings = Array.isArray(worldSettings) && worldSettings.length ? worldSettings : ["medieval_fantasy"];
+    const resolvedTones = Array.isArray(tones) && tones.length ? tones : [];
     cd.game = {
       initialized: true,
       gender,
       bodyTypePrefs: prefs,
       kinks: resolvedKinks,
+      worldSettings: resolvedWorldSettings,
+      tones: resolvedTones,
       playerName: playerName || "Traveler",
       playerDesc: resolvedDesc,
       location: "town_square",
@@ -245,6 +363,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       xpToNext: 100,
       inventory: [],
       activeCharacterId: null,
+      portraits: {},
       skills: {
         combat: { strength: 1, defense: 1, speed: 1 },
         social: { charm: 1, persuasion: 1, empathy: 1 },
@@ -252,7 +371,8 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       },
       quests: [...MAIN_QUESTS.map(q => ({ ...q })), ...buildSideQuests(chars)],
       characters: Object.fromEntries(chars.map(ch => [ch.id, { affection: 0, met: false, currentLocation: ch.location, dialogueStage: 0, questProgress: 0 }])),
-      storyline: buildStoryline(chars, playerName).substring(0, 12500)
+      storyline: buildStoryline(chars, playerName).substring(0, 12500),
+      pendingIntro: buildWorldIntro(chars, playerName || "Traveler", resolvedDesc, resolvedWorldSettings, resolvedTones)
     };
 
     // oc.thread.userCharacter — documented: name + avatar only (no roleInstruction)
@@ -260,7 +380,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
 
     // Surface the player description + kink consent rules via thread-scoped role instruction
     // oc.thread.character.roleInstruction is the correct thread-specific override
-    oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".${buildKinkFragment(resolvedKinks)}`;
+    oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".${buildWorldSettingFragment(resolvedWorldSettings, resolvedTones)}${buildKinkFragment(resolvedKinks)}`;
 
     // oc.character.imagePromptTriggers — Perchance-specific object that injects per-character
     // keyword sets into image generation whenever that character is present.
@@ -650,7 +770,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       document.getElementById("kinkSave").addEventListener("click", () => {
         g.kinks = { ...kinks };
         const resolvedDesc = g.playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
-        oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${g.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${g.playerName}" or "you".${buildKinkFragment(g.kinks)}`;
+        oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${g.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${g.playerName}" or "you".${buildWorldSettingFragment(g.worldSettings, g.tones)}${buildKinkFragment(g.kinks)}`;
         updateReminder();
         oc.window.hide();
         document.body.innerHTML = "";
@@ -769,12 +889,108 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       document.getElementById("backBtn").addEventListener("click", showStep1);
       document.getElementById("startBtn").addEventListener("click", () => {
         const prefs = [...selected];
-        showStep3(gender, name, desc, prefs);
+        showStepWorldTone(gender, name, desc, prefs);
       });
     }
 
+    // ── Step 2b: world setting + story tone ─────────────────────────────────
+    function showStepWorldTone(gender, name, desc, prefs) {
+      const selectedSettings = new Set();
+      const selectedTones    = new Set();
+      const MAX_SETTINGS = 2;
+      const MAX_TONES    = 3;
+
+      function renderWorldTone() {
+        function settingCard(s) {
+          const on = selectedSettings.has(s.id);
+          return `<div data-ws="${s.id}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;` +
+            `border:2px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.2)"};background:${on ? "rgba(212,160,255,0.13)" : "rgba(255,255,255,0.03)"};` +
+            `transition:all 0.13s;user-select:none;margin-bottom:6px;">` +
+            `<span style="font-size:1.4em;flex-shrink:0;">${s.emoji}</span>` +
+            `<div style="flex:1;"><div style="font-weight:600;font-size:0.88em;color:${on ? "#e8d5ff" : "#c9a8ee"};">${s.label}</div>` +
+            `<div style="font-size:0.73em;color:#9070b0;">${s.desc}</div></div>` +
+            `<div style="width:16px;height:16px;border-radius:4px;border:2px solid ${on ? "#d4a0ff" : "#7a4faa"};background:${on ? "#d4a0ff" : "transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+            `${on ? '<span style="color:#1a0a2e;font-size:0.7em;font-weight:900;">✓</span>' : ""}</div></div>`;
+        }
+        function toneCard(t) {
+          const on = selectedTones.has(t.id);
+          return `<div data-st="${t.id}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;` +
+            `border:2px solid ${on ? "#a0d4ff" : "rgba(150,200,255,0.2)"};background:${on ? "rgba(160,212,255,0.10)" : "rgba(255,255,255,0.03)"};` +
+            `transition:all 0.13s;user-select:none;margin-bottom:6px;">` +
+            `<span style="font-size:1.4em;flex-shrink:0;">${t.emoji}</span>` +
+            `<div style="flex:1;"><div style="font-weight:600;font-size:0.88em;color:${on ? "#d0eaff" : "#c9a8ee"};">${t.label}</div>` +
+            `<div style="font-size:0.73em;color:#9070b0;">${t.desc}</div></div>` +
+            `<div style="width:16px;height:16px;border-radius:4px;border:2px solid ${on ? "#a0d4ff" : "#4a7faa"};background:${on ? "#a0d4ff" : "transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">` +
+            `${on ? '<span style="color:#0a1a2e;font-size:0.7em;font-weight:900;">✓</span>' : ""}</div></div>`;
+        }
+
+        // Layout: 2-column grid for settings, 2-column grid for tones
+        const halfS = Math.ceil(WORLD_SETTINGS.length / 2);
+        const colS1 = WORLD_SETTINGS.slice(0, halfS);
+        const colS2 = WORLD_SETTINGS.slice(halfS);
+        const halfT = Math.ceil(STORY_TONES.length / 2);
+        const colT1 = STORY_TONES.slice(0, halfT);
+        const colT2 = STORY_TONES.slice(halfT);
+
+        document.body.innerHTML =
+          `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:20px 22px;max-width:820px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">` +
+          `<h1 style="text-align:center;font-size:1.25em;color:#d4a0ff;margin:0 0 3px;">🌍 World Setting &amp; Story Tone</h1>` +
+          `<p style="text-align:center;color:#b088cc;font-size:0.78em;margin:0 0 12px;">Choose up to <strong style="color:#d4a0ff;">2 world settings</strong> and up to <strong style="color:#a0d4ff;">3 story tones</strong>. Leaving all unselected defaults to Medieval Fantasy.</p>` +
+          `<div style="display:flex;gap:12px;margin-bottom:12px;">` +
+          `<div style="flex:1;border-radius:10px;background:rgba(180,100,255,0.05);border:1px solid rgba(200,150,255,0.2);padding:10px;">` +
+          `<p style="text-align:center;font-size:0.8em;color:#d4a0ff;margin:0 0 8px;font-weight:600;">🌍 World Setting (pick up to 2)</p>` +
+          `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;">` +
+          `<div>${colS1.map(settingCard).join("")}</div><div>${colS2.map(settingCard).join("")}</div>` +
+          `</div><p id="selSCount" style="text-align:center;font-size:0.75em;margin:6px 0 0;color:#705090;"></p></div>` +
+          `<div style="flex:1;border-radius:10px;background:rgba(100,180,255,0.05);border:1px solid rgba(150,200,255,0.2);padding:10px;">` +
+          `<p style="text-align:center;font-size:0.8em;color:#a0d4ff;margin:0 0 8px;font-weight:600;">🎭 Story Tone (pick up to 3)</p>` +
+          `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;">` +
+          `<div>${colT1.map(toneCard).join("")}</div><div>${colT2.map(toneCard).join("")}</div>` +
+          `</div><p id="selTCount" style="text-align:center;font-size:0.75em;margin:6px 0 0;color:#705090;"></p></div>` +
+          `</div>` +
+          `<div style="display:flex;gap:10px;">` +
+          `<button id="wtBack" style="flex:0 0 auto;padding:12px 18px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:1em;cursor:pointer;">← Back</button>` +
+          `<button id="wtNext" style="flex:1;padding:13px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1em;cursor:pointer;font-weight:bold;">Next →</button>` +
+          `</div></div>`;
+
+        function updateCounts() {
+          const sEl = document.getElementById("selSCount");
+          const tEl = document.getElementById("selTCount");
+          if (sEl) sEl.textContent = selectedSettings.size === 0 ? "None selected — defaults to Medieval Fantasy" : `${selectedSettings.size} of ${MAX_SETTINGS} selected`;
+          if (tEl) tEl.textContent = selectedTones.size === 0 ? "None selected — tone is open" : `${selectedTones.size} of ${MAX_TONES} selected`;
+        }
+        updateCounts();
+
+        document.querySelectorAll("[data-ws]").forEach(el => {
+          el.addEventListener("click", () => {
+            const id = el.dataset.ws;
+            if (selectedSettings.has(id)) { selectedSettings.delete(id); }
+            else if (selectedSettings.size < MAX_SETTINGS) { selectedSettings.add(id); }
+            renderWorldTone();
+          });
+        });
+        document.querySelectorAll("[data-st]").forEach(el => {
+          el.addEventListener("click", () => {
+            const id = el.dataset.st;
+            if (selectedTones.has(id)) { selectedTones.delete(id); }
+            else if (selectedTones.size < MAX_TONES) { selectedTones.add(id); }
+            renderWorldTone();
+          });
+        });
+        document.getElementById("wtBack").addEventListener("click", () => showStep2(gender, name, desc));
+        document.getElementById("wtNext").addEventListener("click", () => {
+          const ws = [...selectedSettings];
+          const ts = [...selectedTones];
+          showStep3(gender, name, desc, prefs, ws, ts);
+        });
+      }
+
+      document.body.style.cssText = "margin:0;padding:8px;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;overflow-y:auto;";
+      renderWorldTone();
+    }
+
     // ── Step 3: kink consent menu (3 columns × 12 rows, 4-state cycle) ──────────
-    function showStep3(gender, name, desc, prefs) {
+    function showStep3(gender, name, desc, prefs, worldSettings, tones) {
       const kinks = {};
       const CYCLE = [null, "both", "give", "receive"];
       const STATE_META = {
@@ -844,13 +1060,13 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
           el.addEventListener("click", () => { cycleState(el.dataset.kid); renderStep3(); });
         });
 
-        document.getElementById("s3Back").addEventListener("click",      () => showStep2(gender, name, desc));
+        document.getElementById("s3Back").addEventListener("click",      () => showStepWorldTone(gender, name, desc, prefs));
         document.getElementById("s3SelectAll").addEventListener("click",  () => { KINKS.forEach(k => { kinks[k.id] = "both"; });    renderStep3(); });
         document.getElementById("s3GiveAll").addEventListener("click",    () => { KINKS.forEach(k => { kinks[k.id] = "give"; });    renderStep3(); });
         document.getElementById("s3RecvAll").addEventListener("click",    () => { KINKS.forEach(k => { kinks[k.id] = "receive"; }); renderStep3(); });
         document.getElementById("s3ClearAll").addEventListener("click",   () => { KINKS.forEach(k => { kinks[k.id] = null; });      renderStep3(); });
         document.getElementById("s3Start").addEventListener("click", () => {
-          showLoadingSequence(gender, name, desc, prefs, { ...kinks });
+          showLoadingSequence(gender, name, desc, prefs, { ...kinks }, worldSettings, tones);
         });
       }
 
@@ -858,11 +1074,18 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       renderStep3();
     }
 
-    // ── Loading sequence: canvas magic particles → CSS spinner → auto-dismiss ──
-    function showLoadingSequence(gender, name, desc, prefs, kinks) {
+    // ── Loading sequence: canvas magic particles → portrait generation → CSS spinner → auto-dismiss ──
+    function showLoadingSequence(gender, name, desc, prefs, kinks, worldSettings, tones) {
       const startMs = Date.now();
       const CANVAS_MS  = 3500; // magic particle phase duration
       const SPINNER_MS = 1500; // CSS spinner phase before window closes
+
+      // Determine chars (needed for portrait gen + intro)
+      const allChars = gender === "male" ? MALE_CHARS : FEMALE_CHARS;
+      const resolvedPrefs = Array.isArray(prefs) && prefs.length > 0 ? prefs : [];
+      const chars = resolvedPrefs.length > 0
+        ? [...allChars].sort((a, b) => (resolvedPrefs.includes(a.bodyType) ? 0 : 1) - (resolvedPrefs.includes(b.bodyType) ? 0 : 1))
+        : allChars;
 
       document.body.innerHTML = `
 <style>
@@ -876,6 +1099,14 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   <div id="ery-label" style="position:relative;z-index:2;text-align:center;pointer-events:none;">
     <p style="color:#c9a8ee;font-size:1.1em;animation:ery-pulse 1.6s ease-in-out infinite;letter-spacing:0.05em;margin:0 0 8px;">⚔️ Weaving the Realm of Eryndel<span id="ery-d1"></span></p>
     <p style="color:#705090;font-size:0.82em;margin:0;">Summoning your companions…</p>
+  </div>
+  <div id="ery-portraits" style="display:none;position:relative;z-index:2;text-align:center;padding:16px;">
+    <p style="color:#d4a0ff;font-size:1em;animation:ery-pulse 1.4s ease-in-out infinite;margin:0 0 12px;">🎨 Painting your companions…</p>
+    <p id="ery-portrait-label" style="color:#a080cc;font-size:0.84em;margin:0 0 8px;min-height:1.2em;">Preparing…</p>
+    <div style="width:240px;height:8px;border-radius:4px;background:rgba(200,150,255,0.15);margin:0 auto 8px;">
+      <div id="ery-portrait-bar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#7a2d9e,#d4a0ff);width:0%;transition:width 0.4s;"></div>
+    </div>
+    <p id="ery-portrait-count" style="color:#705090;font-size:0.76em;margin:0;">0 / 0</p>
   </div>
   <div id="ery-spinner" style="display:none;position:relative;z-index:2;flex-direction:column;align-items:center;gap:16px;">
     <div style="position:relative;width:72px;height:72px;">
@@ -916,7 +1147,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
         if (elapsed >= CANVAS_MS) {
           cancelAnimationFrame(rafId);
           window.removeEventListener("resize", resize);
-          transitionToSpinner();
+          startPortraitGeneration();
           return;
         }
         rafId = requestAnimationFrame(animate);
@@ -972,19 +1203,65 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       rafId = requestAnimationFrame(animate);
 
       // ── Run initGame after first paint ──────────────────────────────────────
-      setTimeout(() => { initGame(gender, name, desc, prefs, kinks); }, 50);
+      setTimeout(() => { initGame(gender, name, desc, prefs, kinks, worldSettings, tones); }, 50);
 
-      // ── Transition: canvas fade → CSS spinner → window close ───────────────
+      // ── Portrait generation phase: shows after canvas, awaits all portraits ──
+      function startPortraitGeneration() {
+        const canvasEl    = document.getElementById("ery-canvas");
+        const labelEl     = document.getElementById("ery-label");
+        const portraitsEl = document.getElementById("ery-portraits");
+        if (canvasEl)    canvasEl.style.opacity = "0.15";
+        if (labelEl)     labelEl.style.display  = "none";
+        if (portraitsEl) portraitsEl.style.display = "block";
+
+        // Use oc.textToImage if available; otherwise skip immediately
+        if (typeof oc.textToImage !== "function") {
+          transitionToSpinner();
+          return;
+        }
+
+        const total = chars.length;
+        let done = 0;
+        const portraits = {};
+
+        function updateProgress(charName) {
+          done++;
+          const pct = Math.round((done / total) * 100);
+          const barEl   = document.getElementById("ery-portrait-bar");
+          const cntEl   = document.getElementById("ery-portrait-count");
+          const lblEl   = document.getElementById("ery-portrait-label");
+          if (barEl) barEl.style.width = pct + "%";
+          if (cntEl) cntEl.textContent = `${done} / ${total}`;
+          if (lblEl) lblEl.textContent = charName ? `Finishing ${charName}…` : "Wrapping up…";
+          if (done >= total) {
+            if (cd.game) cd.game.portraits = portraits;
+            transitionToSpinner();
+          }
+        }
+
+        chars.forEach(ch => {
+          const prompt = ch.imageKeywords + ", portrait, character art, fantasy digital painting, detailed face, upper body";
+          oc.textToImage(prompt).then(
+            url => { portraits[ch.id] = url; updateProgress(ch.name); },
+            ()  => { updateProgress(ch.name); }
+          );
+        });
+      }
+
+      // ── Transition: portrait phase → CSS spinner → window close → push intro ──
       function transitionToSpinner() {
-        const canvasEl   = document.getElementById("ery-canvas");
-        const labelEl    = document.getElementById("ery-label");
-        const spinnerEl  = document.getElementById("ery-spinner");
-        if (canvasEl)  canvasEl.style.opacity  = "0.15";
-        if (labelEl)   labelEl.style.display   = "none";
-        if (spinnerEl) spinnerEl.style.display  = "flex";
+        const portraitsEl = document.getElementById("ery-portraits");
+        const spinnerEl   = document.getElementById("ery-spinner");
+        if (portraitsEl) portraitsEl.style.display = "none";
+        if (spinnerEl)   spinnerEl.style.display    = "flex";
         setTimeout(() => {
           oc.window.hide();
           document.body.innerHTML = "";
+          // Pop all initial messages and push the world intro as the AI's opening
+          if (cd.game && cd.game.pendingIntro) {
+            oc.thread.messages = [{ author: "ai", content: cd.game.pendingIntro }];
+            cd.game.pendingIntro = null;
+          }
         }, SPINNER_MS);
       }
     }
