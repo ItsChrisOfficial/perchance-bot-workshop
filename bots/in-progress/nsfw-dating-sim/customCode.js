@@ -1,91 +1,351 @@
 (() => {
   const cd = oc.thread.customData;
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 1 — CHARACTER DEFINITIONS (with NSFW personality profiles)
+  // ════════════════════════════════════════════════════════════════════════════
+
   const FEMALE_CHARS = [
-    { id: "yuki", name: "Yuki Frostmere", archetype: "Ice Mage", personality: "tsundere", location: "castle", bodyType: "ultrapetite_youthful", imageKeywords: "yuki frostmere ice mage silver hair blue eyes ultrapetite youthful tiny frame delicate features pale skin elegant robes" },
-    { id: "aria", name: "Aria Hearthbloom", archetype: "Healer", personality: "gentle nurturing", location: "inn", bodyType: "plump_busty", imageKeywords: "aria hearthbloom healer pink hair green eyes plump busty full figured soft generous curves warm smile white robes glowing hands" },
-    { id: "sakura", name: "Sakura Windstep", archetype: "Ninja", personality: "energetic playful", location: "forest", bodyType: "lithe_athletic", imageKeywords: "sakura windstep ninja cherry blossom pink hair ponytail lithe athletic toned slender compact build red eyes agile" },
-    { id: "luna", name: "Luna Darkmoore", archetype: "Dark Mage", personality: "mysterious seductive", location: "dungeon", bodyType: "curvy_hourglass", imageKeywords: "luna darkmoore dark mage purple hair violet eyes curvy hourglass figure full bust seductive pale skin dark robes alluring" },
-    { id: "hana", name: "Hana Goldleaf", archetype: "Merchant", personality: "cheerful bubbly", location: "market", bodyType: "chubby_plussize", imageKeywords: "hana goldleaf merchant orange hair amber eyes chubby plus size round soft full figured bright smile merchant apron cheerful" },
-    { id: "mei", name: "Mei Silverscript", archetype: "Scholar", personality: "bookworm intellectual", location: "castle", bodyType: "elfin_willowy", imageKeywords: "mei silverscript scholar blue hair glasses elfin slender willowy tall graceful pointed ears spectacles scrolls pensive intelligent" },
-    { id: "rei", name: "Rei Ironheart", archetype: "Warrior", personality: "stoic honorable", location: "training_grounds", bodyType: "muscular_toned", imageKeywords: "rei ironheart warrior red hair determined armor muscular toned powerful athletic strong defined build battle-ready fierce" },
-    { id: "kira", name: "Kira Stonemark", archetype: "Guard Captain", personality: "no-nonsense direct", location: "training_grounds", bodyType: "tomboy_masculine", imageKeywords: "kira stonemark guard captain short auburn hair androgynous athletic broad-shouldered tomboy masculine no-frills practical armor cropped determined jaw strong" }
+    { id: "yuki", name: "Yuki Frostmere", archetype: "Ice Mage", personality: "tsundere",
+      location: "castle", bodyType: "ultrapetite_youthful",
+      imageKeywords: "yuki frostmere ice mage silver hair blue eyes ultrapetite youthful tiny frame delicate features pale skin elegant robes",
+      nsfwMinStage: 3, photoMinStage: 2, pullbackFrom: null, pullbackTo: null,
+      aftercare: "high", giveReceive: "receiver",
+      nsfwPersonality: "Externally frigid; secretly craves warmth and closeness. Opens up slowly — NSFW only from Close (stage 3) onward. Once comfortable she is intensely devoted. Needs post-intimacy cuddling and reassurance. Dislikes anything degrading. Prefers tender, meaningful encounters." },
+    { id: "aria", name: "Aria Hearthbloom", archetype: "Healer", personality: "gentle nurturing",
+      location: "inn", bodyType: "plump_busty",
+      imageKeywords: "aria hearthbloom healer pink hair green eyes plump busty full figured soft generous curves warm smile white robes glowing hands",
+      nsfwMinStage: 5, photoMinStage: 4, pullbackFrom: null, pullbackTo: null,
+      aftercare: "high", giveReceive: "equal",
+      nsfwPersonality: "Intimacy is sacred to Aria. She needs the deepest emotional bond (Intimate, stage 5) before any physical NSFW content. Will share tasteful intimate photos at Romantic (stage 4). Very vanilla but deeply loving. Extensive aftercare expected both ways. Disgusted by anything rough, painful, or degrading." },
+    { id: "sakura", name: "Sakura Windstep", archetype: "Ninja", personality: "energetic playful",
+      location: "forest", bodyType: "lithe_athletic",
+      imageKeywords: "sakura windstep ninja cherry blossom pink hair ponytail lithe athletic toned slender compact build red eyes agile",
+      nsfwMinStage: 2, photoMinStage: 1, pullbackFrom: null, pullbackTo: null,
+      aftercare: "none", giveReceive: "giver",
+      nsfwPersonality: "Enthusiastic and adventurous. Sends teasing photos from Acquaintance (stage 1); engages physically from Friend (stage 2). Prefers to be in control and to give pleasure. Loves exhibitionism if consented. Zero aftercare — she cartwheels away. Enjoys bondage play if consented (tying the partner). Finds clinginess annoying." },
+    { id: "luna", name: "Luna Darkmoore", archetype: "Dark Mage", personality: "mysterious seductive",
+      location: "dungeon", bodyType: "curvy_hourglass",
+      imageKeywords: "luna darkmoore dark mage purple hair violet eyes curvy hourglass figure full bust seductive pale skin dark robes alluring",
+      nsfwMinStage: 1, photoMinStage: 0, pullbackFrom: 4, pullbackTo: 5,
+      aftercare: "none", giveReceive: "giver",
+      nsfwPersonality: "Seductive from the very first meeting. Sends explicit content from Stranger (stage 0); engages physically from Acquaintance (stage 1). PULL-BACK: once feelings deepen to Romantic (stage 4) she withdraws entirely — she finds vulnerability threatening — and refuses NSFW until Intimate (stage 5). Dominant, giving. No aftercare. Dislikes softness unless she initiates it." },
+    { id: "hana", name: "Hana Goldleaf", archetype: "Merchant", personality: "cheerful bubbly",
+      location: "market", bodyType: "chubby_plussize",
+      imageKeywords: "hana goldleaf merchant orange hair amber eyes chubby plus size round soft full figured bright smile merchant apron cheerful",
+      nsfwMinStage: 2, photoMinStage: 1, pullbackFrom: 4, pullbackTo: 5,
+      aftercare: "high", giveReceive: "equal",
+      nsfwPersonality: "Eager and fun from Friend (stage 2). Sends cute photos from Acquaintance (stage 1). PULL-BACK: when she catches real feelings (Romantic, stage 4) she becomes shy and refuses NSFW until the bond is fully committed (Intimate, stage 5). Needs warm aftercare — snacks, talking, laughter. Equal giver and receiver. Keeps things wholesome and fun." },
+    { id: "mei", name: "Mei Silverscript", archetype: "Scholar", personality: "bookworm intellectual",
+      location: "castle", bodyType: "elfin_willowy",
+      imageKeywords: "mei silverscript scholar blue hair glasses elfin slender willowy tall graceful pointed ears spectacles scrolls pensive intelligent",
+      nsfwMinStage: 5, photoMinStage: 3, pullbackFrom: null, pullbackTo: null,
+      aftercare: "medium", giveReceive: "receiver",
+      nsfwPersonality: "Very reserved. Prefers to exchange detailed intimate messages and increasingly explicit photos from Close (stage 3) well before physical contact at Intimate (stage 5). Wants to 'research and discuss' any activity first. Moderate aftercare — intellectual debrief and quiet closeness. Disgusted by anything crude or low-effort. Receiver; wants to be guided." },
+    { id: "rei", name: "Rei Ironheart", archetype: "Warrior", personality: "stoic honorable",
+      location: "training_grounds", bodyType: "muscular_toned",
+      imageKeywords: "rei ironheart warrior red hair determined armor muscular toned powerful athletic strong defined build battle-ready fierce",
+      nsfwMinStage: 3, photoMinStage: 3, pullbackFrom: null, pullbackTo: null,
+      aftercare: "low", giveReceive: "giver",
+      nsfwPersonality: "Physical and direct. No photos before the real thing — she finds it pointless. Engages from Close (stage 3). Prefers giving and being in charge. Minimal aftercare: a firm nod, maybe a sparring session. Disgusted by anything she sees as demeaning to either party. Honest and uncomplicated about what she wants." },
+    { id: "kira", name: "Kira Stonemark", archetype: "Guard Captain", personality: "no-nonsense direct",
+      location: "training_grounds", bodyType: "tomboy_masculine",
+      imageKeywords: "kira stonemark guard captain short auburn hair androgynous athletic broad-shouldered tomboy masculine no-frills practical armor cropped determined jaw strong",
+      nsfwMinStage: 0, photoMinStage: 0, pullbackFrom: 4, pullbackTo: 5,
+      aftercare: "none", giveReceive: "equal",
+      nsfwPersonality: "Completely casual about physical intimacy — will engage with strangers if she decides she wants to (stage 0+). No games, no build-up. PULL-BACK: if real feelings develop (Romantic, stage 4) she shuts down entirely until she is sure of the bond (Intimate, stage 5). Zero aftercare — she is immediately back on duty. Equal but expects full reciprocity." }
   ];
 
   const MALE_CHARS = [
-    { id: "kael", name: "Kael Embervane", archetype: "Fire Warrior", personality: "passionate bold", location: "training_grounds", bodyType: "heavily_muscular", imageKeywords: "kael embervane fire warrior red hair heavily muscular broad powerful chest flame tattoos passionate intense battle-hardened" },
-    { id: "zeph", name: "Zeph Galewing", archetype: "Wind Dancer", personality: "flirtatious charming", location: "market", bodyType: "lean_dancer", imageKeywords: "zeph galewing wind dancer teal hair lean dancer build lithe flexible graceful handsome charming smile breezy outfit" },
-    { id: "orion", name: "Orion Shadowcloak", archetype: "Dark Knight", personality: "brooding mysterious", location: "dungeon", bodyType: "tall_imposing", imageKeywords: "orion shadowcloak dark knight silver hair tall imposing broad-shouldered dark armor brooding intense violet eyes mysterious" },
-    { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble", location: "castle", bodyType: "athletic_toned", imageKeywords: "sol brightmane paladin golden hair athletic toned build radiant armor kind eyes noble gentle glowing holy" },
-    { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous", location: "inn", bodyType: "wiry_slim", imageKeywords: "ash quickfingers rogue dark hair wiry slim compact nimble playful smirk leather gear daggers agile" },
-    { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic", location: "castle", bodyType: "lanky_slender", imageKeywords: "dex inksworth scholar brown hair lanky slender tall awkward build glasses eager enthusiastic studious books quill" },
-    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", bodyType: "hulking_massive", imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce" },
-    { id: "lys", name: "Lys Silkwhisper", archetype: "Enchanter", personality: "gentle coy", location: "inn", bodyType: "femboy_feminine", imageKeywords: "lys silkwhisper enchanter long silver hair androgynous feminine femboy slender delicate features graceful soft flowy pastel robes gentle coy ethereal" }
+    { id: "kael", name: "Kael Embervane", archetype: "Fire Warrior", personality: "passionate bold",
+      location: "training_grounds", bodyType: "heavily_muscular",
+      imageKeywords: "kael embervane fire warrior red hair heavily muscular broad powerful chest flame tattoos passionate intense battle-hardened",
+      nsfwMinStage: 3, photoMinStage: 2, pullbackFrom: null, pullbackTo: null,
+      aftercare: "low", giveReceive: "equal",
+      nsfwPersonality: "Passionate and intense. Engages from Close (stage 3). Sends bold photos from Friend (stage 2). Very physical and athletic. Low aftercare — wants to spar after. Dislikes anything slow or sentimental. Equal giver and receiver. Enthusiastic and straightforward." },
+    { id: "zeph", name: "Zeph Galewing", archetype: "Wind Dancer", personality: "flirtatious charming",
+      location: "market", bodyType: "lean_dancer",
+      imageKeywords: "zeph galewing wind dancer teal hair lean dancer build lithe flexible graceful handsome charming smile breezy outfit",
+      nsfwMinStage: 2, photoMinStage: 1, pullbackFrom: null, pullbackTo: null,
+      aftercare: "low", giveReceive: "giver",
+      nsfwPersonality: "Natural seducer. Sends teasing photos from Acquaintance (stage 1); engages from Friend (stage 2). Focused entirely on giving pleasure. Light aftercare — jokes, laughter, a breezy exit. Loves variety and novelty. Charming and attentive." },
+    { id: "orion", name: "Orion Shadowcloak", archetype: "Dark Knight", personality: "brooding mysterious",
+      location: "dungeon", bodyType: "tall_imposing",
+      imageKeywords: "orion shadowcloak dark knight silver hair tall imposing broad-shouldered dark armor brooding intense violet eyes mysterious",
+      nsfwMinStage: 4, photoMinStage: 4, pullbackFrom: null, pullbackTo: null,
+      aftercare: "high", giveReceive: "giver",
+      nsfwPersonality: "Brooding exterior hides surprising tenderness. Engages only at Romantic (stage 4); photos also from Romantic. Dominant and giving. Unexpectedly needs significant aftercare — intimacy opens him emotionally in ways that surprise even himself. Very deliberate and selective. Intensity requires patience." },
+    { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble",
+      location: "castle", bodyType: "athletic_toned",
+      imageKeywords: "sol brightmane paladin golden hair athletic toned build radiant armor kind eyes noble gentle glowing holy",
+      nsfwMinStage: 5, photoMinStage: 4, pullbackFrom: null, pullbackTo: null,
+      aftercare: "high", giveReceive: "equal",
+      nsfwPersonality: "Noble and deeply emotional. Only at highest trust (Intimate, stage 5). Tasteful photos from Romantic (stage 4). Very vanilla but utterly devoted. Extensive aftercare — holds for hours. Equal give and receive. Completely disgusted by anything rough, coercive, or degrading." },
+    { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous",
+      location: "inn", bodyType: "wiry_slim",
+      imageKeywords: "ash quickfingers rogue dark hair wiry slim compact nimble playful smirk leather gear daggers agile",
+      nsfwMinStage: 1, photoMinStage: 0, pullbackFrom: null, pullbackTo: null,
+      aftercare: "none", giveReceive: "equal",
+      nsfwPersonality: "Casual and fun from Acquaintance (stage 1). Sends cheeky content from Stranger (stage 0). Zero attachment, mutual pleasure is the whole point. No aftercare — already planning the next heist. Loves variety and playful improvisation. Equal giver and receiver." },
+    { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic",
+      location: "castle", bodyType: "lanky_slender",
+      imageKeywords: "dex inksworth scholar brown hair lanky slender tall awkward build glasses eager enthusiastic studious books quill",
+      nsfwMinStage: 5, photoMinStage: 3, pullbackFrom: null, pullbackTo: null,
+      aftercare: "high", giveReceive: "receiver",
+      nsfwPersonality: "Very nervous and inexperienced. Needs extensive reassurance throughout. Prefers receiving and being gently guided. Warms up via photos and messages from Close (stage 3). Physical intimacy only at Intimate (stage 5). High aftercare — needs to verbally process everything. Eager to please once comfortable but needs constant encouragement." },
+    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal",
+      location: "forest", bodyType: "hulking_massive",
+      imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce",
+      nsfwMinStage: 3, photoMinStage: 3, pullbackFrom: null, pullbackTo: null,
+      aftercare: "none", giveReceive: "giver",
+      nsfwPersonality: "Intense and physical. Engages from Close (stage 3). No photos — wants the real thing only. Dominant, giving. Zero aftercare — sees lingering as weakness. Can be overwhelming; pacing is the player's responsibility. Loyal and fiercely protective once the bond forms." },
+    { id: "lys", name: "Lys Silkwhisper", archetype: "Enchanter", personality: "gentle coy",
+      location: "inn", bodyType: "femboy_feminine",
+      imageKeywords: "lys silkwhisper enchanter long silver hair androgynous feminine femboy slender delicate features graceful soft flowy pastel robes gentle coy ethereal",
+      nsfwMinStage: 3, photoMinStage: 2, pullbackFrom: null, pullbackTo: null,
+      aftercare: "medium", giveReceive: "giver",
+      nsfwPersonality: "Gentle and wholly focused on the partner's pleasure. Prefers to give and be directed. Sends soft intimate photos from Friend (stage 2); engages physically from Close (stage 3). Moderate aftercare — quiet, gentle closeness. Communicates preferences clearly despite shyness. Blushes easily but is open about desires." }
   ];
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 2 — WORLD DATA
+  // ════════════════════════════════════════════════════════════════════════════
+
   const BODY_TYPES = {
-    female: [
-      { id: "ultrapetite_youthful", label: "Ultrapetite / Youthful", emoji: "🌸", desc: "Tiny frame, delicate features" },
-      { id: "plump_busty",          label: "Plump & Busty",          emoji: "🍑", desc: "Full figured, generous curves" },
-      { id: "lithe_athletic",       label: "Lithe & Athletic",       emoji: "⚡", desc: "Toned, slender, compact" },
-      { id: "curvy_hourglass",      label: "Curvy / Hourglass",      emoji: "🌙", desc: "Full bust, seductive curves" },
-      { id: "chubby_plussize",      label: "Chubby / Plus-Size",     emoji: "🌻", desc: "Round, soft, full figured" },
-      { id: "elfin_willowy",        label: "Elfin / Willowy",        emoji: "✨", desc: "Tall, slender, graceful" },
-      { id: "muscular_toned",       label: "Muscular & Toned",       emoji: "⚔️", desc: "Powerful, defined build" },
-      { id: "tomboy_masculine",     label: "Tomboy / Masculine",     emoji: "🪖", desc: "Athletic, androgynous, no-frills" }
-    ],
-    male: [
-      { id: "heavily_muscular", label: "Heavily Muscular",   emoji: "💪", desc: "Broad, powerful chest" },
-      { id: "lean_dancer",      label: "Lean & Graceful",    emoji: "🌬️", desc: "Lithe, flexible, dancer build" },
-      { id: "tall_imposing",    label: "Tall & Imposing",    emoji: "🌑", desc: "Broad-shouldered, commanding" },
-      { id: "athletic_toned",   label: "Athletic & Toned",   emoji: "☀️", desc: "Balanced, paladin physique" },
-      { id: "wiry_slim",        label: "Wiry & Slim",        emoji: "🗡️", desc: "Compact, nimble, quick" },
-      { id: "lanky_slender",    label: "Lanky & Slender",    emoji: "📚", desc: "Tall, awkward, bookish frame" },
-      { id: "hulking_massive",  label: "Hulking & Massive",  emoji: "🪨", desc: "Barrel-chested, primal" },
-      { id: "femboy_feminine",  label: "Femboy / Feminine",  emoji: "🌺", desc: "Slender, androgynous, graceful" }
-    ]
+    ultrapetite_youthful:  { label: "Ultra-Petite / Youthful",    desc: "Tiny frame, delicate features, youthful energy" },
+    lithe_athletic:        { label: "Lithe / Athletic",            desc: "Slender, toned, agile build" },
+    curvy_hourglass:       { label: "Curvy / Hourglass",           desc: "Pronounced curves, balanced proportions" },
+    plump_busty:           { label: "Plump / Busty",               desc: "Soft, full-figured, generous bust" },
+    chubby_plussize:       { label: "Chubby / Plus-Size",          desc: "Round, soft, comfortably full" },
+    muscular_toned:        { label: "Muscular / Toned",            desc: "Powerful, defined, athletic strength" },
+    tomboy_masculine:      { label: "Tomboy / Masculine",          desc: "Androgynous, broad-shouldered, practical" },
+    elfin_willowy:         { label: "Elfin / Willowy",             desc: "Tall, graceful, slender with delicate features" },
+    heavily_muscular:      { label: "Heavily Muscular",            desc: "Massive, broad, barrel-chested power" },
+    lean_dancer:           { label: "Lean / Dancer",               desc: "Lithe, flexible, graceful and nimble" },
+    tall_imposing:         { label: "Tall / Imposing",             desc: "Broad-shouldered, commanding presence" },
+    athletic_toned:        { label: "Athletic / Toned",            desc: "Balanced build, active and capable" },
+    wiry_slim:             { label: "Wiry / Slim",                 desc: "Compact, wiry, quick and light" },
+    lanky_slender:         { label: "Lanky / Slender",             desc: "Tall, thin, slightly awkward but earnest" },
+    hulking_massive:       { label: "Hulking / Massive",           desc: "Enormous, primal, overwhelming size" },
+    femboy_feminine:       { label: "Femboy / Feminine",           desc: "Androgynous, soft, ethereally delicate" }
   };
 
   const LOCATIONS = {
-    town_square: { name: "Town Square", desc: "The bustling heart of Eryndel, where all roads meet beneath the ancient Moonveil Spire. Merchants call, children laugh, and adventurers plot their next move." },
-    market: { name: "Market District", desc: "A labyrinth of stalls and canopies heavy with exotic goods. The air smells of spices, leather, and distant magic. The shop is open here." },
-    inn: { name: "The Cozy Inn", desc: "Warm firelight and the scent of roasting meat. Travelers share tables and stories here. A lute player fills the air with melancholy ballads." },
-    forest: { name: "Whispering Forest", desc: "Ancient trees whose roots remember old wars. Strange lights drift between trunks at dusk. Danger and wonder lurk in equal measure." },
-    castle: { name: "Moonveil Castle", desc: "A grand fortress of pale stone and silver banners. Scholars fill its libraries, guards patrol its halls, and secrets hide in its lower vaults." },
-    dungeon: { name: "Shadow Dungeon", desc: "A subterranean labyrinth of damp stone and flickering torchlight. Creatures of the dark hold dominion here. Only the brave descend willingly." },
-    training_grounds: { name: "Training Grounds", desc: "An open yard of packed earth and wooden dummies. The clash of steel rings out from dawn to dusk. Warriors of every discipline hone their craft." }
+    town_square:      { name: "Town Square",       desc: "The heart of Moonveil — merchants, news, and rumor.",  emoji: "🏙️" },
+    inn:              { name: "The Wanderer's Inn", desc: "Warm hearth, cold ale, and warmer company.",           emoji: "🍺" },
+    market:           { name: "Moonveil Market",   desc: "Goods from every corner of Eryndel.",                  emoji: "🛒" },
+    forest:           { name: "Whispering Forest",  desc: "Ancient trees that remember the First Void War.",      emoji: "🌲" },
+    castle:           { name: "Moonveil Castle",   desc: "Seat of the Crown and repository of arcane knowledge.", emoji: "🏰" },
+    dungeon:          { name: "Shadow Dungeon",     desc: "The Shadows' domain — dangerous but knowledgeable.",   emoji: "🕯️" },
+    training_grounds: { name: "Training Grounds",   desc: "Where warriors are forged under the open sky.",        emoji: "⚔️" }
   };
 
   const SHOP_ITEMS = {
-    health_potion: { name: "Health Potion", cost: 20, desc: "Restores vitality." },
-    mana_potion: { name: "Mana Potion", cost: 25, desc: "Restores magical energy." },
-    rose: { name: "Rose", cost: 10, desc: "A romantic gift (+5 affection).", affectionBonus: 5 },
-    enchanted_gem: { name: "Enchanted Gem", cost: 50, desc: "Rare gift (+15 affection).", affectionBonus: 15 },
-    leather_armor: { name: "Leather Armor", cost: 80, desc: "+2 defense.", stat: { path: "combat.defense", val: 2 } },
-    iron_sword: { name: "Iron Sword", cost: 100, desc: "+3 strength.", stat: { path: "combat.strength", val: 3 } },
-    spellbook: { name: "Spellbook", cost: 120, desc: "+3 spellpower.", stat: { path: "magic.spellpower", val: 3 } }
+    health_potion:  { name: "Health Potion",  cost: 30,  desc: "Restores 20 HP.",                   affectionBonus: 0,  heals: 20 },
+    mana_potion:    { name: "Mana Potion",    cost: 25,  desc: "Restores 20 Mana.",                  affectionBonus: 0,  restoresMana: 20 },
+    rose:           { name: "Rose",           cost: 15,  desc: "A crimson rose (+5 affection).",     affectionBonus: 5  },
+    enchanted_gem:  { name: "Enchanted Gem",  cost: 80,  desc: "Glowing gem (+10 affection).",       affectionBonus: 10 },
+    spellbook:      { name: "Spellbook",      cost: 120, desc: "+2 spellpower.",                     affectionBonus: 0,  stat: { path: "magic.spellpower", val: 2 } },
+    iron_sword:     { name: "Iron Sword",     cost: 100, desc: "+2 strength.",                       affectionBonus: 0,  stat: { path: "combat.strength", val: 2 } },
+    leather_armor:  { name: "Leather Armor",  cost: 90,  desc: "+2 defense.",                        affectionBonus: 0,  stat: { path: "combat.defense", val: 2 } }
   };
 
+  const NIGHT_SHOP_ITEMS = {
+    shadow_dagger:  { name: "Shadow Dagger",  cost: 150, desc: "+3 speed, +1 strength (black market).", affectionBonus: 0, stats: [{ path: "combat.speed", val: 3 }, { path: "combat.strength", val: 1 }] },
+    void_essence:   { name: "Void Essence",   cost: 200, desc: "A crafting reagent of pure void energy (black market).", affectionBonus: 0 }
+  };
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 3 — KINK / CONSENT SYSTEM
+  // ════════════════════════════════════════════════════════════════════════════
+
+  const KINKS = [
+    { id: "feet",               label: "Feet / Foot Worship",                emoji: "🦶" },
+    { id: "bondage",            label: "Bondage / Restraint",                 emoji: "⛓️"  },
+    { id: "knifeplay",          label: "Knife Play",                          emoji: "🔪" },
+    { id: "cnc",                label: "Consensual Non-Consent (CNC)",        emoji: "🎭" },
+    { id: "cuckolding",         label: "Cuckolding",                          emoji: "🪬" },
+    { id: "ntr",                label: "Netorare (NTR)",                      emoji: "💔" },
+    { id: "petplay",            label: "Pet Play",                            emoji: "🐾" },
+    { id: "fisting",            label: "Fisting",                             emoji: "✊" },
+    { id: "prolapse",           label: "Prolapse",                            emoji: "🌹" },
+    { id: "exhibitionism",      label: "Exhibitionism",                       emoji: "👁️"  },
+    { id: "strapon",            label: "Strap-ons",                           emoji: "💜" },
+    { id: "rimming",            label: "Rimming",                             emoji: "💋" },
+    { id: "pegging",            label: "Pegging",                             emoji: "💜" },
+    { id: "ddlg",               label: "DDlg / Age Play (all characters are adults)", emoji: "🎀" },
+    { id: "anal",               label: "Anal",                                emoji: "🍑" },
+    { id: "mutual_masturbation",label: "Mutual Masturbation",                 emoji: "🤝" },
+    { id: "watersports",        label: "Watersports / Piss",                  emoji: "💦" },
+    { id: "scat",               label: "Scat",                                emoji: "💩" },
+    { id: "vomit",              label: "Vomit / Emetophilia",                 emoji: "🤢" },
+    { id: "futa",               label: "Futanari (Futa)",                     emoji: "✨" },
+    { id: "transgender",        label: "Transgender / Trans Characters",      emoji: "🏳️‍⚧️" },
+    { id: "gaping",             label: "Gaping",                              emoji: "🫦" },
+    { id: "voyeurism",          label: "Voyeurism / Watching",                emoji: "🔭" },
+    { id: "spanking",           label: "Spanking / Impact Play",              emoji: "🖐️"  },
+    { id: "waxplay",            label: "Wax Play / Temperature",              emoji: "🕯️"  },
+    { id: "edging",             label: "Orgasm Denial / Edging",              emoji: "⏳" },
+    { id: "hypnosis",           label: "Hypnosis / Mind Control",             emoji: "🌀" },
+    { id: "publicsex",          label: "Public Sex",                          emoji: "🌍" },
+    { id: "sizediff",           label: "Size Difference",                     emoji: "📏" },
+    { id: "tentacles",          label: "Tentacles / Monster",                 emoji: "🐙" }
+  ];
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 4 — GAME MECHANICS DATA
+  // ════════════════════════════════════════════════════════════════════════════
+
+  const CRAFTED_ITEMS = {
+    "Starbloom Bouquet":      { affectionBonus: 30 },
+    "Healing Salve":          { heals: 30 },
+    "Void Codex":             { stat: { path: "magic.spellpower", val: 5 } },
+    "Shadow Cloak":           { stats: [{ path: "combat.defense", val: 3 }, { path: "combat.speed", val: 2 }] },
+    "Elixir of Dual Essence": { heals: 30, restoresMana: 30 }
+  };
+
+  const CRAFTING_RECIPES = [
+    { inputs: ["Rose", "Enchanted Gem"],       output: "Starbloom Bouquet",      desc: "A legendary gift. +30 affection when given." },
+    { inputs: ["Forest Herb", "Forest Herb"],  output: "Healing Salve",          desc: "Restores 30 HP when used." },
+    { inputs: ["Void Shard", "Spellbook"],     output: "Void Codex",             desc: "+5 spellpower permanently." },
+    { inputs: ["Dungeon Key", "Leather Scrap"],output: "Shadow Cloak",           desc: "+3 defense, +2 speed permanently." },
+    { inputs: ["Health Potion", "Mana Potion"],output: "Elixir of Dual Essence", desc: "Restores 30 HP and 30 Mana." }
+  ];
+
+  const ENEMIES = {
+    forest:           [
+      { id: "wolf",           name: "Forest Wolf",      str: 3, def: 1, spd: 4, maxHp: 15, xp: 25, gold: 10, loot: ["Forest Herb"] },
+      { id: "bandit",         name: "Bandit",           str: 4, def: 2, spd: 3, maxHp: 20, xp: 35, gold: 20, loot: ["Leather Scrap"] }
+    ],
+    dungeon:          [
+      { id: "dungeon_guard",  name: "Dungeon Guard",    str: 5, def: 3, spd: 2, maxHp: 25, xp: 40, gold: 25, loot: ["Dungeon Key"] },
+      { id: "void_fragment",  name: "Void Fragment",    str: 6, def: 1, spd: 5, maxHp: 20, xp: 50, gold: 15, loot: ["Void Shard"] }
+    ],
+    training_grounds: [
+      { id: "sparring_partner",name: "Sparring Partner",str: 3, def: 3, spd: 3, maxHp: 20, xp: 20, gold:  5, loot: [] }
+    ],
+    town_square:      [
+      { id: "thug",           name: "Street Thug",      str: 2, def: 1, spd: 2, maxHp: 12, xp: 15, gold:  8, loot: [] }
+    ],
+    castle:           [
+      { id: "castle_guard",   name: "Castle Guard",     str: 4, def: 4, spd: 2, maxHp: 22, xp: 35, gold: 20, loot: [] }
+    ]
+  };
+
+  const CHAR_SCHEDULES = {
+    yuki:   { morning: "castle",           afternoon: "castle",           evening: "inn",            night: "castle"           },
+    aria:   { morning: "inn",              afternoon: "inn",              evening: "inn",            night: "inn"              },
+    sakura: { morning: "forest",           afternoon: "training_grounds", evening: "market",         night: "inn"              },
+    luna:   { morning: "dungeon",          afternoon: "dungeon",          evening: "dungeon",        night: "dungeon"          },
+    hana:   { morning: "market",           afternoon: "market",           evening: "market",         night: "inn"              },
+    mei:    { morning: "castle",           afternoon: "castle",           evening: "castle",         night: "castle"           },
+    rei:    { morning: "training_grounds", afternoon: "training_grounds", evening: "inn",            night: "training_grounds" },
+    kira:   { morning: "training_grounds", afternoon: "training_grounds", evening: "castle",         night: "castle"           },
+    kael:   { morning: "training_grounds", afternoon: "training_grounds", evening: "inn",            night: "inn"              },
+    zeph:   { morning: "market",           afternoon: "market",           evening: "town_square",    night: "inn"              },
+    orion:  { morning: "dungeon",          afternoon: "dungeon",          evening: "dungeon",        night: "dungeon"          },
+    sol:    { morning: "castle",           afternoon: "castle",           evening: "town_square",    night: "inn"              },
+    ash:    { morning: "inn",              afternoon: "market",           evening: "town_square",    night: "dungeon"          },
+    dex:    { morning: "castle",           afternoon: "castle",           evening: "castle",         night: "castle"           },
+    rex:    { morning: "forest",           afternoon: "training_grounds", evening: "inn",            night: "inn"              },
+    lys:    { morning: "inn",              afternoon: "castle",           evening: "inn",            night: "inn"              }
+  };
+
+  const CHAR_META = {
+    yuki:   { favoriteGift: "Spellbook",           rival: "mei"   },
+    aria:   { favoriteGift: "Rose",                rival: null    },
+    sakura: { favoriteGift: "Health Potion",       rival: "kira"  },
+    luna:   { favoriteGift: "Void Codex",          rival: "mei"   },
+    hana:   { favoriteGift: "Enchanted Gem",       rival: null    },
+    mei:    { favoriteGift: "Spellbook",           rival: "yuki"  },
+    rei:    { favoriteGift: "Iron Sword",          rival: "kira"  },
+    kira:   { favoriteGift: "Leather Armor",       rival: "rei"   },
+    kael:   { favoriteGift: "Iron Sword",          rival: "rex"   },
+    zeph:   { favoriteGift: "Rose",                rival: null    },
+    orion:  { favoriteGift: "Void Codex",          rival: null    },
+    sol:    { favoriteGift: "Enchanted Gem",       rival: null    },
+    ash:    { favoriteGift: "Shadow Dagger",       rival: null    },
+    dex:    { favoriteGift: "Spellbook",           rival: null    },
+    rex:    { favoriteGift: "Iron Sword",          rival: "kael"  },
+    lys:    { favoriteGift: "Starbloom Bouquet",   rival: null    }
+  };
+
+  const ROMANTIC_SKILL_REQ = {
+    yuki:   { path: "magic.spellpower",   min: 4 },
+    aria:   { path: "social.empathy",     min: 4 },
+    sakura: { path: "combat.speed",       min: 4 },
+    luna:   { path: "magic.resistance",   min: 4 },
+    hana:   { path: "social.charm",       min: 4 },
+    mei:    { path: "magic.spellpower",   min: 5 },
+    rei:    { path: "combat.strength",    min: 5 },
+    kira:   { path: "combat.defense",     min: 5 },
+    kael:   { path: "combat.strength",    min: 5 },
+    zeph:   { path: "social.charm",       min: 4 },
+    orion:  { path: "magic.resistance",   min: 4 },
+    sol:    { path: "social.persuasion",  min: 4 },
+    ash:    { path: "combat.speed",       min: 4 },
+    dex:    { path: "magic.spellpower",   min: 4 },
+    rex:    { path: "combat.strength",    min: 5 },
+    lys:    { path: "social.empathy",     min: 4 }
+  };
+
+  const REL_TIERS = [
+    { name: "Stranger",     min: 0,   stage: 0 },
+    { name: "Acquaintance", min: 15,  stage: 1 },
+    { name: "Friend",       min: 30,  stage: 2 },
+    { name: "Close",        min: 50,  stage: 3 },
+    { name: "Romantic",     min: 75,  stage: 4 },
+    { name: "Intimate",     min: 100, stage: 5 }
+  ];
+
+  const ACHIEVEMENTS_DEF = [
+    { id: "first_gift",   name: "Gift Giver",          icon: "🎁", cond: "Give your first gift" },
+    { id: "first_fight",  name: "Battle-Tested",        icon: "⚔️", cond: "Win your first fight" },
+    { id: "all_met",      name: "Social Butterfly",     icon: "🦋", cond: "Meet all 8 companions" },
+    { id: "level5",       name: "Seasoned Adventurer",  icon: "⭐", cond: "Reach level 5" },
+    { id: "first_romance",name: "Heartstrings",         icon: "💕", cond: "Reach Romantic tier with any companion" },
+    { id: "intimate",     name: "Kindred Souls",        icon: "💞", cond: "Reach Intimate tier with any companion" },
+    { id: "mq1_done",     name: "Rift Investigator",    icon: "🌀", cond: "Complete Echoes of the Rift" },
+    { id: "mq2_done",     name: "Seal Guardian",        icon: "🔮", cond: "Complete The Shattered Seal" },
+    { id: "mq3_done",     name: "Realm Savior",         icon: "👑", cond: "Complete United Hearts, Unyielding Realm" },
+    { id: "crafter",      name: "Artisan",              icon: "⚗️", cond: "Craft your first item" },
+    { id: "trainer",      name: "Dedicated Student",    icon: "📚", cond: "Train a skill 5 times" },
+    { id: "gold_hoarder", name: "Treasure Hunter",      icon: "💰", cond: "Accumulate 500 gold" },
+    { id: "shadow_path",  name: "The Void Beckons",     icon: "🌑", cond: "Betray 3 companions" },
+    { id: "first_craft",  name: "Alchemist's Touch",    icon: "🧪", cond: "Craft any item for the first time" }
+  ];
+
+  const STAT_GATES = [
+    { desc: "Persuasion ≥5 for the market fence storyline",    check: g => resolveSkill(g, "social.persuasion")  >= 5 },
+    { desc: "Spellpower ≥6 for the dungeon ritual",            check: g => resolveSkill(g, "magic.spellpower")   >= 6 },
+    { desc: "Charm ≥4 for flirting with Yuki or Kael",         check: g => resolveSkill(g, "social.charm")       >= 4 },
+    { desc: "Strength ≥5 for the forest guardian encounter",   check: g => resolveSkill(g, "combat.strength")    >= 5 },
+    { desc: "Empathy ≥5 for Aria or Ash's deepest dialogue",   check: g => resolveSkill(g, "social.empathy")     >= 5 }
+  ];
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 5 — QUEST DATA
+  // ════════════════════════════════════════════════════════════════════════════
+
   const MAIN_QUESTS = [
-    { id: "mq1", title: "Echoes of the Rift", desc: "Investigate the strange tremors shaking Eryndel. Seek clues in the Shadow Dungeon and Whispering Forest.", type: "main", characterId: null, completed: false, progress: 0, goal: 3 },
-    { id: "mq2", title: "The Shattered Seal", desc: "Seven ancient seals once imprisoned the Void King. Three have already broken. Find the remaining four keepers.", type: "main", characterId: null, completed: false, progress: 0, goal: 4 },
-    { id: "mq3", title: "United Hearts, Unyielding Realm", desc: "Win the trust and alliance of all eight companions. Only together can you face the Void King's return.", type: "main", characterId: null, completed: false, progress: 0, goal: 8 }
+    { id: "mq1", type: "main", title: "Echoes of the Rift",           goal: 3, visible: true,
+      desc: "Investigate the tremors and creature sightings near the Shadow Dungeon and Whispering Forest." },
+    { id: "mq2", type: "main", title: "The Shattered Seal",           goal: 4, visible: false,
+      desc: "Earn the trust of each seal guardian and reinforce the four remaining Binding Seals." },
+    { id: "mq3", type: "main", title: "United Hearts, Unyielding Realm", goal: 1, visible: false,
+      desc: "Unite the companions' emotional bonds into one act of will to re-seal Malachar forever." }
   ];
 
   function buildSideQuests(chars) {
-    const quests = [
-      { id: "sq_" + chars[0].id, title: chars[0].name + "'s Trial", desc: "Help " + chars[0].name + " overcome a personal challenge tied to their past.", type: "side", characterId: chars[0].id, completed: false, progress: 0, goal: 2 },
-      { id: "sq_" + chars[1].id, title: chars[1].name + "'s Secret", desc: "Uncover a hidden truth that " + chars[1].name + " has never shared with anyone.", type: "side", characterId: chars[1].id, completed: false, progress: 0, goal: 2 },
-      { id: "sq_" + chars[2].id, title: chars[2].name + "'s Mission", desc: "Assist " + chars[2].name + " in completing a dangerous task they've been delaying.", type: "side", characterId: chars[2].id, completed: false, progress: 0, goal: 2 },
-      { id: "sq_" + chars[3].id, title: chars[3].name + "'s Darkness", desc: "Help " + chars[3].name + " confront the shadows threatening to consume them.", type: "side", characterId: chars[3].id, completed: false, progress: 0, goal: 2 },
-      { id: "sq_" + chars[4].id, title: chars[4].name + "'s Dream", desc: "Support " + chars[4].name + " in achieving a long-held ambition.", type: "side", characterId: chars[4].id, completed: false, progress: 0, goal: 2 },
-      { id: "sq_" + chars[5].id, title: chars[5].name + "'s Discovery", desc: "Join " + chars[5].name + " in investigating an ancient mystery.", type: "side", characterId: chars[5].id, completed: false, progress: 0, goal: 2 },
-      { id: "sq_" + chars[6].id, title: chars[6].name + "'s Honor", desc: "Stand beside " + chars[6].name + " when their reputation is put on the line.", type: "side", characterId: chars[6].id, completed: false, progress: 0, goal: 2 }
-    ];
-    if (chars[7]) {
-      quests.push({ id: "sq_" + chars[7].id, title: chars[7].name + "'s Conviction", desc: "Challenge the beliefs that define " + chars[7].name + " and uncover the truth they alone know about the Void King's imprisonment.", type: "side", characterId: chars[7].id, completed: false, progress: 0, goal: 2 });
-    }
-    return quests;
+    return chars.map((ch, i) => ({
+      id:      `sq_${ch.id}`,
+      type:    "side",
+      charId:  ch.id,
+      title:   `${ch.name}'s Trial`,
+      goal:    2,
+      visible: false,
+      desc:    `Help ${ch.name} resolve a personal crisis tied to the Void King's return.`
+    }));
   }
 
   function buildStoryline(chars, playerName) {
@@ -140,152 +400,343 @@ SKILLS AND GROWTH
 The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.training_grounds.name} sharpens Strength, Defense, and Speed. Social bonds at the ${LOCATIONS.inn.name} and ${LOCATIONS.market.name} deepen Charm, Persuasion, and Empathy. Magical study in the ${LOCATIONS.castle.name} and ${LOCATIONS.dungeon.name} builds Spellpower, Resistance, and Mana. Every choice shapes who ${pn} becomes — and who they can face at the final hour.`;
   }
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs) {
-    const allChars = gender === "male" ? MALE_CHARS : FEMALE_CHARS;
-    const prefs = Array.isArray(bodyTypePrefs) && bodyTypePrefs.length > 0 ? bodyTypePrefs : [];
-    // Sort preferred body types to the front; preserve original order within each group
-    const chars = prefs.length > 0
-      ? [...allChars].sort((a, b) => {
-          const aP = prefs.includes(a.bodyType) ? 0 : 1;
-          const bP = prefs.includes(b.bodyType) ? 0 : 1;
-          return aP - bP;
-        })
-      : allChars;
-    const resolvedDesc = playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
-    cd.game = {
-      initialized: true,
-      gender,
-      bodyTypePrefs: prefs,
-      playerName: playerName || "Traveler",
-      playerDesc: resolvedDesc,
-      location: "town_square",
-      gold: 100,
-      xp: 0,
-      level: 1,
-      xpToNext: 100,
-      inventory: [],
-      activeCharacterId: null,
-      skills: {
-        combat: { strength: 1, defense: 1, speed: 1 },
-        social: { charm: 1, persuasion: 1, empathy: 1 },
-        magic: { spellpower: 1, resistance: 1, mana: 1 }
-      },
-      quests: [...MAIN_QUESTS.map(q => ({ ...q })), ...buildSideQuests(chars)],
-      characters: Object.fromEntries(chars.map(ch => [ch.id, { affection: 0, met: false, currentLocation: ch.location, dialogueStage: 0, questProgress: 0 }])),
-      storyline: buildStoryline(chars, playerName).substring(0, 12500)
-    };
-
-    // oc.thread.userCharacter — documented: name + avatar only (no roleInstruction)
-    oc.thread.userCharacter.name = cd.game.playerName;
-
-    // Surface the player description via the thread-scoped character role instruction
-    // oc.thread.character.roleInstruction is the correct thread-specific override
-    oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${cd.game.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${cd.game.playerName}" or "you".`;
-
-    // oc.character.imagePromptTriggers — Perchance-specific object that injects per-character
-    // keyword sets into image generation whenever that character is present.
-    // Format: { "Character Name": "keyword, list, here" }
-    // Appends by default; prefix with "@prepend " to prepend instead.
-    const kwMap = {};
-    chars.forEach(ch => { kwMap[ch.name] = ch.imageKeywords; });
-    oc.character.imagePromptTriggers = kwMap;
-
-    updateReminder();
-    updateShortcutButtons();
-  }
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 6 — PURE HELPERS
+  // ════════════════════════════════════════════════════════════════════════════
 
   function getActiveChars() {
-    return (cd.game?.gender === "male" ? MALE_CHARS : FEMALE_CHARS);
+    const g = cd.game;
+    return g.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
   }
 
   function getChar(id) {
-    return getActiveChars().find(ch => ch.id === id);
+    return [...FEMALE_CHARS, ...MALE_CHARS].find(c => c.id === id);
   }
 
-  // ── Environment-reactive message styling ────────────────────────────────────
-  // Sets oc.thread.messageWrapperStyle (documented: CSS applied to all thread messages).
-  // 11+ distinct styles driven by current location × real-world time-of-day.
+  function getRelTier(affection) {
+    let tier = REL_TIERS[0];
+    for (const t of REL_TIERS) { if (affection >= t.min) tier = t; }
+    return tier;
+  }
+
+  function getTimeBlock(hour) {
+    if (hour >= 6  && hour < 12) return "morning";
+    if (hour >= 12 && hour < 18) return "afternoon";
+    if (hour >= 18 && hour < 22) return "evening";
+    return "night";
+  }
+
+  function getGameHour(g) {
+    return Math.floor((g.time.totalMinutes % (24 * 60)) / 60);
+  }
+
+  function advanceTime(g, minutes) {
+    const prevDay = g.time.day;
+    g.time.totalMinutes += minutes;
+    g.time.day = Math.floor(g.time.totalMinutes / (24 * 60)) + 1;
+    if (g.time.day > prevDay) {
+      regeneratePriceModifiers(g);
+      g.lastTrained = {};
+    }
+    updateCompanionSchedules(g);
+  }
+
+  function regeneratePriceModifiers(g) {
+    const mods = {};
+    Object.keys(SHOP_ITEMS).forEach(id => {
+      mods[id] = Math.round((0.8 + Math.random() * 0.4) * 100) / 100;
+    });
+    g.priceModifiers = mods;
+  }
+
+  function updateCompanionSchedules(g) {
+    const hour = getGameHour(g);
+    const block = getTimeBlock(hour);
+    const festival = isFestivalDay(g);
+    getActiveChars().forEach(ch => {
+      const sched = CHAR_SCHEDULES[ch.id];
+      if (sched) g.characters[ch.id].currentLocation = festival ? "town_square" : (sched[block] || ch.location);
+    });
+  }
+
+  function isFestivalDay(g) { return g.time.day % 7 === 0; }
+
+  function normalizeItemName(raw) {
+    return raw.replace(/_/g, " ").trim().replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function getItemAffectionBonus(itemName) {
+    const shopKey = Object.keys(SHOP_ITEMS).find(k => SHOP_ITEMS[k].name === itemName);
+    if (shopKey && SHOP_ITEMS[shopKey].affectionBonus) return SHOP_ITEMS[shopKey].affectionBonus;
+    if (CRAFTED_ITEMS[itemName]?.affectionBonus)       return CRAFTED_ITEMS[itemName].affectionBonus;
+    return 0;
+  }
+
+  function resolveSkill(g, path) {
+    const [cat, stat] = path.split(".");
+    return g.skills[cat]?.[stat] ?? 0;
+  }
+
+  function applyStatItem(g, item) {
+    if (item.stat) {
+      const [cat, sk] = item.stat.path.split(".");
+      g.skills[cat][sk] = (g.skills[cat][sk] || 0) + item.stat.val;
+    }
+    if (item.stats) {
+      item.stats.forEach(s => {
+        const [cat, sk] = s.path.split(".");
+        g.skills[cat][sk] = (g.skills[cat][sk] || 0) + s.val;
+      });
+    }
+  }
+
+  function earnAchievement(g, id) {
+    if (g.achievements.find(a => a.id === id)) return false;
+    const def = ACHIEVEMENTS_DEF.find(a => a.id === id);
+    if (!def) return false;
+    g.achievements.push({ id, name: def.name, icon: def.icon, earnedAt: `Day ${g.time.day}` });
+    oc.thread.messages.push({ author: "system", content: `🏆 Achievement Unlocked: ${def.icon} **${def.name}** — ${def.cond}` });
+    return true;
+  }
+
+  function checkAchievements(g) {
+    const chars = getActiveChars();
+    if (chars.every(ch => g.characters[ch.id]?.met))                                  earnAchievement(g, "all_met");
+    if (g.level >= 5)                                                                   earnAchievement(g, "level5");
+    if (chars.some(ch => getRelTier(g.characters[ch.id]?.affection || 0).stage >= 4)) earnAchievement(g, "first_romance");
+    if (chars.some(ch => getRelTier(g.characters[ch.id]?.affection || 0).stage >= 5)) earnAchievement(g, "intimate");
+    if (g.gold >= 500)                                                                  earnAchievement(g, "gold_hoarder");
+    const mq1 = g.quests.find(q => q.id === "mq1");
+    const mq2 = g.quests.find(q => q.id === "mq2");
+    const mq3 = g.quests.find(q => q.id === "mq3");
+    if (mq1?.completed) earnAchievement(g, "mq1_done");
+    if (mq2?.completed) earnAchievement(g, "mq2_done");
+    if (mq3?.completed) { earnAchievement(g, "mq3_done"); triggerEnding(g); }
+    if (g.trainingCount >= 5)  earnAchievement(g, "trainer");
+    if (g.craftingCount >= 1)  earnAchievement(g, "crafter");
+    if ((g.betrayed?.length || 0) >= 3) earnAchievement(g, "shadow_path");
+  }
+
+  function completeQuest(g, quest) {
+    quest.completed = true;
+    quest.progress  = quest.goal;
+    const xpReward   = quest.type === "main" ? 200 : 100;
+    const goldReward = quest.type === "main" ? 100 :  50;
+    awardXP(xpReward);
+    g.gold += goldReward;
+    // Unlock MQ2 after MQ1, MQ3 after MQ2
+    if (quest.id === "mq1") {
+      const mq2 = g.quests.find(q => q.id === "mq2");
+      if (mq2) mq2.visible = true;
+    }
+    if (quest.id === "mq2") {
+      const mq3 = g.quests.find(q => q.id === "mq3");
+      if (mq3) mq3.visible = true;
+    }
+    oc.thread.messages.push({ author: "system",
+      content: `\u2705 **Quest Complete: ${quest.title}**\nReward: +${xpReward} XP, +${goldReward}g` });
+    g.questNotification = true;
+    checkAchievements(g);
+  }
+
+  function getQuestDepError(g, questId) {
+    if (questId === "mq2") {
+      const sidesDone = g.quests.filter(q => q.type === "side" && q.completed).length;
+      const mq2       = g.quests.find(q => q.id === "mq2");
+      const needed    = (mq2?.progress || 0) + 1;
+      if (sidesDone < needed)
+        return `Complete at least ${needed} side quest(s) first (${sidesDone} done).`;
+    }
+    if (questId === "mq3") {
+      if (!g.quests.find(q => q.id === "mq1")?.completed) return "Complete **Echoes of the Rift** first.";
+      if (!g.quests.find(q => q.id === "mq2")?.completed) return "Complete **The Shattered Seal** first.";
+    }
+    return null;
+  }
+
+  function triggerEnding(g) {
+    if (g.gameOver) return;
+    const chars  = getActiveChars();
+    const affs   = chars.map(ch => g.characters[ch.id]?.affection || 0).sort((a, b) => a - b);
+    const median = affs[Math.floor(affs.length / 2)];
+    const allHigh    = affs.every(a => a >= 75);
+    const shadowPath = (g.betrayed?.length || 0) >= 3;
+    // median affection drives the "Realm Saved" ending flavour
+    const bondsForged = median >= 50;
+    let endingName, endingDesc;
+    if (shadowPath) {
+      endingName = "\uD83C\uDF11 Shadow Path";
+      endingDesc = "You chose power over bonds. Eryndel's shadows welcome you, but the hearts you abandoned echo in the silence. Malachar smiles.";
+    } else if (allHigh) {
+      endingName = "\uD83D\uDC9E Hearts United";
+      endingDesc = "The realm stands because of love. Every bond forged became a weapon against the void. The companions stand with you as Malachar is sealed once more.";
+    } else if (bondsForged) {
+      endingName = "\u2728 Bonds Forged, Realm Saved";
+      endingDesc = `You built real friendships (median affection ${median}) — not all hearts were won, but enough warmth filled the ritual. The seal holds. Eryndel breathes again.`;
+    } else {
+      endingName = "\u2694\uFE0F Realm Saved Alone";
+      endingDesc = `You faced the Void King with courage but few true allies (median affection ${median}). The victory is real, but the silence afterward is heavy. The realm endures.`;
+    }
+    g.gameOver = true;
+    g.ending   = endingName;
+    const achList = g.achievements.map(a => `${a.icon} ${a.name}`).join(", ") || "None";
+    oc.thread.messages.push({ author: "system",
+      content: `\uD83C\uDF89 **THE END \u2014 ${endingName}**\n\n${endingDesc}\n\n**Your Journey:** Level ${g.level} | ${g.gold}g | Day ${g.time.day}\n**Achievements:** ${achList}\n\n_Type \`/ng+\` to begin New Game+ and carry your legacy forward._` });
+    updateShortcutButtons();
+  }
+
   function getEnvironmentStyle(location, hour) {
-    // Time bucket (7 slots)
-    const slot = hour >= 5 && hour < 7   ? "dawn"
-               : hour >= 7 && hour < 11  ? "morning"
-               : hour >= 11 && hour < 14 ? "noon"
-               : hour >= 14 && hour < 17 ? "afternoon"
-               : hour >= 17 && hour < 20 ? "dusk"
-               : hour >= 20 && hour < 22 ? "evening"
-               :                           "night";
-
-    // Fixed indoor locations — style 1 (inn/bar): soft warm white, warm grey, amber
-    if (location === "inn") {
-      return "background:rgba(42,22,8,0.88);color:#f2deb0;border-left:3px solid #b87828;padding-left:4px;";
-    }
-    // Style 2 (dungeon): near-black teal, cold stone
-    if (location === "dungeon") {
-      return "background:rgba(4,10,10,0.93);color:#7ab0a0;border-left:3px solid #285040;padding-left:4px;";
-    }
-    // Style 3 (castle): royal deep navy, silver
-    if (location === "castle") {
-      return "background:rgba(8,12,28,0.91);color:#bccaee;border-left:3px solid #4868b8;padding-left:4px;";
-    }
-
-    // Time-based outdoor palette
-    const TIME = {
-      dawn:      { bg: "rgba(38,12,28,0.84)", text: "#f0c8d0", accent: "#b85870" },
-      morning:   { bg: "rgba(58,38,10,0.78)", text: "#f8e8c0", accent: "#c89830" },
-      noon:      { bg: "rgba(10,28,58,0.75)", text: "#e8f0f8", accent: "#4890d0" },
-      afternoon: { bg: "rgba(14,32,52,0.76)", text: "#f0e8d0", accent: "#70a8d8" },
-      dusk:      { bg: "rgba(40,10,18,0.86)", text: "#f8d0b8", accent: "#c04828" },
-      evening:   { bg: "rgba(8,10,34,0.89)", text: "#c8d0f0", accent: "#3848a8" },
-      night:     { bg: "rgba(4,6,24,0.92)",  text: "#b8c0e8", accent: "#2848a0" }
+    const isDark = hour < 6 || hour >= 20;
+    const palettes = {
+      town_square:      isDark ? { bg: "#0d1b2a", accent: "#4a9eff", text: "#c8d8e8" } : { bg: "#f0e6c8", accent: "#d4a017", text: "#2c1810" },
+      inn:              isDark ? { bg: "#1a0f0f", accent: "#ff6b35", text: "#f0d0a0" } : { bg: "#2d1810", accent: "#ff8c42", text: "#f5dfc0" },
+      market:           isDark ? { bg: "#0f1a0f", accent: "#4caf50", text: "#c8e8c8" } : { bg: "#fff8e1", accent: "#ff9800", text: "#3e2723" },
+      forest:           isDark ? { bg: "#071207", accent: "#00ff41", text: "#a0c8a0" } : { bg: "#e8f5e9", accent: "#2e7d32", text: "#1b5e20" },
+      castle:           isDark ? { bg: "#0d0d1a", accent: "#9c27b0", text: "#d0c0e8" } : { bg: "#e8eaf6", accent: "#3f51b5", text: "#1a237e" },
+      dungeon:          isDark ? { bg: "#0a0008", accent: "#7b1fa2", text: "#c080d0" } : { bg: "#1a001a", accent: "#9c27b0", text: "#d0a0d8" },
+      training_grounds: isDark ? { bg: "#1a0d00", accent: "#ff5722", text: "#f0c8a0" } : { bg: "#fce4ec", accent: "#c62828", text: "#4a0000" }
     };
+    const p = palettes[location] || palettes.town_square;
+    return `oc.thread.style = { backgroundColor: "${p.bg}", accentColor: "${p.accent}", textColor: "${p.text}" };`;
+  }
 
-    // Location accent overrides for outdoor locations
-    const LOC_ACCENT = {
-      forest:           "#386028",   // Style 4-10: deep emerald, shifts with time
-      market:           "#a07028",   // Style 11-17: warm ochre/brass
-      training_grounds: "#804828",   // Style 18-24: terracotta/iron
-      town_square:      null         // Style 25-31: pure time palette
-    };
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 7 — STATE DISPLAY
+  // ════════════════════════════════════════════════════════════════════════════
 
-    const t = TIME[slot];
-    const accent = LOC_ACCENT[location] || t.accent;
-    return `background:${t.bg};color:${t.text};border-left:3px solid ${accent};padding-left:4px;`;
+  function buildConsentBlock(g) {
+    const enabled  = (g.enabledKinks || []);
+    const allIds   = KINKS.map(k => k.id);
+    const disabled = allIds.filter(id => !enabled.includes(id));
+    const enabledLabels  = enabled.length  ? enabled.map(id  => { const k = KINKS.find(x => x.id === id);  return k ? k.label : id; }).join(", ") : "None";
+    const disabledLabels = disabled.length ? disabled.map(id => { const k = KINKS.find(x => x.id === id);  return k ? k.label : id; }).join(", ") : "None";
+    return `\n\u2550\u2550\u2550 CONSENT CONTRACT \u2014 ABSOLUTE & NON-NEGOTIABLE \u2550\u2550\u2550\nCONSENTED KINKS (MAY appear in story): ${enabledLabels}\nBANNED KINKS \u2014 MUST NEVER APPEAR under any circumstances, in any context, at any time, ever: ${disabledLabels}\nAny content, act, implication, or reference to a BANNED kink is a hard violation. Do not write it, hint at it, allude to it, or allow it to occur even if a character or player initiates it. Redirect firmly. This constraint overrides all other instructions.\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`;
+  }
+
+  function buildNsfwProfileBlock(g) {
+    if (!g.activeCharacterId) return "";
+    const charDef   = getChar(g.activeCharacterId);
+    if (!charDef) return "";
+    const charState = g.characters[g.activeCharacterId];
+    if (!charState) return "";
+    const aff       = charState.affection || 0;
+    const tier      = getRelTier(aff);
+    const stage     = tier.stage;
+
+    // Determine NSFW access accounting for pull-back zones
+    let nsfwStatus, photoStatus;
+    if (charDef.pullbackFrom !== null && stage >= charDef.pullbackFrom && stage < charDef.pullbackTo) {
+      nsfwStatus  = `\uD83D\uDD12 LOCKED (pull-back zone — ${charDef.name} withdraws between stage ${charDef.pullbackFrom} and ${charDef.pullbackTo})`;
+      photoStatus = `\uD83D\uDD12 LOCKED (same pull-back zone)`;
+    } else {
+      nsfwStatus  = stage >= charDef.nsfwMinStage  ? "\uD83D\uDD13 UNLOCKED" : `\uD83D\uDD12 LOCKED (needs stage ${charDef.nsfwMinStage})`;
+      photoStatus = stage >= charDef.photoMinStage ? "\uD83D\uDD13 UNLOCKED" : `\uD83D\uDD12 LOCKED (needs stage ${charDef.photoMinStage})`;
+    }
+
+    return `\n\u2550\u2550\u2550 ACTIVE CHARACTER NSFW PROFILE: ${charDef.name} \u2550\u2550\u2550\nRelationship: ${tier.name} (Stage ${stage}) | Affection: ${aff}\nPhysical NSFW: ${nsfwStatus}\nIntimate Photos/Messages: ${photoStatus}\nCharacter Traits: ${charDef.nsfwPersonality}\nAftercare: ${charDef.aftercare} | Role preference: ${charDef.giveReceive}\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`;
   }
 
   function updateReminder() {
-    const g = cd.game;
-    if (!g) return;
-    const locName = LOCATIONS[g.location]?.name || g.location;
-    const activeQ = g.quests.filter(q => !q.completed && q.progress > 0);
-    const qLine = activeQ.length ? activeQ.map(q => q.title + " (" + q.progress + "/" + q.goal + ")").join(", ") : "None active";
-    const charLine = g.activeCharacterId ? (getChar(g.activeCharacterId)?.name || "Unknown") : "None";
-    const descSnip = g.playerDesc ? g.playerDesc.substring(0, 120) : "An adventurer";
-    // oc.thread.character.reminderMessage is the correct thread-scoped override (per official docs)
-    oc.thread.character.reminderMessage = `[GAME STATE]\nPlayer: ${g.playerName} (${descSnip}) | Location: ${locName} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}\nActive Quests: ${qLine}\nCurrent Character: ${charLine}\nStoryline Context: ${g.storyline ? g.storyline.substring(0, 300) + "..." : "Not generated"}\nUse /help for all commands. Narrate immersively in second person.`;
-    // oc.thread.messageWrapperStyle is the documented API for thread-wide message CSS
-    oc.thread.messageWrapperStyle = getEnvironmentStyle(g.location, new Date().getHours());
+    const g    = cd.game;
+    const hour = getGameHour(g);
+    const chars = getActiveChars();
+    const loc  = LOCATIONS[g.location] || { name: g.location };
+    const festival = isFestivalDay(g) ? " 🎉 FESTIVAL DAY — all companions at Town Square, double affection gains!" : "";
+
+    // Active quests summary
+    const activeQs = g.quests
+      .filter(q => q.visible && !q.completed)
+      .map(q => `${q.title} [${q.progress}/${q.goal}]`)
+      .join(", ") || "None";
+
+    // Active character line
+    let charLine = "None";
+    if (g.activeCharacterId) {
+      const cdef = getChar(g.activeCharacterId);
+      const cst  = g.characters[g.activeCharacterId];
+      if (cdef && cst) {
+        const tier = getRelTier(cst.affection || 0);
+        charLine = `${cdef.name} (${tier.name} stage ${tier.stage}, ❤️${cst.affection || 0}, loc: ${cst.currentLocation || cdef.location})`;
+      }
+    }
+
+    // Skill snapshot
+    const sk = g.skills;
+    const skillLine = `STR ${sk.combat.strength} DEF ${sk.combat.defense} SPD ${sk.combat.speed} | CHM ${sk.social.charm} PRS ${sk.social.persuasion} EMP ${sk.social.empathy} | SPC ${sk.magic.spellpower} RES ${sk.magic.resistance} MAN ${sk.magic.mana}`;
+
+    // Locked stat gates
+    const lockedGates = STAT_GATES.filter(sg => !sg.check(g)).map(sg => sg.desc).join("; ");
+
+    // Enemies at current location
+    const locEnemies = (ENEMIES[g.location] || []).map(e => e.name).join(", ");
+
+    // Companion schedule summary (where everyone is right now)
+    const scheduleSnip = chars.slice(0, 4).map(ch => {
+      const cs = g.characters[ch.id];
+      return `${ch.name.split(" ")[0]}@${cs?.currentLocation || ch.location}`;
+    }).join(", ");
+
+    let reminder = `[GAME STATE]
+Player: ${g.playerName} | Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}
+HP: ${g.hp}/${g.maxHp} | Mana: ${g.mana}/${g.maxMana} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}
+Location: ${loc.name}${locEnemies ? ` | Enemies here: ${locEnemies}` : ""}
+Skills: ${skillLine}
+${lockedGates ? `Stat gates not yet met: ${lockedGates}` : "All stat gates cleared"}
+Active Quests: ${activeQs}
+Active Character: ${charLine}
+Companions (first 4): ${scheduleSnip}
+${g.gameOver ? `[GAME OVER — Ending: ${g.ending}. Only /ng+ is accepted.]` : ""}
+Use /help for all commands. Narrate immersively in second person.`;
+
+    reminder += buildConsentBlock(g);
+    reminder += buildNsfwProfileBlock(g);
+    reminder += `\n[Storyline]\n${g.storyline?.slice(0, 900) || ""}`;
+
+    oc.thread.character.reminderMessage = reminder;
+    const hour2 = getGameHour(g);
+    eval(getEnvironmentStyle(g.location, hour2));
   }
 
   function updateShortcutButtons() {
+    const g = cd.game;
+    const questLabel = g?.questNotification ? "\u26A1 Quests" : "\uD83D\uDCDC Quests";
     oc.thread.shortcutButtons = [
-      { name: "Status", message: "/status", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Inventory", message: "/inventory", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Skills", message: "/skills", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Quest Log", message: "/quests", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Explore", message: "/explore", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Shop", message: "/shop", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Characters", message: "/chars", insertionType: "replace", autoSend: true, clearAfterSend: false },
-      { name: "Help", message: "/help", insertionType: "replace", autoSend: true, clearAfterSend: false }
+      { name: "\uD83D\uDCCA Status",       message: "/status",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83C\uDF92 Inventory",    message: "/inventory",     insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\u2694\uFE0F Skills",       message: "/skills",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: questLabel,                  message: "/quests",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83D\uDDFA\uFE0F Explore",message: "/explore",       insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83C\uDFEA Shop",         message: "/shop",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83D\uDC65 Characters",   message: "/chars",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83D\uDD52 Time",         message: "/time",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83C\uDFCB\uFE0F Train",  message: "/train ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "\uD83D\uDDE1\uFE0F Fight",  message: "/fight ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "\uD83D\uDE34 Rest",         message: "/rest",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\u2697\uFE0F Craft",        message: "/craft ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "\uD83C\uDFC6 Achievements", message: "/achievements",  insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83D\uDD1E Kinks",        message: "/kinks",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\u2753 Help",               message: "/help",          insertionType: "replace", autoSend: true,  clearAfterSend: false }
     ];
   }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 8 — XP & DETECTION
+  // ════════════════════════════════════════════════════════════════════════════
 
   function awardXP(amount) {
     const g = cd.game;
     g.xp += amount;
     while (g.xp >= g.xpToNext) {
-      g.xp -= g.xpToNext;
-      g.level++;
+      g.xp     -= g.xpToNext;
+      g.level  += 1;
       g.xpToNext = Math.floor(g.xpToNext * 1.5);
+      g.maxHp    = 30 + (g.level - 1) * 5;
+      g.maxMana  = 20 + (g.level - 1) * 3;
+      g.hp       = g.maxHp;
+      g.mana     = g.maxMana;
+      oc.thread.messages.push({ author: "system",
+        content: `\u2B06\uFE0F **Level Up! You are now Level ${g.level}.**\nMax HP: ${g.maxHp} | Max Mana: ${g.maxMana}` });
+      checkAchievements(g);
     }
   }
 
@@ -293,448 +744,1027 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const chars = getActiveChars();
     const lower = text.toLowerCase();
     for (const ch of chars) {
-      const parts = ch.name.toLowerCase().split(" ");
-      if (parts.some(p => lower.includes(p)) || lower.includes(ch.id)) {
-        return ch;
-      }
+      if (lower.includes(ch.name.split(" ")[0].toLowerCase())) return ch;
     }
     return null;
   }
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 9 — COMMAND HANDLER
+  // ════════════════════════════════════════════════════════════════════════════
+
   function handleCommand(msg) {
-    const g = cd.game;
-    const text = msg.content.trim();
-    const parts = text.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
+    const g    = cd.game;
+    const text = msg.content?.trim() || "";
+    const parts = text.slice(1).split(/\s+/);
+    const cmd  = parts[0]?.toLowerCase();
     const args = parts.slice(1);
 
-    const spliceMsg = () => {
-      const idx = oc.thread.messages.indexOf(msg);
-      if (idx !== -1) oc.thread.messages.splice(idx, 1);
-    };
-
-    if (cmd === "/status") {
-      spliceMsg();
-      const locName = LOCATIONS[g.location]?.name || g.location;
-      oc.thread.messages.push({ author: "system", content: `📊 **Status — ${g.playerName}**\nLevel: ${g.level} | XP: ${g.xp}/${g.xpToNext}\nGold: ${g.gold} | Location: ${locName}\nQuests completed: ${g.quests.filter(q => q.completed).length}/${g.quests.length}` });
-      return true;
+    // Block all commands except /ng+ after game over
+    if (g.gameOver && cmd !== "ng+") {
+      oc.thread.messages.push({ author: "system",
+        content: `The story has ended (${g.ending}). Type \`/ng+\` to continue in New Game+.` });
+      return;
     }
 
-    if (cmd === "/inventory") {
-      spliceMsg();
+    // ── /status ──────────────────────────────────────────────────────────────
+    if (cmd === "status") {
+      const hour = getGameHour(g);
+      const festival = isFestivalDay(g) ? " 🎉 Festival!" : "";
+      oc.thread.messages.push({ author: "system",
+        content: `**\uD83D\uDCCA ${g.playerName}'s Status**\nLevel ${g.level} | XP ${g.xp}/${g.xpToNext} | \u2764\uFE0F HP ${g.hp}/${g.maxHp} | \uD83D\uDCA7 Mana ${g.mana}/${g.maxMana}\n\uD83D\uDCB0 Gold: ${g.gold} | \uD83D\uDDD3\uFE0F Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}\n\uD83D\uDCCD Location: ${LOCATIONS[g.location]?.name || g.location}\n\uD83D\uDCE2 Ending: ${g.ending || "In progress"}` });
+      updateReminder();
+      return;
+    }
+
+    // ── /inventory ───────────────────────────────────────────────────────────
+    if (cmd === "inventory") {
       const inv = g.inventory;
-      const txt = inv.length ? inv.map(i => "• " + i).join("\n") : "Your pack is empty.";
-      oc.thread.messages.push({ author: "system", content: `🎒 **Inventory**\n${txt}` });
-      return true;
+      const list = inv.length ? inv.map((item, i) => `${i + 1}. ${item}`).join("\n") : "Empty";
+      oc.thread.messages.push({ author: "system", content: `**\uD83C\uDF92 Inventory** (${inv.length} items)\n${list}` });
+      return;
     }
 
-    if (cmd === "/skills") {
-      spliceMsg();
+    // ── /skills ──────────────────────────────────────────────────────────────
+    if (cmd === "skills") {
       const sk = g.skills;
-      oc.thread.messages.push({ author: "system", content: `⚔️ **Skills**\n**Combat:** Strength ${sk.combat.strength} | Defense ${sk.combat.defense} | Speed ${sk.combat.speed}\n**Social:** Charm ${sk.social.charm} | Persuasion ${sk.social.persuasion} | Empathy ${sk.social.empathy}\n**Magic:** Spellpower ${sk.magic.spellpower} | Resistance ${sk.magic.resistance} | Mana ${sk.magic.mana}` });
-      return true;
+      oc.thread.messages.push({ author: "system",
+        content: `**\u2694\uFE0F Skills**\n**Combat:** Strength ${sk.combat.strength} | Defense ${sk.combat.defense} | Speed ${sk.combat.speed}\n**Social:** Charm ${sk.social.charm} | Persuasion ${sk.social.persuasion} | Empathy ${sk.social.empathy}\n**Magic:** Spellpower ${sk.magic.spellpower} | Resistance ${sk.magic.resistance} | Mana ${sk.magic.mana}` });
+      return;
     }
 
-    if (cmd === "/quests") {
-      spliceMsg();
-      const lines = g.quests.map(q => `${q.completed ? "✅" : "🔲"} [${q.type === "main" ? "MAIN" : "SIDE"}] **${q.title}** (${q.progress}/${q.goal})\n   ${q.desc}`);
-      oc.thread.messages.push({ author: "system", content: `📜 **Quest Log**\n${lines.join("\n")}` });
-      return true;
-    }
-
-    if (cmd === "/explore") {
-      spliceMsg();
-      const loc = LOCATIONS[g.location];
-      const chars = getActiveChars().filter(ch => g.characters[ch.id]?.currentLocation === g.location);
-      const charList = chars.length ? chars.map(c => `• ${c.name} (${c.archetype})`).join("\n") : "No companions here right now.";
-      oc.thread.messages.push({ author: "system", content: `🗺️ **${loc.name}**\n${loc.desc}\n\n**Present:**\n${charList}` });
-      return true;
-    }
-
-    if (cmd === "/go") {
-      spliceMsg();
-      const dest = args[0]?.toLowerCase();
-      if (!dest || !LOCATIONS[dest]) {
-        const locs = Object.entries(LOCATIONS).map(([k, v]) => `• ${k} — ${v.name}`).join("\n");
-        oc.thread.messages.push({ author: "system", content: `🧭 **Locations:**\n${locs}\nUsage: /go <location_id>` });
-      } else {
-        g.location = dest;
-        updateReminder();
-        oc.thread.messages.push({ author: "system", content: `🚶 You travel to **${LOCATIONS[dest].name}**.` });
+    // ── /quests ──────────────────────────────────────────────────────────────
+    if (cmd === "quests") {
+      g.questNotification = false;
+      updateShortcutButtons();
+      const visibleQs = g.quests.filter(q => q.visible);
+      if (!visibleQs.length) {
+        oc.thread.messages.push({ author: "system", content: "**\uD83D\uDCDC Quest Log** — No quests discovered yet. Explore and talk to companions!" });
+        return;
       }
-      return true;
-    }
-
-    if (cmd === "/shop") {
-      spliceMsg();
-      if (g.location !== "market") {
-        oc.thread.messages.push({ author: "system", content: "🏪 The shop is only available in the **Market District**. Use `/go market` to travel there." });
-        return true;
-      }
-      const lines = Object.entries(SHOP_ITEMS).map(([k, v]) => `• **${v.name}** — ${v.cost}g — ${v.desc} (id: \`${k}\`)`);
-      oc.thread.messages.push({ author: "system", content: `🏪 **Shop** (Your gold: ${g.gold}g)\n${lines.join("\n")}\nUse /buy <item_id> to purchase.` });
-      return true;
-    }
-
-    if (cmd === "/buy") {
-      spliceMsg();
-      if (g.location !== "market") {
-        oc.thread.messages.push({ author: "system", content: "🏪 You must be in the **Market District** to buy items." });
-        return true;
-      }
-      const itemId = args[0]?.toLowerCase();
-      const item = SHOP_ITEMS[itemId];
-      if (!item) {
-        oc.thread.messages.push({ author: "system", content: "❌ Unknown item. Use /shop to see available items." });
-        return true;
-      }
-      if (g.gold < item.cost) {
-        oc.thread.messages.push({ author: "system", content: `❌ Not enough gold. You have ${g.gold}g but **${item.name}** costs ${item.cost}g.` });
-        return true;
-      }
-      g.gold -= item.cost;
-      g.inventory.push(item.name);
-      if (item.stat) {
-        const [cat, stat] = item.stat.path.split(".");
-        g.skills[cat][stat] += item.stat.val;
-      }
-      updateReminder();
-      oc.thread.messages.push({ author: "system", content: `✅ Purchased **${item.name}** for ${item.cost}g. Remaining gold: ${g.gold}g.` });
-      return true;
-    }
-
-    if (cmd === "/talk") {
-      spliceMsg();
-      const charId = args[0]?.toLowerCase();
-      const ch = getChar(charId);
-      if (!ch) {
-        oc.thread.messages.push({ author: "system", content: "❓ Unknown character. Use /chars to see the roster." });
-        return true;
-      }
-      const charState = g.characters[charId];
-      if (charState.currentLocation !== g.location) {
-        oc.thread.messages.push({ author: "system", content: `${ch.name} is not here. They are at **${LOCATIONS[charState.currentLocation]?.name || charState.currentLocation}**. Use /go to travel there.` });
-        return true;
-      }
-      charState.met = true;
-      g.activeCharacterId = charId;
-      updateReminder();
-      oc.thread.messages.push({ author: "system", content: `💬 You approach **${ch.name}** (${ch.archetype}). Affection: ${charState.affection} | Dialogue stage: ${charState.dialogueStage}.` });
-      return true;
-    }
-
-    if (cmd === "/gift") {
-      spliceMsg();
-      const charId = args[0]?.toLowerCase();
-      const ch = getChar(charId);
-      if (!ch) {
-        oc.thread.messages.push({ author: "system", content: "❓ Unknown character. Use /chars to see the roster." });
-        return true;
-      }
-      const giftItems = g.inventory.filter(i => {
-        const key = Object.keys(SHOP_ITEMS).find(k => SHOP_ITEMS[k].name === i);
-        return key && SHOP_ITEMS[key].affectionBonus;
+      const lines = visibleQs.map(q => {
+        const status = q.completed ? "\u2705" : `\uD83D\uDD18 [${q.progress}/${q.goal}]`;
+        return `${status} **${q.title}** (${q.type})\n   ${q.desc}`;
       });
-      if (giftItems.length === 0) {
-        oc.thread.messages.push({ author: "system", content: "🎁 You have no gift items. Buy a Rose or Enchanted Gem from the shop." });
-        return true;
-      }
-      const giftName = giftItems[0];
-      const giftKey = Object.keys(SHOP_ITEMS).find(k => SHOP_ITEMS[k].name === giftName);
-      const bonus = SHOP_ITEMS[giftKey].affectionBonus;
-      const idxInv = g.inventory.indexOf(giftName);
-      g.inventory.splice(idxInv, 1);
-      g.characters[charId].affection += bonus;
+      oc.thread.messages.push({ author: "system", content: `**\uD83D\uDCDC Quest Log**\n${lines.join("\n")}` });
       updateReminder();
-      oc.thread.messages.push({ author: "system", content: `🎁 You give **${giftName}** to **${ch.name}**. Affection +${bonus} → ${g.characters[charId].affection}.` });
-      return true;
+      return;
     }
 
-    if (cmd === "/chars") {
-      spliceMsg();
+    // ── /explore ─────────────────────────────────────────────────────────────
+    if (cmd === "explore") {
+      const loc = LOCATIONS[g.location];
+      const chars = getActiveChars();
+      const here  = chars.filter(ch => g.characters[ch.id]?.currentLocation === g.location);
+      const charList = here.length
+        ? here.map(ch => {
+            const cst  = g.characters[ch.id];
+            const tier = getRelTier(cst?.affection || 0);
+            return `  ${ch.name} (${ch.archetype}) — ${tier.name} (❤️${cst?.affection || 0})`;
+          }).join("\n")
+        : "  Nobody you know is here right now.";
+      const enemies  = (ENEMIES[g.location] || []).map(e => `  ${e.name} (use /fight ${e.id})`).join("\n") || "  No enemies here.";
+      const hour = getGameHour(g);
+      const night = hour >= 20 || hour < 6;
+      const nightNote = night && Object.keys(NIGHT_SHOP_ITEMS).length ? "\n  \uD83C\uDF19 Black market is open! (/shop shows extra items)" : "";
+      oc.thread.messages.push({ author: "system",
+        content: `**\uD83D\uDDFA\uFE0F ${loc?.name || g.location}** — ${loc?.desc || ""}\n\n**Companions here:**\n${charList}\n\n**Enemies:**\n${enemies}${nightNote}` });
+      return;
+    }
+
+    // ── /shop ─────────────────────────────────────────────────────────────────
+    if (cmd === "shop") {
+      const hour = getGameHour(g);
+      const night = hour >= 20 || hour < 6;
+      const items = { ...SHOP_ITEMS, ...(night ? NIGHT_SHOP_ITEMS : {}) };
+      const lines = Object.entries(items).map(([id, item]) => {
+        const mult = g.priceModifiers[id] || 1;
+        const price = Math.round(item.cost * mult);
+        const priceNote = mult < 0.95 ? " \uD83D\uDCC9 Sale!" : mult > 1.05 ? " \uD83D\uDCC8 Pricey" : "";
+        return `  ${item.name} — ${price}g${priceNote}: ${item.desc} (buy: /buy ${id})`;
+      });
+      oc.thread.messages.push({ author: "system",
+        content: `**\uD83C\uDFEA Shop** (Gold: ${g.gold}g)\n${lines.join("\n")}` });
+      return;
+    }
+
+    // ── /buy <item> ──────────────────────────────────────────────────────────
+    if (cmd === "buy") {
+      const itemId = args[0];
+      const hour   = getGameHour(g);
+      const night  = hour >= 20 || hour < 6;
+      const allItems = { ...SHOP_ITEMS, ...(night ? NIGHT_SHOP_ITEMS : {}) };
+      const item   = allItems[itemId];
+      if (!item) {
+        oc.thread.messages.push({ author: "system", content: `Unknown item "${itemId}". Use /shop to see available items.` });
+        return;
+      }
+      const mult  = g.priceModifiers[itemId] || 1;
+      const price = Math.round(item.cost * mult);
+      if (g.gold < price) {
+        oc.thread.messages.push({ author: "system", content: `Not enough gold. ${item.name} costs ${price}g (you have ${g.gold}g).` });
+        return;
+      }
+      g.gold -= price;
+      g.inventory.push(item.name);
+      oc.thread.messages.push({ author: "system", content: `\uD83D\uDED2 Bought **${item.name}** for ${price}g. Gold remaining: ${g.gold}g.` });
+      checkAchievements(g);
+      updateReminder();
+      return;
+    }
+
+    // ── /chars ───────────────────────────────────────────────────────────────
+    if (cmd === "chars") {
       const chars = getActiveChars();
       const lines = chars.map(ch => {
-        const st = g.characters[ch.id];
-        const locName = LOCATIONS[st.currentLocation]?.name || st.currentLocation;
-        return `• **${ch.name}** (${ch.archetype}) — ${locName} | Affection: ${st.affection} | Met: ${st.met ? "Yes" : "No"}`;
+        const cst   = g.characters[ch.id];
+        const tier  = getRelTier(cst?.affection || 0);
+        const met   = cst?.met ? "" : " (not yet met)";
+        return `  **${ch.name}** (${ch.archetype}) — ${tier.name} ❤️${cst?.affection || 0}${met} @ ${cst?.currentLocation || ch.location}`;
       });
-      oc.thread.messages.push({ author: "system", content: `👥 **Characters**\n${lines.join("\n")}` });
-      return true;
+      oc.thread.messages.push({ author: "system", content: `**\uD83D\uDC65 Companions**\n${lines.join("\n")}` });
+      return;
     }
 
-    if (cmd === "/help") {
-      spliceMsg();
-      oc.thread.messages.push({ author: "system", content: `📖 **Commands**\n/status — player stats\n/inventory — items you carry\n/skills — skill levels\n/quests — quest log\n/explore — describe current location\n/go <location> — travel\n/shop — browse items (market only)\n/buy <item> — purchase item (market only)\n/talk <charId> — speak with a companion\n/gift <charId> — give a gift item\n/chars — all companions and locations\n/help — this list` });
-      return true;
-    }
-
-    return false;
-  }
-
-  function showOpeningUI() {
-    oc.window.show();
-    const BASE_STYLE = "margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;display:flex;align-items:center;justify-content:center;";
-    const CARD_STYLE = "background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:28px 32px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);";
-    const INPUT_STYLE = "width:100%;padding:10px;border-radius:8px;background:#2a1540;border:1px solid #7a4faa;color:#e8d5ff;font-size:1em;box-sizing:border-box;";
-    const LABEL_STYLE = "display:block;margin-bottom:6px;font-size:0.9em;color:#c9a8ee;";
-
-    document.body.style.cssText = BASE_STYLE;
-
-    // ── Step 1: gender / name / description ─────────────────────────────────
-    function showStep1() {
-      document.body.innerHTML = `
-<div style="${CARD_STYLE}">
-  <h1 style="text-align:center;font-size:1.6em;color:#d4a0ff;margin:0 0 4px;">⚔️ Realm of Eryndel</h1>
-  <p style="text-align:center;color:#b088cc;font-size:0.85em;margin:0 0 24px;">NSFW Dating Sim — Character Setup</p>
-  <label style="${LABEL_STYLE}">Romance characters of gender:</label>
-  <select id="genderSel" style="${INPUT_STYLE}margin-bottom:16px;">
-    <option value="female">Female</option>
-    <option value="male">Male</option>
-  </select>
-  <label style="${LABEL_STYLE}">Your name:</label>
-  <input id="nameInp" type="text" placeholder="Enter your name…" style="${INPUT_STYLE}margin-bottom:16px;" />
-  <label style="${LABEL_STYLE}">Describe yourself (appearance, personality):</label>
-  <textarea id="descInp" placeholder="I am…" rows="4" style="${INPUT_STYLE}margin-bottom:20px;resize:vertical;"></textarea>
-  <button id="nextBtn" style="width:100%;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.1em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">Next →</button>
-</div>`;
-      document.getElementById("nextBtn").addEventListener("click", () => {
-        const gender = document.getElementById("genderSel").value;
-        const name   = document.getElementById("nameInp").value.trim() || "Traveler";
-        const desc   = document.getElementById("descInp").value.trim() || "An adventurer who has arrived in Eryndel seeking purpose.";
-        showStep2(gender, name, desc);
+    // ── /go <location> ────────────────────────────────────────────────────────
+    if (cmd === "go") {
+      const dest = args[0]?.toLowerCase();
+      if (!LOCATIONS[dest]) {
+        const list = Object.keys(LOCATIONS).join(", ");
+        oc.thread.messages.push({ author: "system", content: `Unknown location. Options: ${list}` });
+        return;
+      }
+      g.location = dest;
+      advanceTime(g, 60);
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDDFA\uFE0F Traveled to **${LOCATIONS[dest].name}**.` });
+      // Quest discovery: check if any companion in this location has an undiscovered side quest
+      const chars = getActiveChars();
+      const here  = chars.filter(ch => g.characters[ch.id]?.currentLocation === dest);
+      here.forEach(ch => {
+        const sq = g.quests.find(q => q.id === `sq_${ch.id}` && !q.visible);
+        if (sq) {
+          sq.visible = true;
+          g.questNotification = true;
+          oc.thread.messages.push({ author: "system", content: `\uD83D\uDCDC New side quest discovered: **${sq.title}**` });
+        }
       });
+      updateReminder();
+      updateShortcutButtons();
+      return;
     }
 
-    // ── Step 2: body type preference (single or any range) ──────────────────
-    function showStep2(gender, name, desc) {
-      const types = BODY_TYPES[gender];
-      const selected = new Set();
+    // ── /talk <charId> ────────────────────────────────────────────────────────
+    if (cmd === "talk") {
+      const charId = args[0];
+      const ch     = getChar(charId);
+      if (!ch) {
+        oc.thread.messages.push({ author: "system", content: `Unknown character "${charId}". Use /chars to see companions.` });
+        return;
+      }
+      const cst = g.characters[charId];
+      if (!cst) return;
+      const here = cst.currentLocation === g.location;
+      if (!here) {
+        oc.thread.messages.push({ author: "system",
+          content: `${ch.name} isn't here right now. They are at ${LOCATIONS[cst.currentLocation]?.name || cst.currentLocation}.` });
+        return;
+      }
+      if (!cst.met) {
+        cst.met = true;
+        const sq = g.quests.find(q => q.id === `sq_${charId}` && !q.visible);
+        if (sq) { sq.visible = true; g.questNotification = true; oc.thread.messages.push({ author: "system", content: `\uD83D\uDCDC New side quest discovered: **${sq.title}**` }); }
+      }
+      cst.affection = (cst.affection || 0) + (isFestivalDay(g) ? 4 : 2);
+      g.activeCharacterId = charId;
+      advanceTime(g, 30);
+      // Jealousy: if romantic with rival, decrement rival affection
+      const rival = CHAR_META[charId]?.rival;
+      if (rival && g.characters[rival]) {
+        const rivalTier = getRelTier(g.characters[rival].affection || 0);
+        if (rivalTier.stage >= 4) {
+          g.characters[rival].affection = Math.max(0, (g.characters[rival].affection || 0) - 1);
+        }
+      }
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDCAC You spend time with **${ch.name}**. Affection +${isFestivalDay(g) ? 4 : 2} (now ${cst.affection}).` });
+      updateReminder();
+      return;
+    }
 
-      function renderCards() {
-        const container = document.getElementById("btContainer");
-        if (!container) return;
-        container.innerHTML = types.map(t => {
-          const on = selected.has(t.id);
-          return `<div data-bt="${t.id}" style="
-            display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;
-            border:2px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.2)"};
-            background:${on ? "rgba(212,160,255,0.15)" : "rgba(255,255,255,0.03)"};
-            transition:all 0.15s ease;user-select:none;margin-bottom:8px;">
-            <span style="font-size:1.5em;line-height:1;">${t.emoji}</span>
-            <div style="flex:1;">
-              <div style="font-weight:600;color:${on ? "#e8d5ff" : "#c9a8ee"};font-size:0.95em;">${t.label}</div>
-              <div style="font-size:0.78em;color:#9070b0;">${t.desc}</div>
-            </div>
-            <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${on ? "#d4a0ff" : "#7a4faa"};
-              background:${on ? "#d4a0ff" : "transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              ${on ? '<span style="color:#1a0a2e;font-size:0.75em;font-weight:900;">✓</span>' : ""}
-            </div>
-          </div>`;
-        }).join("");
-        // wire click handlers
-        container.querySelectorAll("[data-bt]").forEach(el => {
-          el.addEventListener("click", () => {
-            const id = el.dataset.bt;
-            if (selected.has(id)) selected.delete(id); else selected.add(id);
-            renderCards();
-            updateCount();
-          });
-        });
+    // ── /gift <charId> <itemName…> ────────────────────────────────────────────
+    if (cmd === "gift") {
+      const charId   = args[0];
+      const itemName = normalizeItemName(args.slice(1).join(" "));
+      const ch = getChar(charId);
+      if (!ch) {
+        oc.thread.messages.push({ author: "system", content: `Unknown character "${charId}".` });
+        return;
+      }
+      const idx = g.inventory.findIndex(i => i.toLowerCase() === itemName.toLowerCase());
+      if (idx === -1) {
+        oc.thread.messages.push({ author: "system", content: `You don't have "${itemName}" in your inventory.` });
+        return;
+      }
+      g.inventory.splice(idx, 1);
+      const cst      = g.characters[charId];
+      const fav      = CHAR_META[charId]?.favoriteGift;
+      const isFav    = fav && fav.toLowerCase() === itemName.toLowerCase();
+      const baseBonus = getItemAffectionBonus(itemName);
+      const bonus    = isFav ? baseBonus * 2 : baseBonus;
+      const festival  = isFestivalDay(g) ? 2 : 0;
+      cst.affection   = (cst.affection || 0) + bonus + festival;
+      const favNote   = isFav ? ` \uD83D\uDC96 Favourite gift — double affection!` : "";
+      const festNote  = festival ? ` +${festival} festival bonus` : "";
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83C\uDF81 Gave **${itemName}** to **${ch.name}**. Affection +${bonus + festival} (now ${cst.affection}).${favNote}${festNote}` });
+      earnAchievement(g, "first_gift");
+      checkAchievements(g);
+      // Handle consumable crafted item effects on self
+      const crafted = CRAFTED_ITEMS[itemName];
+      if (crafted?.heals)        { g.hp   = Math.min(g.maxHp,   g.hp   + crafted.heals); }
+      if (crafted?.restoresMana) { g.mana = Math.min(g.maxMana, g.mana + crafted.restoresMana); }
+      updateReminder();
+      return;
+    }
+
+    // ── /advance <questId> ────────────────────────────────────────────────────
+    if (cmd === "advance") {
+      const questId = args[0];
+      if (!questId) {
+        oc.thread.messages.push({ author: "system", content: "Usage: /advance <questId> — e.g. /advance mq1 or /advance sq_yuki" });
+        return;
+      }
+      const quest = g.quests.find(q => q.id === questId);
+      if (!quest) {
+        oc.thread.messages.push({ author: "system", content: `Quest "${questId}" not found. Use /quests to see your log.` });
+        return;
+      }
+      if (!quest.visible) {
+        oc.thread.messages.push({ author: "system", content: `Quest "${quest.title}" hasn't been discovered yet. Explore and talk to companions.` });
+        return;
+      }
+      if (quest.completed) {
+        oc.thread.messages.push({ author: "system", content: `**${quest.title}** is already complete!` });
+        return;
+      }
+      const depErr = getQuestDepError(g, questId);
+      if (depErr) {
+        oc.thread.messages.push({ author: "system", content: `\u26A0\uFE0F Cannot advance **${quest.title}**: ${depErr}` });
+        return;
+      }
+      quest.progress += 1;
+      const stepXP = quest.type === "main" ? 50 : 30;
+      awardXP(stepXP);
+      g.questNotification = true;
+      if (quest.progress >= quest.goal) {
+        completeQuest(g, quest);
+      } else {
+        oc.thread.messages.push({ author: "system",
+          content: `\uD83D\uDD18 **Quest Progress: ${quest.title}** [${quest.progress}/${quest.goal}]\n+${stepXP} XP` });
+        updateShortcutButtons();
+      }
+      updateReminder();
+      return;
+    }
+
+    // ── /time ─────────────────────────────────────────────────────────────────
+    if (cmd === "time") {
+      const hour    = getGameHour(g);
+      const block   = getTimeBlock(hour);
+      const festNote = isFestivalDay(g) ? " \uD83C\uDF89 FESTIVAL DAY" : "";
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDD52 **Day ${g.time.day}**, ${String(hour).padStart(2,"0")}:00 (${block})${festNote}\nTotal minutes elapsed: ${g.time.totalMinutes}` });
+      return;
+    }
+
+    // ── /rest ─────────────────────────────────────────────────────────────────
+    if (cmd === "rest") {
+      if (g.location !== "inn") {
+        oc.thread.messages.push({ author: "system", content: "You can only rest at The Wanderer's Inn (/go inn)." });
+        return;
+      }
+      const hour       = getGameHour(g);
+      const minsToNext = ((24 - hour) % 24 || 24) * 60;
+      advanceTime(g, minsToNext + 8 * 60); // advance to 08:00 next day
+      g.hp   = g.maxHp;
+      g.mana = g.maxMana;
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDE34 **You rest until morning.**\nDay ${g.time.day} begins. HP fully restored (${g.hp}/${g.maxHp}). Mana fully restored (${g.mana}/${g.maxMana}).${isFestivalDay(g) ? "\n\uD83C\uDF89 Today is a Festival Day!" : ""}` });
+      updateReminder();
+      return;
+    }
+
+    // ── /fight <enemyId> [--spell] ────────────────────────────────────────────
+    if (cmd === "fight") {
+      const enemyId  = args[0];
+      const useSpell = args.includes("--spell");
+      if (!enemyId) {
+        const avail = (ENEMIES[g.location] || []).map(e => e.id).join(", ");
+        oc.thread.messages.push({ author: "system",
+          content: `Usage: /fight <enemyId> [--spell]\nEnemies here: ${avail || "none"}` });
+        return;
+      }
+      const baseEnemy = (ENEMIES[g.location] || []).find(e => e.id === enemyId);
+      if (!baseEnemy) {
+        oc.thread.messages.push({ author: "system", content: `No enemy "${enemyId}" found here.` });
+        return;
+      }
+      // Scale enemy to player level
+      const scale    = 1 + (g.level - 1) * 0.2;
+      const enemy    = {
+        ...baseEnemy,
+        str: Math.round(baseEnemy.str * scale),
+        def: Math.round(baseEnemy.def * scale),
+        hp:  Math.round(baseEnemy.maxHp * scale)
+      };
+      if (useSpell && g.mana < 10) {
+        oc.thread.messages.push({ author: "system", content: `Not enough mana for a spell (need 10, have ${g.mana}). Rest at the inn to recover mana.` });
+        return;
+      }
+      if (useSpell) g.mana -= 10;
+
+      let playerHp   = g.hp;
+      let enemyHp    = enemy.hp;
+      const log      = [];
+      const MAX_ROUNDS = 6;
+
+      for (let r = 1; r <= MAX_ROUNDS && playerHp > 0 && enemyHp > 0; r++) {
+        // Player attacks
+        const pAtk   = useSpell
+          ? g.skills.magic.spellpower + Math.floor(Math.random() * 4) + 1
+          : g.skills.combat.strength  + Math.floor(Math.random() * 3) + 1;
+        const pDmg   = Math.max(1, pAtk - enemy.def);
+        enemyHp      = Math.max(0, enemyHp - pDmg);
+        const pLog   = useSpell ? `\u2728 Spell hits for ${pDmg}` : `\u2694\uFE0F You strike for ${pDmg}`;
+        if (enemyHp === 0) { log.push(`Round ${r}: ${pLog} — **${enemy.name} defeated!**`); break; }
+        // Enemy attacks
+        const eAtk   = enemy.str + Math.floor(Math.random() * 3) + 1;
+        const eDmg   = Math.max(0, eAtk - g.skills.combat.defense);
+        playerHp     = Math.max(0, playerHp - eDmg);
+        log.push(`Round ${r}: ${pLog} | \uD83D\uDEE1\uFE0F ${enemy.name} hits for ${eDmg} (blocked ${eAtk - eDmg})`);
       }
 
-      function updateCount() {
-        const el = document.getElementById("selCount");
-        if (!el) return;
-        const n = selected.size;
-        el.textContent = n === 0 ? "No preference — show everyone"
-          : n === 1 ? "1 body type selected"
-          : `${n} body types selected`;
-        el.style.color = n === 0 ? "#705090" : "#d4a0ff";
+      g.hp = playerHp;
+      const won = enemyHp <= 0;
+      advanceTime(g, 60);
+
+      if (won) {
+        const lootDrop = enemy.loot.length && Math.random() < 0.6 ? enemy.loot[Math.floor(Math.random() * enemy.loot.length)] : null;
+        if (lootDrop) g.inventory.push(lootDrop);
+        g.gold += enemy.gold;
+        awardXP(enemy.xp);
+        earnAchievement(g, "first_fight");
+        oc.thread.messages.push({ author: "system",
+          content: `\u2694\uFE0F **Battle vs ${enemy.name}**\n${log.join("\n")}\n\n\u2705 **Victory!** +${enemy.xp} XP, +${enemy.gold}g${lootDrop ? `, found: ${lootDrop}` : ""}\nHP: ${g.hp}/${g.maxHp}` });
+      } else {
+        const goldLost = Math.min(g.gold, Math.floor(enemy.gold / 2));
+        g.gold -= goldLost;
+        g.hp    = Math.max(1, Math.floor(g.maxHp / 2));
+        g.location = "inn";
+        oc.thread.messages.push({ author: "system",
+          content: `\u2694\uFE0F **Battle vs ${enemy.name}**\n${log.join("\n")}\n\n\uD83D\uDCA5 **Defeated!** Lost ${goldLost}g. You wake at the inn with ${g.hp} HP.` });
       }
-
-      document.body.innerHTML = `
-<div style="${CARD_STYLE}max-height:95vh;overflow-y:auto;">
-  <h1 style="text-align:center;font-size:1.4em;color:#d4a0ff;margin:0 0 2px;">💕 Body Type Preferences</h1>
-  <p style="text-align:center;color:#b088cc;font-size:0.82em;margin:0 0 6px;">Pick <strong style="color:#d4a0ff;">one</strong> you love or <strong style="color:#d4a0ff;">a range</strong> of types you're attracted to.</p>
-  <p style="text-align:center;color:#705090;font-size:0.78em;margin:0 0 16px;">Leaving all unselected shows all companions equally.</p>
-  <div id="btContainer"></div>
-  <p id="selCount" style="text-align:center;font-size:0.82em;margin:4px 0 16px;color:#705090;"></p>
-  <div style="display:flex;gap:10px;">
-    <button id="backBtn" style="flex:0 0 auto;padding:12px 18px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:1em;cursor:pointer;">← Back</button>
-    <button id="startBtn" style="flex:1;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.05em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Start Adventure</button>
-  </div>
-</div>`;
-      renderCards();
-      updateCount();
-
-      document.getElementById("backBtn").addEventListener("click", showStep1);
-      document.getElementById("startBtn").addEventListener("click", () => {
-        const prefs = [...selected];
-        showLoadingSequence(gender, name, desc, prefs);
-      });
+      checkAchievements(g);
+      updateReminder();
+      return;
     }
 
-    // ── Loading sequence: canvas magic particles → CSS spinner → auto-dismiss ──
-    function showLoadingSequence(gender, name, desc, prefs) {
-      const startMs = Date.now();
-      const CANVAS_MS  = 3500; // magic particle phase duration
-      const SPINNER_MS = 1500; // CSS spinner phase before window closes
-
-      document.body.innerHTML = `
-<style>
-  @keyframes ery-spin  { to { transform: rotate(360deg); } }
-  @keyframes ery-pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
-  @keyframes ery-fdots { 0%{content:""} 33%{content:"."} 66%{content:".."} 100%{content:"..."} }
-  #ery-d1::after, #ery-d2::after { content:""; animation: ery-fdots 1.2s steps(1) infinite; }
-</style>
-<div id="ery-root" style="position:fixed;inset:0;background:#1a0a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
-  <canvas id="ery-canvas" style="position:absolute;inset:0;width:100%;height:100%;transition:opacity 1s;"></canvas>
-  <div id="ery-label" style="position:relative;z-index:2;text-align:center;pointer-events:none;">
-    <p style="color:#c9a8ee;font-size:1.1em;animation:ery-pulse 1.6s ease-in-out infinite;letter-spacing:0.05em;margin:0 0 8px;">⚔️ Weaving the Realm of Eryndel<span id="ery-d1"></span></p>
-    <p style="color:#705090;font-size:0.82em;margin:0;">Summoning your companions…</p>
-  </div>
-  <div id="ery-spinner" style="display:none;position:relative;z-index:2;flex-direction:column;align-items:center;gap:16px;">
-    <div style="position:relative;width:72px;height:72px;">
-      <div style="position:absolute;inset:0;border-radius:50%;border:4px solid rgba(200,150,255,0.15);"></div>
-      <div style="position:absolute;inset:0;border-radius:50%;border:4px solid transparent;border-top-color:#d4a0ff;animation:ery-spin 0.85s linear infinite;"></div>
-      <div style="position:absolute;inset:10px;border-radius:50%;border:3px solid transparent;border-top-color:#9060cc;animation:ery-spin 1.3s linear infinite reverse;"></div>
-    </div>
-    <p style="color:#d4a0ff;font-size:1.05em;animation:ery-pulse 1.4s ease-in-out infinite;letter-spacing:0.04em;margin:0;">✨ Almost ready<span id="ery-d2"></span></p>
-  </div>
-</div>`;
-
-      // ── Canvas setup ────────────────────────────────────────────────────────
-      const canvas = document.getElementById("ery-canvas");
-      const ctx    = canvas.getContext("2d");
-      function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-      resize();
-      window.addEventListener("resize", resize);
-
-      const COLORS = ["#d4a0ff", "#9060cc", "#e8d5ff", "#b060ff", "#ffffff", "#7030cc", "#ff90ff"];
-      const particles = [];
-      let rafId;
-
-      function spawnAt(ox, oy) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 0.8 + Math.random() * 3;
-        particles.push({
-          x: ox, y: oy,
-          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-          size: 1.5 + Math.random() * 3.5,
-          color: COLORS[Math.floor(Math.random() * COLORS.length)],
-          life: 1.0, decay: 0.007 + Math.random() * 0.013,
-          trail: []
-        });
+    // ── /train <category> ─────────────────────────────────────────────────────
+    if (cmd === "train") {
+      if (!args[0]) {
+        oc.thread.messages.push({ author: "system",
+          content: "Usage: /train <combat|magic|social>\nCombat at Training Grounds, Magic at Castle, Social at Inn. Costs 20g, 2 hours, 1× per day per category." });
+        return;
       }
+      const cat = args[0].toLowerCase();
+      const trainMap = { combat: "training_grounds", magic: "castle", social: "inn" };
+      if (!trainMap[cat]) {
+        oc.thread.messages.push({ author: "system", content: `Unknown category "${cat}". Use combat, magic, or social.` });
+        return;
+      }
+      if (g.location !== trainMap[cat]) {
+        oc.thread.messages.push({ author: "system",
+          content: `${cat} training requires you to be at ${LOCATIONS[trainMap[cat]].name}. You are at ${LOCATIONS[g.location]?.name || g.location}.` });
+        return;
+      }
+      if (g.lastTrained[cat]) {
+        oc.thread.messages.push({ author: "system", content: `You have already trained ${cat} today. Rest to clear the cooldown.` });
+        return;
+      }
+      if (g.gold < 20) {
+        oc.thread.messages.push({ author: "system", content: `Training costs 20g (you have ${g.gold}g).` });
+        return;
+      }
+      g.gold -= 20;
+      g.lastTrained[cat] = true;
+      g.trainingCount = (g.trainingCount || 0) + 1;
+      // Raise the lowest skill in category
+      const skillGroup = g.skills[cat];
+      const lowest     = Object.entries(skillGroup).sort((a, b) => a[1] - b[1])[0];
+      skillGroup[lowest[0]] += 1;
+      advanceTime(g, 120);
+      awardXP(40);
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83C\uDFCB\uFE0F **${cat.charAt(0).toUpperCase() + cat.slice(1)} Training**\nPaid 20g | ${lowest[0].charAt(0).toUpperCase() + lowest[0].slice(1)}: ${lowest[1]} \u2192 ${lowest[1]+1} | +40 XP` });
+      checkAchievements(g);
+      updateReminder();
+      return;
+    }
 
-      function animate(ts) {
-        const elapsed = Date.now() - startMs;
-        if (elapsed >= CANVAS_MS) {
-          cancelAnimationFrame(rafId);
-          window.removeEventListener("resize", resize);
-          transitionToSpinner();
+    // ── /flirt <charId> ───────────────────────────────────────────────────────
+    if (cmd === "flirt") {
+      const charId = args[0];
+      const ch = getChar(charId);
+      if (!ch) {
+        oc.thread.messages.push({ author: "system", content: `Unknown character "${charId}". Use /chars to see companions.` });
+        return;
+      }
+      const cst = g.characters[charId];
+      if (!cst) return;
+      if (cst.currentLocation !== g.location) {
+        oc.thread.messages.push({ author: "system",
+          content: `${ch.name} isn't here. They're at ${LOCATIONS[cst.currentLocation]?.name || cst.currentLocation}.` });
+        return;
+      }
+      const charm   = g.skills.social.charm;
+      const minCharm = 3;
+      if (charm < minCharm) {
+        oc.thread.messages.push({ author: "system",
+          content: `Your charm (${charm}) is too low to flirt effectively. Reach Charm ${minCharm}+ via /train social.` });
+        return;
+      }
+      // Check relationship skill ceiling for Romantic
+      const req = ROMANTIC_SKILL_REQ[charId];
+      const tier = getRelTier(cst.affection || 0);
+      if (req && tier.stage >= 3) {
+        // Moving toward romantic — check skill gate
+        const skillVal = resolveSkill(g, req.path);
+        if (skillVal < req.min) {
+          const [cat, sk] = req.path.split(".");
+          oc.thread.messages.push({ author: "system",
+            content: `${ch.name} senses you aren't quite ready for that level of connection. (Requires ${sk} ${req.min}, you have ${skillVal}. Train to progress.)` });
           return;
         }
-        rafId = requestAnimationFrame(animate);
-        const W = canvas.width, H = canvas.height;
-        const cx = W / 2, cy = H / 2;
-
-        // Fade-trail bg
-        ctx.fillStyle = "rgba(26,10,46,0.22)";
-        ctx.fillRect(0, 0, W, H);
-
-        // Pulsing central glow
-        const pulse = 0.75 + 0.25 * Math.sin(ts * 0.002);
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 130 * pulse);
-        g.addColorStop(0,   "rgba(180,80,255,0.5)");
-        g.addColorStop(0.4, "rgba(120,40,200,0.2)");
-        g.addColorStop(1,   "rgba(0,0,0,0)");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H);
-
-        // Spawn particles from center + occasional orbital ring
-        if (Math.random() < 0.5) spawnAt(cx, cy);
-        if (Math.random() < 0.06) {
-          const a = Math.random() * Math.PI * 2, r = 55 + Math.random() * 45;
-          spawnAt(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-        }
-
-        // Update and draw
-        for (let i = particles.length - 1; i >= 0; i--) {
-          const p = particles[i];
-          p.trail.push({ x: p.x, y: p.y });
-          if (p.trail.length > 8) p.trail.shift();
-          p.x += p.vx; p.y += p.vy;
-          p.vx *= 1.015; p.vy *= 1.015;
-          p.life -= p.decay;
-          if (p.life <= 0) { particles.splice(i, 1); continue; }
-          // Trail dots
-          p.trail.forEach((pt, j) => {
-            ctx.globalAlpha = (j / p.trail.length) * p.life * 0.55;
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, p.size * 0.45 * ((j + 1) / p.trail.length), 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.fill();
-          });
-          // Main sparkle
-          ctx.globalAlpha = p.life * 0.9;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          ctx.fill();
-          ctx.globalAlpha = 1;
-        }
       }
-      rafId = requestAnimationFrame(animate);
-
-      // ── Run initGame after first paint ──────────────────────────────────────
-      setTimeout(() => { initGame(gender, name, desc, prefs); }, 50);
-
-      // ── Transition: canvas fade → CSS spinner → window close ───────────────
-      function transitionToSpinner() {
-        const canvasEl   = document.getElementById("ery-canvas");
-        const labelEl    = document.getElementById("ery-label");
-        const spinnerEl  = document.getElementById("ery-spinner");
-        if (canvasEl)  canvasEl.style.opacity  = "0.15";
-        if (labelEl)   labelEl.style.display   = "none";
-        if (spinnerEl) spinnerEl.style.display  = "flex";
-        setTimeout(() => {
-          oc.window.hide();
-          document.body.innerHTML = "";
-        }, SPINNER_MS);
+      const success = charm >= 4 || Math.random() < 0.6;
+      const bonus   = success ? (isFestivalDay(g) ? 8 : 5) : 0;
+      cst.affection = (cst.affection || 0) + bonus;
+      advanceTime(g, 30);
+      // Jealousy
+      const rival = CHAR_META[charId]?.rival;
+      if (rival && g.characters[rival]) {
+        const rivalTier = getRelTier(g.characters[rival].affection || 0);
+        if (rivalTier.stage >= 4) g.characters[rival].affection = Math.max(0, (g.characters[rival].affection || 0) - 2);
       }
+      if (success) {
+        oc.thread.messages.push({ author: "system",
+          content: `\uD83D\uDE18 You flirt with **${ch.name}** — and it lands! Affection +${bonus} (now ${cst.affection}).` });
+      } else {
+        oc.thread.messages.push({ author: "system",
+          content: `\uD83D\uDE05 Your attempt to flirt with **${ch.name}** falls flat. Try again when your charm is higher.` });
+      }
+      checkAchievements(g);
+      updateReminder();
+      return;
     }
 
-    showStep1();
+    // ── /craft <item1> <item2> ────────────────────────────────────────────────
+    if (cmd === "craft") {
+      if (args.length < 2) {
+        const recipeList = CRAFTING_RECIPES.map(r => `  ${r.inputs.join(" + ")} → ${r.output}: ${r.desc}`).join("\n");
+        oc.thread.messages.push({ author: "system",
+          content: `Usage: /craft <item1> <item2>\n\n**Known Recipes:**\n${recipeList}` });
+        return;
+      }
+      // Build item name: may have underscores for spaces
+      const nameA = normalizeItemName(args[0]);
+      const nameB = normalizeItemName(args[1]);
+      const recipe = CRAFTING_RECIPES.find(r => {
+        const ins = [nameA.toLowerCase(), nameB.toLowerCase()].sort().join("|");
+        const rec = [...r.inputs].map(x => x.toLowerCase()).sort().join("|");
+        return ins === rec;
+      });
+      if (!recipe) {
+        oc.thread.messages.push({ author: "system", content: `No recipe for **${nameA}** + **${nameB}**. Use /craft to see known recipes.` });
+        return;
+      }
+      // Remove both from inventory
+      const invLow = g.inventory.map(i => i.toLowerCase());
+      const idxA   = invLow.indexOf(nameA.toLowerCase());
+      if (idxA === -1) {
+        oc.thread.messages.push({ author: "system", content: `You don't have "${nameA}" in your inventory.` });
+        return;
+      }
+      g.inventory.splice(idxA, 1);
+      const idxB = g.inventory.map(i => i.toLowerCase()).indexOf(nameB.toLowerCase());
+      if (idxB === -1) {
+        g.inventory.push(nameA); // refund A
+        oc.thread.messages.push({ author: "system", content: `You don't have "${nameB}" in your inventory.` });
+        return;
+      }
+      g.inventory.splice(idxB, 1);
+      g.inventory.push(recipe.output);
+      g.craftingCount = (g.craftingCount || 0) + 1;
+      // Apply stat bonuses immediately for stat-granting items
+      const crafted = CRAFTED_ITEMS[recipe.output];
+      if (crafted?.stat)   applyStatItem(g, crafted);
+      if (crafted?.stats)  applyStatItem(g, crafted);
+      awardXP(50);
+      earnAchievement(g, "crafter");
+      earnAchievement(g, "first_craft");
+      oc.thread.messages.push({ author: "system",
+        content: `\u2697\uFE0F **Crafted: ${recipe.output}**\n${recipe.desc}\n+50 XP` });
+      updateReminder();
+      return;
+    }
+
+    // ── /use <itemName> ───────────────────────────────────────────────────────
+    if (cmd === "use") {
+      const itemName = normalizeItemName(args.join(" "));
+      const idx = g.inventory.findIndex(i => i.toLowerCase() === itemName.toLowerCase());
+      if (idx === -1) {
+        oc.thread.messages.push({ author: "system", content: `"${itemName}" not in inventory.` });
+        return;
+      }
+      const item = SHOP_ITEMS[Object.keys(SHOP_ITEMS).find(k => SHOP_ITEMS[k].name.toLowerCase() === itemName.toLowerCase())];
+      const crafted = CRAFTED_ITEMS[itemName] || (item?.heals || item?.restoresMana ? item : null);
+      if (!crafted && !item?.heals && !item?.restoresMana) {
+        oc.thread.messages.push({ author: "system", content: `${itemName} can't be used directly. It may be a gift or crafting ingredient.` });
+        return;
+      }
+      g.inventory.splice(idx, 1);
+      let result = [];
+      const heals = crafted?.heals || item?.heals || 0;
+      const restMana = crafted?.restoresMana || item?.restoresMana || 0;
+      if (heals)    { g.hp   = Math.min(g.maxHp,   g.hp   + heals);    result.push(`+${heals} HP`); }
+      if (restMana) { g.mana = Math.min(g.maxMana, g.mana + restMana); result.push(`+${restMana} Mana`); }
+      oc.thread.messages.push({ author: "system",
+        content: `\u2728 Used **${itemName}**: ${result.join(", ")}. HP: ${g.hp}/${g.maxHp} | Mana: ${g.mana}/${g.maxMana}` });
+      updateReminder();
+      return;
+    }
+
+    // ── /achievements ─────────────────────────────────────────────────────────
+    if (cmd === "achievements") {
+      if (!g.achievements.length) {
+        oc.thread.messages.push({ author: "system",
+          content: `\uD83C\uDFC6 **Achievements** — None earned yet.\n\nAvailable:\n${ACHIEVEMENTS_DEF.map(a => `  ${a.icon} ${a.name}: ${a.cond}`).join("\n")}` });
+        return;
+      }
+      const earned  = g.achievements.map(a => `  ${a.icon} **${a.name}** — earned ${a.earnedAt}`).join("\n");
+      const pending = ACHIEVEMENTS_DEF.filter(a => !g.achievements.find(e => e.id === a.id)).map(a => `  ${a.icon} ${a.name}: ${a.cond}`).join("\n");
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83C\uDFC6 **Achievements (${g.achievements.length}/${ACHIEVEMENTS_DEF.length})**\n${earned}${pending ? `\n\n**Pending:**\n${pending}` : ""}` });
+      return;
+    }
+
+    // ── /betray <charId> ──────────────────────────────────────────────────────
+    if (cmd === "betray") {
+      const charId = args[0];
+      const ch = getChar(charId);
+      if (!ch) {
+        oc.thread.messages.push({ author: "system", content: `Unknown character "${charId}".` });
+        return;
+      }
+      const cst = g.characters[charId];
+      if (!cst) return;
+      if (g.betrayed.includes(charId)) {
+        oc.thread.messages.push({ author: "system", content: `You have already betrayed ${ch.name}.` });
+        return;
+      }
+      cst.affection = Math.max(-10, (cst.affection || 0) - 50);
+      g.betrayed.push(charId);
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDD1A **Betrayed: ${ch.name}.** Affection plummeted to ${cst.affection}. The shadows watch.` });
+      checkAchievements(g);
+      updateReminder();
+      return;
+    }
+
+    // ── /kinks ────────────────────────────────────────────────────────────────
+    if (cmd === "kinks") {
+      showKinkMenu();
+      return;
+    }
+
+    // ── /ng+ ──────────────────────────────────────────────────────────────────
+    if (cmd === "ng+") {
+      if (!g.gameOver) {
+        oc.thread.messages.push({ author: "system", content: "New Game+ is only available after completing the game." });
+        return;
+      }
+      const legacy = { gold: 500, affectionBonus: 10, prevEnding: g.ending };
+      const gender = g.gender;
+      const name   = g.playerName;
+      const desc   = g.playerDesc;
+      const bodyPrefs = g.bodyTypePrefs;
+      const kinks  = g.enabledKinks || [];
+      initGame(gender, name, desc, bodyPrefs);
+      cd.game.gold += legacy.gold;
+      cd.game.ngPlusBonus = legacy;
+      cd.game.enabledKinks = kinks;
+      getActiveChars().forEach(ch => {
+        cd.game.characters[ch.id].affection += legacy.affectionBonus;
+      });
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDC51 **New Game+ Begins!**\nThe realm remembers you (${legacy.prevEnding}).\nStarting bonus: +${legacy.gold}g, +${legacy.affectionBonus} affection with every companion.\nYour consent settings have been preserved.` });
+      updateReminder();
+      updateShortcutButtons();
+      return;
+    }
+
+    // ── /help ─────────────────────────────────────────────────────────────────
+    if (cmd === "help") {
+      oc.thread.messages.push({ author: "system",
+        content: `**\u2753 Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}` });
+      return;
+    }
+
+    oc.thread.messages.push({ author: "system", content: `Unknown command "/${cmd}". Type /help for all commands.` });
   }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 10 — KINK MENU (in-play)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  function showKinkMenu() {
+    const g = cd.game;
+    const enabled = g.enabledKinks || [];
+
+    const kinkCheckboxes = KINKS.map(k => `
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:13px;">
+        <input type="checkbox" data-kink="${k.id}" ${enabled.includes(k.id) ? "checked" : ""}
+          style="width:16px;height:16px;accent-color:#ff6b9d;cursor:pointer;" />
+        <span>${k.emoji} ${k.label}</span>
+      </label>`).join("");
+
+    oc.window.show(`
+      <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:560px;color:#eee;background:#1a1a2e;border-radius:12px;max-height:80vh;overflow-y:auto;">
+        <h2 style="text-align:center;color:#ff6b9d;margin:0 0 8px;">🔞 Consent & Kink Settings</h2>
+        <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 12px;">
+          ✅ Checked = consented — <strong>may appear</strong> in story.<br>
+          ❌ Unchecked = <strong>absolutely banned</strong> — will never appear under any circumstances.
+        </p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+          <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=true)"
+            style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Select All</button>
+          <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=false)"
+            style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Deselect All</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;">
+          ${kinkCheckboxes}
+        </div>
+        <button id="saveKinks" style="width:100%;padding:12px;background:linear-gradient(135deg,#ff6b9d,#c44569);border:none;border-radius:8px;color:white;font-size:15px;font-weight:bold;cursor:pointer;">
+          💾 Save Consent Settings
+        </button>
+      </div>
+      <script>
+        document.getElementById('saveKinks').addEventListener('click', () => {
+          const boxes = document.querySelectorAll('[data-kink]');
+          const enabled = [];
+          boxes.forEach(cb => { if (cb.checked) enabled.push(cb.dataset.kink); });
+          oc.sendMessage('/kinks_save ' + enabled.join(','));
+          oc.window.hide();
+        });
+      </script>
+    `);
+  }
+
+  // Internal command to persist kink selection (triggered by the kink menu UI)
+  function handleKinkSave(msg) {
+    const g    = cd.game;
+    const text = msg.content?.trim() || "";
+    const raw  = text.replace("/kinks_save ", "").trim();
+    g.enabledKinks = raw ? raw.split(",").filter(Boolean) : [];
+    const count = g.enabledKinks.length;
+    oc.thread.messages.push({ author: "system",
+      content: `\uD83D\uDD12 Consent settings saved. ${count} kink${count !== 1 ? "s" : ""} enabled. The story will strictly respect these boundaries.` });
+    updateReminder();
+    return true;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 11 — OPENING UI (setup wizard: 3 steps)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  function showOpeningUI() {
+    const stepStyles = `
+      font-family:'Segoe UI',sans-serif;
+      background:linear-gradient(135deg,#0d0d2e,#1a0a1a);
+      color:#eee; padding:28px; border-radius:14px;
+      max-width:540px; min-height:400px;`;
+
+    const btnStyle = (color) => `
+      width:100%;padding:11px;border:none;border-radius:8px;cursor:pointer;
+      background:linear-gradient(135deg,${color});color:white;
+      font-size:14px;font-weight:bold;margin-top:8px;`;
+
+    const inputStyle = `
+      width:100%;padding:10px;border-radius:8px;background:#1e1e3a;
+      border:1px solid #444;color:#eee;font-size:14px;box-sizing:border-box;`;
+
+    // ── STEP 1: Gender / Name / Description ──
+    function step1() {
+      oc.window.show(`
+        <div style="${stepStyles}">
+          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 6px;">⚔️ Chronicles of the Void King</h2>
+          <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 18px;">Step 1 of 3 — Your Character</p>
+
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button id="gF" onclick="selectGender('female')" style="${btnStyle("#c44569,#ff6b9d")}">♀ Female Companions</button>
+            <button id="gM" onclick="selectGender('male')"   style="${btnStyle("#1565c0,#42a5f5")}">♂ Male Companions</button>
+          </div>
+
+          <label style="font-size:13px;color:#aaa;">Your name</label>
+          <input id="pName" placeholder="Traveler" style="${inputStyle}margin-bottom:10px;" />
+
+          <label style="font-size:13px;color:#aaa;">Your appearance (optional)</label>
+          <textarea id="pDesc" placeholder="Short description of how you look..."
+            style="${inputStyle}height:70px;resize:vertical;margin-bottom:10px;"></textarea>
+
+          <button onclick="goStep2()" style="${btnStyle("#2e7d32,#66bb6a")}">Next →</button>
+        </div>
+        <script>
+          let selGender = 'female';
+          function selectGender(g) {
+            selGender = g;
+            document.getElementById('gF').style.opacity = g==='female'?'1':'0.5';
+            document.getElementById('gM').style.opacity = g==='male' ?'1':'0.5';
+          }
+          selectGender('female');
+          function goStep2() {
+            const name = document.getElementById('pName').value.trim() || 'Traveler';
+            const desc = document.getElementById('pDesc').value.trim();
+            oc.sendMessage('/setup_step2 ' + JSON.stringify({gender:selGender,name,desc}));
+          }
+        </script>
+      `);
+    }
+
+    // ── STEP 2: Body-type preferences ──
+    function step2(data) {
+      const bodyCards = Object.entries(BODY_TYPES).map(([id, bt]) => `
+        <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:13px;">
+          <input type="checkbox" value="${id}" data-bt="${id}"
+            style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
+          <div><strong>${bt.label}</strong><br><span style="color:#aaa;font-size:11px;">${bt.desc}</span></div>
+        </label>`).join("");
+
+      oc.window.show(`
+        <div style="${stepStyles}max-height:82vh;overflow-y:auto;">
+          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 2 of 3 — Preferences</h2>
+          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 12px;">Which body types are you attracted to? (Check all that apply)</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+            ${bodyCards}
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=true)"
+              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">All</button>
+            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=false)"
+              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">None</button>
+          </div>
+          <button onclick="goStep3()" style="${btnStyle("#7b1fa2,#ab47bc")}">Next → Kink Settings</button>
+        </div>
+        <script>
+          const _data = ${JSON.stringify(data)};
+          function goStep3() {
+            const boxes = document.querySelectorAll('[data-bt]');
+            const prefs = [];
+            boxes.forEach(cb => { if (cb.checked) prefs.push(cb.value); });
+            oc.sendMessage('/setup_step3 ' + JSON.stringify({..._data, bodyTypePrefs: prefs}));
+          }
+        </script>
+      `);
+    }
+
+    // ── STEP 3: Kink / Consent menu ──
+    function step3(data) {
+      const kinkCards = KINKS.map(k => `
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
+          <input type="checkbox" data-kink="${k.id}"
+            style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
+          <span>${k.emoji} ${k.label}</span>
+        </label>`).join("");
+
+      oc.window.show(`
+        <div style="${stepStyles}max-height:82vh;overflow-y:auto;">
+          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 3 of 3 — 🔞 Consent & Kinks</h2>
+          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 4px;">
+            ✅ Check what you <strong>consent to</strong>.<br>
+            ❌ Unchecked kinks are <strong>absolutely banned</strong> from the story — permanently, unless you change them later via /kinks.
+          </p>
+          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">
+            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=true)"
+              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">Select All</button>
+            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=false)"
+              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">Deselect All</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+            ${kinkCards}
+          </div>
+          <button onclick="startGame()" style="${btnStyle("#c62828,#ef5350")}font-size:16px;">⚔️ Begin Your Journey</button>
+        </div>
+        <script>
+          const _d = ${JSON.stringify(data)};
+          function startGame() {
+            const boxes   = document.querySelectorAll('[data-kink]');
+            const enabled = [];
+            boxes.forEach(cb => { if (cb.checked) enabled.push(cb.dataset.kink); });
+            oc.sendMessage('/setup_start ' + JSON.stringify({..._d, enabledKinks: enabled}));
+          }
+        </script>
+      `);
+    }
+
+    // Expose step functions so the message handler can call them
+    cd._uiStep2 = step2;
+    cd._uiStep3 = step3;
+    step1();
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 12 — GAME INIT & MIGRATION
+  // ════════════════════════════════════════════════════════════════════════════
+
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks) {
+    const chars     = gender === "female" ? FEMALE_CHARS : MALE_CHARS;
+    const sideQuests = buildSideQuests(chars);
+    const quests     = [
+      ...MAIN_QUESTS.map(q => ({ ...q, progress: 0, completed: false })),
+      ...sideQuests.map(q => ({ ...q, progress: 0, completed: false }))
+    ];
+
+    const characters = {};
+    chars.forEach(ch => {
+      characters[ch.id] = {
+        affection: 0, met: false,
+        currentLocation: ch.location,
+        dialogueStage: 0, questProgress: 0
+      };
+    });
+
+    cd.game = {
+      initialized:      true,
+      gender,
+      playerName:       playerName || "Traveler",
+      playerDesc:       playerDesc || "",
+      bodyTypePrefs:    bodyTypePrefs || [],
+      enabledKinks:     enabledKinks  || [],
+      location:         "town_square",
+      gold:             50,
+      inventory:        [],
+      level:            1,
+      xp:               0,
+      xpToNext:         100,
+      hp:               30,
+      maxHp:            30,
+      mana:             20,
+      maxMana:          20,
+      skills: {
+        combat: { strength: 1, defense: 1, speed: 1 },
+        social: { charm: 1, persuasion: 1, empathy: 1 },
+        magic:  { spellpower: 1, resistance: 1, mana: 1 }
+      },
+      characters,
+      quests,
+      activeCharacterId: null,
+      time:             { totalMinutes: 8 * 60, day: 1 },
+      lastTrained:      {},
+      priceModifiers:   {},
+      achievements:     [],
+      trainingCount:    0,
+      craftingCount:    0,
+      gameOver:         false,
+      ending:           null,
+      betrayed:         [],
+      questNotification:false,
+      ngPlusBonus:      null,
+      storyline:        buildStoryline(chars, playerName)
+    };
+
+    regeneratePriceModifiers(cd.game);
+    updateCompanionSchedules(cd.game);
+    updateReminder();
+    updateShortcutButtons();
+  }
+
+  // Add missing fields for older save states
+  function migrateGame(g) {
+    if (g.hp         === undefined) g.hp         = 30;
+    if (g.maxHp      === undefined) g.maxHp      = 30 + (g.level - 1) * 5;
+    if (g.mana       === undefined) g.mana       = 20;
+    if (g.maxMana    === undefined) g.maxMana    = 20 + (g.level - 1) * 3;
+    if (!g.time)                    g.time       = { totalMinutes: 8 * 60, day: 1 };
+    if (!g.lastTrained)             g.lastTrained = {};
+    if (!g.achievements)            g.achievements = [];
+    if (!g.betrayed)                g.betrayed   = [];
+    if (g.trainingCount === undefined) g.trainingCount = 0;
+    if (g.craftingCount === undefined) g.craftingCount = 0;
+    if (g.gameOver    === undefined) g.gameOver   = false;
+    if (g.ending      === undefined) g.ending     = null;
+    if (!g.priceModifiers)          g.priceModifiers = {};
+    if (g.questNotification === undefined) g.questNotification = false;
+    if (!g.enabledKinks)            g.enabledKinks = [];
+    if (!g.ngPlusBonus)             g.ngPlusBonus  = null;
+    if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName);
+    // Ensure quests have a visible field
+    if (g.quests) {
+      g.quests.forEach(q => {
+        if (q.visible === undefined) q.visible = q.type === "main" && q.id === "mq1";
+      });
+    }
+    regeneratePriceModifiers(g);
+    updateCompanionSchedules(g);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 13 — BOOT & EVENT HANDLER
+  // ════════════════════════════════════════════════════════════════════════════
 
   if (!cd.game?.initialized) {
     showOpeningUI();
   } else {
+    migrateGame(cd.game);
     updateReminder();
     updateShortcutButtons();
   }
 
   oc.thread.on("MessageAdded", async ({ message }) => {
-    if (!cd.game?.initialized) return;
-    const g = cd.game;
+    if (!cd.game?.initialized) {
+      // Setup wizard message routing
+      const text = message.content?.trim() || "";
+
+      if (text.startsWith("/setup_step2 ")) {
+        try {
+          const data = JSON.parse(text.slice("/setup_step2 ".length));
+          cd._pendingSetup = data;
+          if (cd._uiStep2) cd._uiStep2(data);
+        } catch (e) {}
+        return;
+      }
+      if (text.startsWith("/setup_step3 ")) {
+        try {
+          const data = JSON.parse(text.slice("/setup_step3 ".length));
+          cd._pendingSetup = data;
+          if (cd._uiStep3) cd._uiStep3(data);
+        } catch (e) {}
+        return;
+      }
+      if (text.startsWith("/setup_start ")) {
+        try {
+          const data = JSON.parse(text.slice("/setup_start ".length));
+          oc.window.hide();
+          initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks);
+          oc.thread.messages.push({ author: "system",
+            content: `\u2694\uFE0F **Welcome to Eryndel, ${data.name}!**\nYour journey begins at the Town Square. Type /help for all commands, or simply start talking to explore the world.${data.enabledKinks?.length ? `\n\uD83D\uDD12 ${data.enabledKinks.length} kink(s) enabled. Type /kinks to adjust at any time.` : "\n\uD83D\uDD12 All kinks currently disabled. Type /kinks to enable content you consent to."}` });
+          updateReminder();
+          updateShortcutButtons();
+        } catch (e) {
+          oc.thread.messages.push({ author: "system", content: "Setup error. Please refresh and try again." });
+        }
+        return;
+      }
+      return;
+    }
+
+    const g    = cd.game;
     const text = message.content?.trim() || "";
+
+    // Intercept internal kink save command
+    if (text.startsWith("/kinks_save")) {
+      handleKinkSave(message);
+      return;
+    }
 
     if (text.startsWith("/")) {
       handleCommand(message);
       return;
     }
 
+    // Regular message — advance world
     awardXP(10);
+    advanceTime(g, 15);
 
+    // Auto-detect active character from message text
     const detected = detectActiveChar(text);
     if (detected) {
       g.activeCharacterId = detected.id;
-      if (!g.characters[detected.id].met) {
-        g.characters[detected.id].met = true;
+      const cst = g.characters[detected.id];
+      if (cst && !cst.met) {
+        cst.met = true;
+        const sq = g.quests.find(q => q.id === `sq_${detected.id}` && !q.visible);
+        if (sq) {
+          sq.visible = true;
+          g.questNotification = true;
+          oc.thread.messages.push({ author: "system",
+            content: `\uD83D\uDCDC New side quest discovered: **${sq.title}**` });
+        }
       }
     }
 
+    checkAchievements(g);
     updateReminder();
+    updateShortcutButtons();
   });
 })();

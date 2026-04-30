@@ -1,41 +1,93 @@
-@name=Status
+# Shortcut buttons — all 15 entries, all 5 fields present
+# Source of truth is updateShortcutButtons() in customCode.js
+# This file documents the initial/default set embedded in the export JSON.
+
+@name=📊 Status
 @message=/status
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Inventory
+@name=🎒 Inventory
 @message=/inventory
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Skills
+@name=⚔️ Skills
 @message=/skills
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Quest Log
+@name=📜 Quests
 @message=/quests
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Explore
+@name=🗺️ Explore
 @message=/explore
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Shop
+@name=🏪 Shop
 @message=/shop
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Characters
+@name=👥 Characters
 @message=/chars
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Talk
-@message=/talk
+@name=🕒 Time
+@message=/time
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Gift
-@message=/gift
+@name=🏋️ Train
+@message=/train 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
 
-@name=Go: Inn
-@message=/go inn
+@name=🗡️ Fight
+@message=/fight 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
 
-@name=Go: Market
-@message=/go market
+@name=😴 Rest
+@message=/rest
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Go: Forest
-@message=/go forest
+@name=⚗️ Craft
+@message=/craft 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
 
-@name=Go: Castle
-@message=/go castle
+@name=🏆 Achievements
+@message=/achievements
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
 
-@name=Help
+@name=🔞 Kinks
+@message=/kinks
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=❓ Help
 @message=/help
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
