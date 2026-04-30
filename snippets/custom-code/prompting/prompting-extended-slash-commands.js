@@ -73,6 +73,8 @@
  *     POV extraction (receives the resolved character's name at call time).
  *   - IMAGE_STYLE_PREFIX / IMAGE_STYLE_SUFFIX: wrap generated prompts in
  *     style keywords (quality boosters, art style, etc.).
+ *   - IMAGE_NEGATIVE_PROMPT: comma-separated terms the image generator
+ *     should avoid. Rendered as (negativePrompt:::…) inside the <image> tag.
  *
  * Caveats:
  *   - Images are inserted as <image>prompt</image> tags. The Perchance
@@ -154,6 +156,19 @@
 
   /** Style keywords appended to every generated image prompt. */
   const IMAGE_STYLE_SUFFIX = oc.character.imagePromptSuffix ?? "";
+
+  /**
+   * Negative prompt appended to every generated image inside the
+   * (negativePrompt:::) block that the Perchance text-to-image plugin
+   * recognises. Add or remove comma-separated terms to steer the image
+   * generator away from common artifacts and unwanted styles.
+   */
+  const IMAGE_NEGATIVE_PROMPT = [
+    "low quality", "worst quality", "blurry", "jpeg artifacts",
+    "watermark", "text", "logo", "signature", "username",
+    "deformed", "bad anatomy", "extra limbs", "disfigured",
+    "out of frame", "cropped", "ugly", "error", "duplicate",
+  ].join(", ");
 
   /** Maximum characters taken from each message for the LLM context block. */
   const MAX_CONTEXT_CHARS = 2500;
@@ -257,6 +272,8 @@
    * automatically — none of which are available when embedding a raw base64
    * data URL.
    *
+   * A negative prompt is appended using the (negativePrompt:::…) syntax
+   * recognised by the plugin to steer generation away from common artifacts.
    * A plain-text description is also pushed as a hidden AI note so the model
    * has context for what appears at this point in the scene.
    * expectsReply is set to true so the AI continues the narrative naturally.
@@ -270,6 +287,7 @@
   function generateAndInsertImage(rawPrompt, label, triggers = "") {
     const triggerPart = triggers ? `, ${triggers}` : "";
     const styledPrompt = IMAGE_STYLE_PREFIX + rawPrompt.trim() + triggerPart + IMAGE_STYLE_SUFFIX;
+    const negPart = IMAGE_NEGATIVE_PROMPT ? ` (negativePrompt::: ${IMAGE_NEGATIVE_PROMPT})` : "";
 
     // Insert a hidden AI note with the text description so the model has
     // awareness of what the image represents in the scene.
@@ -278,10 +296,11 @@
     // Use the Perchance text-to-image plugin's native <image> tag so the
     // platform renders the image and provides quick-regeneration,
     // prompt-editing, and multi-image generation UI out of the box.
+    // The (negativePrompt:::) block tells the plugin what to avoid.
     // expectsReply:true so the AI continues the scene after this message.
     oc.thread.messages.push({
       author:       "system",
-      content:      `<image>${styledPrompt}</image>`,
+      content:      `<image>${styledPrompt}${negPart}</image>`,
       hiddenFrom:   [],
       expectsReply: true,
     });
