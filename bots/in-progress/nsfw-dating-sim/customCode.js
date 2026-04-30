@@ -12,14 +12,35 @@
   ];
 
   const MALE_CHARS = [
-    { id: "kael", name: "Kael Embervane", archetype: "Fire Warrior", personality: "passionate bold", location: "training_grounds", imageKeywords: "kael embervane fire warrior red hair heavily muscular broad powerful chest flame tattoos passionate intense battle-hardened" },
-    { id: "zeph", name: "Zeph Galewing", archetype: "Wind Dancer", personality: "flirtatious charming", location: "market", imageKeywords: "zeph galewing wind dancer teal hair lean dancer build lithe flexible graceful handsome charming smile breezy outfit" },
-    { id: "orion", name: "Orion Shadowcloak", archetype: "Dark Knight", personality: "brooding mysterious", location: "dungeon", imageKeywords: "orion shadowcloak dark knight silver hair tall imposing broad-shouldered dark armor brooding intense violet eyes mysterious" },
-    { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble", location: "castle", imageKeywords: "sol brightmane paladin golden hair athletic toned build radiant armor kind eyes noble gentle glowing holy" },
-    { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous", location: "inn", imageKeywords: "ash quickfingers rogue dark hair wiry slim compact nimble playful smirk leather gear daggers agile" },
-    { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic", location: "castle", imageKeywords: "dex inksworth scholar brown hair lanky slender tall awkward build glasses eager enthusiastic studious books quill" },
-    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce" }
+    { id: "kael", name: "Kael Embervane", archetype: "Fire Warrior", personality: "passionate bold", location: "training_grounds", bodyType: "heavily_muscular", imageKeywords: "kael embervane fire warrior red hair heavily muscular broad powerful chest flame tattoos passionate intense battle-hardened" },
+    { id: "zeph", name: "Zeph Galewing", archetype: "Wind Dancer", personality: "flirtatious charming", location: "market", bodyType: "lean_dancer", imageKeywords: "zeph galewing wind dancer teal hair lean dancer build lithe flexible graceful handsome charming smile breezy outfit" },
+    { id: "orion", name: "Orion Shadowcloak", archetype: "Dark Knight", personality: "brooding mysterious", location: "dungeon", bodyType: "tall_imposing", imageKeywords: "orion shadowcloak dark knight silver hair tall imposing broad-shouldered dark armor brooding intense violet eyes mysterious" },
+    { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble", location: "castle", bodyType: "athletic_toned", imageKeywords: "sol brightmane paladin golden hair athletic toned build radiant armor kind eyes noble gentle glowing holy" },
+    { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous", location: "inn", bodyType: "wiry_slim", imageKeywords: "ash quickfingers rogue dark hair wiry slim compact nimble playful smirk leather gear daggers agile" },
+    { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic", location: "castle", bodyType: "lanky_slender", imageKeywords: "dex inksworth scholar brown hair lanky slender tall awkward build glasses eager enthusiastic studious books quill" },
+    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", bodyType: "hulking_massive", imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce" }
   ];
+
+  const BODY_TYPES = {
+    female: [
+      { id: "ultrapetite_youthful", label: "Ultrapetite / Youthful", emoji: "🌸", desc: "Tiny frame, delicate features" },
+      { id: "plump_busty",          label: "Plump & Busty",          emoji: "🍑", desc: "Full figured, generous curves" },
+      { id: "lithe_athletic",       label: "Lithe & Athletic",       emoji: "⚡", desc: "Toned, slender, compact" },
+      { id: "curvy_hourglass",      label: "Curvy / Hourglass",      emoji: "🌙", desc: "Full bust, seductive curves" },
+      { id: "chubby_plussize",      label: "Chubby / Plus-Size",     emoji: "🌻", desc: "Round, soft, full figured" },
+      { id: "elfin_willowy",        label: "Elfin / Willowy",        emoji: "✨", desc: "Tall, slender, graceful" },
+      { id: "muscular_toned",       label: "Muscular & Toned",       emoji: "⚔️", desc: "Powerful, defined build" }
+    ],
+    male: [
+      { id: "heavily_muscular", label: "Heavily Muscular",   emoji: "💪", desc: "Broad, powerful chest" },
+      { id: "lean_dancer",      label: "Lean & Graceful",    emoji: "🌬️", desc: "Lithe, flexible, dancer build" },
+      { id: "tall_imposing",    label: "Tall & Imposing",    emoji: "🌑", desc: "Broad-shouldered, commanding" },
+      { id: "athletic_toned",   label: "Athletic & Toned",   emoji: "☀️", desc: "Balanced, paladin physique" },
+      { id: "wiry_slim",        label: "Wiry & Slim",        emoji: "🗡️", desc: "Compact, nimble, quick" },
+      { id: "lanky_slender",    label: "Lanky & Slender",    emoji: "📚", desc: "Tall, awkward, bookish frame" },
+      { id: "hulking_massive",  label: "Hulking & Massive",  emoji: "🪨", desc: "Barrel-chested, primal" }
+    ]
+  };
 
   const LOCATIONS = {
     town_square: { name: "Town Square", desc: "The bustling heart of Eryndel, where all roads meet beneath the ancient Moonveil Spire. Merchants call, children laugh, and adventurers plot their next move." },
@@ -109,11 +130,21 @@ SKILLS AND GROWTH
 The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.training_grounds.name} sharpens Strength, Defense, and Speed. Social bonds at the ${LOCATIONS.inn.name} and ${LOCATIONS.market.name} deepen Charm, Persuasion, and Empathy. Magical study in the ${LOCATIONS.castle.name} and ${LOCATIONS.dungeon.name} builds Spellpower, Resistance, and Mana. Every choice shapes who ${pn} becomes — and who they can face at the final hour.`;
   }
 
-  function initGame(gender, playerName, playerDesc) {
-    const chars = gender === "male" ? MALE_CHARS : FEMALE_CHARS;
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs) {
+    const allChars = gender === "male" ? MALE_CHARS : FEMALE_CHARS;
+    const prefs = Array.isArray(bodyTypePrefs) && bodyTypePrefs.length > 0 ? bodyTypePrefs : [];
+    // Sort preferred body types to the front; preserve original order within each group
+    const chars = prefs.length > 0
+      ? [...allChars].sort((a, b) => {
+          const aP = prefs.includes(a.bodyType) ? 0 : 1;
+          const bP = prefs.includes(b.bodyType) ? 0 : 1;
+          return aP - bP;
+        })
+      : allChars;
     cd.game = {
       initialized: true,
       gender,
+      bodyTypePrefs: prefs,
       playerName: playerName || "Traveler",
       location: "town_square",
       gold: 100,
@@ -372,29 +403,136 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
 
   function showOpeningUI() {
     oc.window.show();
-    document.body.style.cssText = "margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;display:flex;align-items:center;justify-content:center;";
-    document.body.innerHTML = `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:32px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-<h1 style="text-align:center;font-size:1.6em;color:#d4a0ff;margin-bottom:4px;">⚔️ Realm of Eryndel</h1>
-<p style="text-align:center;color:#b088cc;font-size:0.85em;margin-bottom:24px;">NSFW Dating Sim — Character Setup</p>
-<label style="display:block;margin-bottom:6px;font-size:0.9em;color:#c9a8ee;">Romance characters of gender:</label>
-<select id="genderSel" style="width:100%;padding:10px;border-radius:8px;background:#2a1540;border:1px solid #7a4faa;color:#e8d5ff;font-size:1em;margin-bottom:16px;">
-  <option value="female">Female</option>
-  <option value="male">Male</option>
-</select>
-<label style="display:block;margin-bottom:6px;font-size:0.9em;color:#c9a8ee;">Your name:</label>
-<input id="nameInp" type="text" placeholder="Enter your name..." style="width:100%;padding:10px;border-radius:8px;background:#2a1540;border:1px solid #7a4faa;color:#e8d5ff;font-size:1em;margin-bottom:16px;box-sizing:border-box;" />
-<label style="display:block;margin-bottom:6px;font-size:0.9em;color:#c9a8ee;">Describe yourself (appearance, personality):</label>
-<textarea id="descInp" placeholder="I am..." rows="4" style="width:100%;padding:10px;border-radius:8px;background:#2a1540;border:1px solid #7a4faa;color:#e8d5ff;font-size:1em;margin-bottom:20px;box-sizing:border-box;resize:vertical;"></textarea>
-<button id="startBtn" style="width:100%;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.1em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Start Adventure</button>
+    const BASE_STYLE = "margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;display:flex;align-items:center;justify-content:center;";
+    const CARD_STYLE = "background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:28px 32px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);";
+    const INPUT_STYLE = "width:100%;padding:10px;border-radius:8px;background:#2a1540;border:1px solid #7a4faa;color:#e8d5ff;font-size:1em;box-sizing:border-box;";
+    const LABEL_STYLE = "display:block;margin-bottom:6px;font-size:0.9em;color:#c9a8ee;";
+
+    document.body.style.cssText = BASE_STYLE;
+
+    // ── Step 1: gender / name / description ─────────────────────────────────
+    function showStep1() {
+      document.body.innerHTML = `
+<div style="${CARD_STYLE}">
+  <h1 style="text-align:center;font-size:1.6em;color:#d4a0ff;margin:0 0 4px;">⚔️ Realm of Eryndel</h1>
+  <p style="text-align:center;color:#b088cc;font-size:0.85em;margin:0 0 24px;">NSFW Dating Sim — Character Setup</p>
+  <label style="${LABEL_STYLE}">Romance characters of gender:</label>
+  <select id="genderSel" style="${INPUT_STYLE}margin-bottom:16px;">
+    <option value="female">Female</option>
+    <option value="male">Male</option>
+  </select>
+  <label style="${LABEL_STYLE}">Your name:</label>
+  <input id="nameInp" type="text" placeholder="Enter your name…" style="${INPUT_STYLE}margin-bottom:16px;" />
+  <label style="${LABEL_STYLE}">Describe yourself (appearance, personality):</label>
+  <textarea id="descInp" placeholder="I am…" rows="4" style="${INPUT_STYLE}margin-bottom:20px;resize:vertical;"></textarea>
+  <button id="nextBtn" style="width:100%;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.1em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">Next →</button>
 </div>`;
-    document.getElementById("startBtn").addEventListener("click", () => {
-      const gender = document.getElementById("genderSel").value;
-      const name = document.getElementById("nameInp").value.trim() || "Traveler";
-      const desc = document.getElementById("descInp").value.trim() || "An adventurer who has arrived in Eryndel seeking purpose.";
-      initGame(gender, name, desc);
-      oc.window.hide();
-      document.body.innerHTML = "";
-    });
+      document.getElementById("nextBtn").addEventListener("click", () => {
+        const gender = document.getElementById("genderSel").value;
+        const name   = document.getElementById("nameInp").value.trim() || "Traveler";
+        const desc   = document.getElementById("descInp").value.trim() || "An adventurer who has arrived in Eryndel seeking purpose.";
+        showStep2(gender, name, desc);
+      });
+    }
+
+    // ── Step 2: body type preference (single or any range) ──────────────────
+    function showStep2(gender, name, desc) {
+      const types = BODY_TYPES[gender];
+      const selected = new Set();
+
+      function renderCards() {
+        const container = document.getElementById("btContainer");
+        if (!container) return;
+        container.innerHTML = types.map(t => {
+          const on = selected.has(t.id);
+          return `<div data-bt="${t.id}" style="
+            display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;cursor:pointer;
+            border:2px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.2)"};
+            background:${on ? "rgba(212,160,255,0.15)" : "rgba(255,255,255,0.03)"};
+            transition:all 0.15s ease;user-select:none;margin-bottom:8px;">
+            <span style="font-size:1.5em;line-height:1;">${t.emoji}</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;color:${on ? "#e8d5ff" : "#c9a8ee"};font-size:0.95em;">${t.label}</div>
+              <div style="font-size:0.78em;color:#9070b0;">${t.desc}</div>
+            </div>
+            <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${on ? "#d4a0ff" : "#7a4faa"};
+              background:${on ? "#d4a0ff" : "transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              ${on ? '<span style="color:#1a0a2e;font-size:0.75em;font-weight:900;">✓</span>' : ""}
+            </div>
+          </div>`;
+        }).join("");
+        // wire click handlers
+        container.querySelectorAll("[data-bt]").forEach(el => {
+          el.addEventListener("click", () => {
+            const id = el.dataset.bt;
+            if (selected.has(id)) selected.delete(id); else selected.add(id);
+            renderCards();
+            updateCount();
+          });
+        });
+      }
+
+      function updateCount() {
+        const el = document.getElementById("selCount");
+        if (!el) return;
+        const n = selected.size;
+        el.textContent = n === 0 ? "No preference — show everyone"
+          : n === 1 ? "1 body type selected"
+          : `${n} body types selected`;
+        el.style.color = n === 0 ? "#705090" : "#d4a0ff";
+      }
+
+      document.body.innerHTML = `
+<div style="${CARD_STYLE}max-height:95vh;overflow-y:auto;">
+  <h1 style="text-align:center;font-size:1.4em;color:#d4a0ff;margin:0 0 2px;">💕 Body Type Preferences</h1>
+  <p style="text-align:center;color:#b088cc;font-size:0.82em;margin:0 0 6px;">Pick <strong style="color:#d4a0ff;">one</strong> you love or <strong style="color:#d4a0ff;">a range</strong> of types you're attracted to.</p>
+  <p style="text-align:center;color:#705090;font-size:0.78em;margin:0 0 16px;">Leaving all unselected shows all companions equally.</p>
+  <div id="btContainer"></div>
+  <p id="selCount" style="text-align:center;font-size:0.82em;margin:4px 0 16px;color:#705090;"></p>
+  <div style="display:flex;gap:10px;">
+    <button id="backBtn" style="flex:0 0 auto;padding:12px 18px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:1em;cursor:pointer;">← Back</button>
+    <button id="startBtn" style="flex:1;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.05em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Enter Eryndel →</button>
+  </div>
+</div>`;
+      renderCards();
+      updateCount();
+
+      document.getElementById("backBtn").addEventListener("click", showStep1);
+      document.getElementById("startBtn").addEventListener("click", () => {
+        const prefs = [...selected];
+        showSpinner();
+        // defer initGame one tick so the spinner paints first
+        setTimeout(() => {
+          initGame(gender, name, desc, prefs);
+          oc.window.hide();
+          document.body.innerHTML = "";
+        }, 60);
+      });
+    }
+
+    // ── Loading spinner ──────────────────────────────────────────────────────
+    function showSpinner() {
+      document.body.innerHTML = `
+<style>
+  @keyframes ery-spin  { to { transform: rotate(360deg); } }
+  @keyframes ery-pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
+  @keyframes ery-dots  { 0%{ content:""; } 33%{ content:"."; } 66%{ content:".."; } 100%{ content:"..."; } }
+  #ery-dots::after { content:""; animation: ery-dots 1.2s steps(1) infinite; }
+</style>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:22px;">
+  <div style="position:relative;width:72px;height:72px;">
+    <div style="position:absolute;inset:0;border-radius:50%;border:4px solid rgba(200,150,255,0.15);"></div>
+    <div style="position:absolute;inset:0;border-radius:50%;border:4px solid transparent;border-top-color:#d4a0ff;animation:ery-spin 0.85s linear infinite;"></div>
+    <div style="position:absolute;inset:10px;border-radius:50%;border:3px solid transparent;border-top-color:#9060cc;animation:ery-spin 1.3s linear infinite reverse;"></div>
+  </div>
+  <p style="color:#c9a8ee;font-size:1.05em;animation:ery-pulse 1.6s ease-in-out infinite;letter-spacing:0.04em;">
+    ⚔️ Weaving the realm of Eryndel<span id="ery-dots"></span>
+  </p>
+  <p style="color:#705090;font-size:0.8em;">Generating your story &amp; companions…</p>
+</div>`;
+    }
+
+    showStep1();
   }
 
   if (!cd.game?.initialized) {
