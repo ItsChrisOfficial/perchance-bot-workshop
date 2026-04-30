@@ -8,7 +8,8 @@
     { id: "luna", name: "Luna Darkmoore", archetype: "Dark Mage", personality: "mysterious seductive", location: "dungeon", bodyType: "curvy_hourglass", imageKeywords: "luna darkmoore dark mage purple hair violet eyes curvy hourglass figure full bust seductive pale skin dark robes alluring" },
     { id: "hana", name: "Hana Goldleaf", archetype: "Merchant", personality: "cheerful bubbly", location: "market", bodyType: "chubby_plussize", imageKeywords: "hana goldleaf merchant orange hair amber eyes chubby plus size round soft full figured bright smile merchant apron cheerful" },
     { id: "mei", name: "Mei Silverscript", archetype: "Scholar", personality: "bookworm intellectual", location: "castle", bodyType: "elfin_willowy", imageKeywords: "mei silverscript scholar blue hair glasses elfin slender willowy tall graceful pointed ears spectacles scrolls pensive intelligent" },
-    { id: "rei", name: "Rei Ironheart", archetype: "Warrior", personality: "stoic honorable", location: "training_grounds", bodyType: "muscular_toned", imageKeywords: "rei ironheart warrior red hair determined armor muscular toned powerful athletic strong defined build battle-ready fierce" }
+    { id: "rei", name: "Rei Ironheart", archetype: "Warrior", personality: "stoic honorable", location: "training_grounds", bodyType: "muscular_toned", imageKeywords: "rei ironheart warrior red hair determined armor muscular toned powerful athletic strong defined build battle-ready fierce" },
+    { id: "kira", name: "Kira Stonemark", archetype: "Guard Captain", personality: "no-nonsense direct", location: "training_grounds", bodyType: "tomboy_masculine", imageKeywords: "kira stonemark guard captain short auburn hair androgynous athletic broad-shouldered tomboy masculine no-frills practical armor cropped determined jaw strong" }
   ];
 
   const MALE_CHARS = [
@@ -18,7 +19,8 @@
     { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble", location: "castle", bodyType: "athletic_toned", imageKeywords: "sol brightmane paladin golden hair athletic toned build radiant armor kind eyes noble gentle glowing holy" },
     { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous", location: "inn", bodyType: "wiry_slim", imageKeywords: "ash quickfingers rogue dark hair wiry slim compact nimble playful smirk leather gear daggers agile" },
     { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic", location: "castle", bodyType: "lanky_slender", imageKeywords: "dex inksworth scholar brown hair lanky slender tall awkward build glasses eager enthusiastic studious books quill" },
-    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", bodyType: "hulking_massive", imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce" }
+    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", bodyType: "hulking_massive", imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce" },
+    { id: "lys", name: "Lys Silkwhisper", archetype: "Enchanter", personality: "gentle coy", location: "inn", bodyType: "femboy_feminine", imageKeywords: "lys silkwhisper enchanter long silver hair androgynous feminine femboy slender delicate features graceful soft flowy pastel robes gentle coy ethereal" }
   ];
 
   const BODY_TYPES = {
@@ -29,7 +31,8 @@
       { id: "curvy_hourglass",      label: "Curvy / Hourglass",      emoji: "🌙", desc: "Full bust, seductive curves" },
       { id: "chubby_plussize",      label: "Chubby / Plus-Size",     emoji: "🌻", desc: "Round, soft, full figured" },
       { id: "elfin_willowy",        label: "Elfin / Willowy",        emoji: "✨", desc: "Tall, slender, graceful" },
-      { id: "muscular_toned",       label: "Muscular & Toned",       emoji: "⚔️", desc: "Powerful, defined build" }
+      { id: "muscular_toned",       label: "Muscular & Toned",       emoji: "⚔️", desc: "Powerful, defined build" },
+      { id: "tomboy_masculine",     label: "Tomboy / Masculine",     emoji: "🪖", desc: "Athletic, androgynous, no-frills" }
     ],
     male: [
       { id: "heavily_muscular", label: "Heavily Muscular",   emoji: "💪", desc: "Broad, powerful chest" },
@@ -38,7 +41,8 @@
       { id: "athletic_toned",   label: "Athletic & Toned",   emoji: "☀️", desc: "Balanced, paladin physique" },
       { id: "wiry_slim",        label: "Wiry & Slim",        emoji: "🗡️", desc: "Compact, nimble, quick" },
       { id: "lanky_slender",    label: "Lanky & Slender",    emoji: "📚", desc: "Tall, awkward, bookish frame" },
-      { id: "hulking_massive",  label: "Hulking & Massive",  emoji: "🪨", desc: "Barrel-chested, primal" }
+      { id: "hulking_massive",  label: "Hulking & Massive",  emoji: "🪨", desc: "Barrel-chested, primal" },
+      { id: "femboy_feminine",  label: "Femboy / Feminine",  emoji: "🌺", desc: "Slender, androgynous, graceful" }
     ]
   };
 
@@ -65,11 +69,11 @@
   const MAIN_QUESTS = [
     { id: "mq1", title: "Echoes of the Rift", desc: "Investigate the strange tremors shaking Eryndel. Seek clues in the Shadow Dungeon and Whispering Forest.", type: "main", characterId: null, completed: false, progress: 0, goal: 3 },
     { id: "mq2", title: "The Shattered Seal", desc: "Seven ancient seals once imprisoned the Void King. Three have already broken. Find the remaining four keepers.", type: "main", characterId: null, completed: false, progress: 0, goal: 4 },
-    { id: "mq3", title: "United Hearts, Unyielding Realm", desc: "Win the trust and alliance of all seven companions. Only together can you face the Void King's return.", type: "main", characterId: null, completed: false, progress: 0, goal: 7 }
+    { id: "mq3", title: "United Hearts, Unyielding Realm", desc: "Win the trust and alliance of all eight companions. Only together can you face the Void King's return.", type: "main", characterId: null, completed: false, progress: 0, goal: 8 }
   ];
 
   function buildSideQuests(chars) {
-    return [
+    const quests = [
       { id: "sq_" + chars[0].id, title: chars[0].name + "'s Trial", desc: "Help " + chars[0].name + " overcome a personal challenge tied to their past.", type: "side", characterId: chars[0].id, completed: false, progress: 0, goal: 2 },
       { id: "sq_" + chars[1].id, title: chars[1].name + "'s Secret", desc: "Uncover a hidden truth that " + chars[1].name + " has never shared with anyone.", type: "side", characterId: chars[1].id, completed: false, progress: 0, goal: 2 },
       { id: "sq_" + chars[2].id, title: chars[2].name + "'s Mission", desc: "Assist " + chars[2].name + " in completing a dangerous task they've been delaying.", type: "side", characterId: chars[2].id, completed: false, progress: 0, goal: 2 },
@@ -78,6 +82,10 @@
       { id: "sq_" + chars[5].id, title: chars[5].name + "'s Discovery", desc: "Join " + chars[5].name + " in investigating an ancient mystery.", type: "side", characterId: chars[5].id, completed: false, progress: 0, goal: 2 },
       { id: "sq_" + chars[6].id, title: chars[6].name + "'s Honor", desc: "Stand beside " + chars[6].name + " when their reputation is put on the line.", type: "side", characterId: chars[6].id, completed: false, progress: 0, goal: 2 }
     ];
+    if (chars[7]) {
+      quests.push({ id: "sq_" + chars[7].id, title: chars[7].name + "'s Conviction", desc: "Challenge the beliefs that define " + chars[7].name + " and uncover the truth they alone know about the Void King's imprisonment.", type: "side", characterId: chars[7].id, completed: false, progress: 0, goal: 2 });
+    }
+    return quests;
   }
 
   function buildStoryline(chars, playerName) {
@@ -100,7 +108,7 @@ The Shadows — a secretive network operating from the Shadow Dungeon and the ci
 
 The Seekers — an ancient order of wandering truth-hunters, bound by no crown. They believe the only way to defeat Malachar is to reunite the seven soul-fragments. ${c[0].name} is the last known Seeker elder.
 
-THE SEVEN COMPANIONS
+THE EIGHT COMPANIONS
 ${c[0].name} (${c[0].archetype}): Pride and pain run deep in ${c[0].name}. As a ${c[0].archetype} stationed at ${LOCATIONS[c[0].location].name}, they have built walls around themselves as impenetrable as their magic. Their backstory is one of loss — a mentor destroyed by the Void — and their tsundere exterior conceals fierce loyalty. They hold the key to the first Binding Seal's location.
 
 ${c[1].name} (${c[1].archetype}): Kind to a fault, ${c[1].name} operates from ${LOCATIONS[c[1].location].name}, tending to the wounded and the weary. Their ${c[1].personality} nature hides a devastating secret: their healing power is linked to one of the fractured seals. Every time they heal, the seal weakens slightly. They don't know yet.
@@ -114,6 +122,8 @@ ${c[4].name} (${c[4].archetype}): Running the most successful stall in ${LOCATIO
 ${c[5].name} (${c[5].archetype}): Found in ${LOCATIONS[c[5].location].name} surrounded by scrolls and star charts, ${c[5].name} is the foremost authority on Aetheric Weave theory. Their ${c[5].personality} obsession has led them to a terrifying conclusion: the seals will all fail within one lunar cycle unless something radical is done. They haven't told the Crown yet.
 
 ${c[6].name} (${c[6].archetype}): The finest fighter at ${LOCATIONS[c[6].location].name}, ${c[6].name} trains others and asks little in return. Their ${c[6].personality} code of honor is absolute — which makes it all the more painful that they once served Malachar, long ago, before they broke free. That secret could destroy them.
+
+${c[7] ? `${c[7].name} (${c[7].archetype}): Owing allegiance to no faction, ${c[7].name} moves between ${LOCATIONS[c[7].location].name} and the realm's forgotten places on their own terms. Their ${c[7].personality} nature masks extraordinary conviction — and a heretical belief that the Void King's imprisonment was itself an act of corruption. They alone carry knowledge of the original sealing ritual, and will only share it with someone they wholly trust.` : ""}
 
 THE THREE MAIN QUESTS
 
@@ -491,7 +501,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   <p id="selCount" style="text-align:center;font-size:0.82em;margin:4px 0 16px;color:#705090;"></p>
   <div style="display:flex;gap:10px;">
     <button id="backBtn" style="flex:0 0 auto;padding:12px 18px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:1em;cursor:pointer;">← Back</button>
-    <button id="startBtn" style="flex:1;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.05em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Enter Eryndel →</button>
+    <button id="startBtn" style="flex:1;padding:14px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1.05em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Start Adventure</button>
   </div>
 </div>`;
       renderCards();
@@ -500,36 +510,139 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       document.getElementById("backBtn").addEventListener("click", showStep1);
       document.getElementById("startBtn").addEventListener("click", () => {
         const prefs = [...selected];
-        showSpinner();
-        // defer initGame one tick so the spinner paints first
-        setTimeout(() => {
-          initGame(gender, name, desc, prefs);
-          oc.window.hide();
-          document.body.innerHTML = "";
-        }, 60);
+        showLoadingSequence(gender, name, desc, prefs);
       });
     }
 
-    // ── Loading spinner ──────────────────────────────────────────────────────
-    function showSpinner() {
+    // ── Loading sequence: canvas magic particles → CSS spinner → auto-dismiss ──
+    function showLoadingSequence(gender, name, desc, prefs) {
+      const startMs = Date.now();
+      const CANVAS_MS  = 3500; // magic particle phase duration
+      const SPINNER_MS = 1500; // CSS spinner phase before window closes
+
       document.body.innerHTML = `
 <style>
   @keyframes ery-spin  { to { transform: rotate(360deg); } }
-  @keyframes ery-pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
-  @keyframes ery-dots  { 0%{ content:""; } 33%{ content:"."; } 66%{ content:".."; } 100%{ content:"..."; } }
-  #ery-dots::after { content:""; animation: ery-dots 1.2s steps(1) infinite; }
+  @keyframes ery-pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+  @keyframes ery-fdots { 0%{content:""} 33%{content:"."} 66%{content:".."} 100%{content:"..."} }
+  #ery-d1::after, #ery-d2::after { content:""; animation: ery-fdots 1.2s steps(1) infinite; }
 </style>
-<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:22px;">
-  <div style="position:relative;width:72px;height:72px;">
-    <div style="position:absolute;inset:0;border-radius:50%;border:4px solid rgba(200,150,255,0.15);"></div>
-    <div style="position:absolute;inset:0;border-radius:50%;border:4px solid transparent;border-top-color:#d4a0ff;animation:ery-spin 0.85s linear infinite;"></div>
-    <div style="position:absolute;inset:10px;border-radius:50%;border:3px solid transparent;border-top-color:#9060cc;animation:ery-spin 1.3s linear infinite reverse;"></div>
+<div id="ery-root" style="position:fixed;inset:0;background:#1a0a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+  <canvas id="ery-canvas" style="position:absolute;inset:0;width:100%;height:100%;transition:opacity 1s;"></canvas>
+  <div id="ery-label" style="position:relative;z-index:2;text-align:center;pointer-events:none;">
+    <p style="color:#c9a8ee;font-size:1.1em;animation:ery-pulse 1.6s ease-in-out infinite;letter-spacing:0.05em;margin:0 0 8px;">⚔️ Weaving the Realm of Eryndel<span id="ery-d1"></span></p>
+    <p style="color:#705090;font-size:0.82em;margin:0;">Summoning your companions…</p>
   </div>
-  <p style="color:#c9a8ee;font-size:1.05em;animation:ery-pulse 1.6s ease-in-out infinite;letter-spacing:0.04em;">
-    ⚔️ Weaving the realm of Eryndel<span id="ery-dots"></span>
-  </p>
-  <p style="color:#705090;font-size:0.8em;">Generating your story &amp; companions…</p>
+  <div id="ery-spinner" style="display:none;position:relative;z-index:2;flex-direction:column;align-items:center;gap:16px;">
+    <div style="position:relative;width:72px;height:72px;">
+      <div style="position:absolute;inset:0;border-radius:50%;border:4px solid rgba(200,150,255,0.15);"></div>
+      <div style="position:absolute;inset:0;border-radius:50%;border:4px solid transparent;border-top-color:#d4a0ff;animation:ery-spin 0.85s linear infinite;"></div>
+      <div style="position:absolute;inset:10px;border-radius:50%;border:3px solid transparent;border-top-color:#9060cc;animation:ery-spin 1.3s linear infinite reverse;"></div>
+    </div>
+    <p style="color:#d4a0ff;font-size:1.05em;animation:ery-pulse 1.4s ease-in-out infinite;letter-spacing:0.04em;margin:0;">✨ Almost ready<span id="ery-d2"></span></p>
+  </div>
 </div>`;
+
+      // ── Canvas setup ────────────────────────────────────────────────────────
+      const canvas = document.getElementById("ery-canvas");
+      const ctx    = canvas.getContext("2d");
+      function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      resize();
+      window.addEventListener("resize", resize);
+
+      const COLORS = ["#d4a0ff", "#9060cc", "#e8d5ff", "#b060ff", "#ffffff", "#7030cc", "#ff90ff"];
+      const particles = [];
+      let rafId;
+
+      function spawnAt(ox, oy) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.8 + Math.random() * 3;
+        particles.push({
+          x: ox, y: oy,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          size: 1.5 + Math.random() * 3.5,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          life: 1.0, decay: 0.007 + Math.random() * 0.013,
+          trail: []
+        });
+      }
+
+      function animate(ts) {
+        const elapsed = Date.now() - startMs;
+        if (elapsed >= CANVAS_MS) {
+          cancelAnimationFrame(rafId);
+          window.removeEventListener("resize", resize);
+          transitionToSpinner();
+          return;
+        }
+        rafId = requestAnimationFrame(animate);
+        const W = canvas.width, H = canvas.height;
+        const cx = W / 2, cy = H / 2;
+
+        // Fade-trail bg
+        ctx.fillStyle = "rgba(26,10,46,0.22)";
+        ctx.fillRect(0, 0, W, H);
+
+        // Pulsing central glow
+        const pulse = 0.75 + 0.25 * Math.sin(ts * 0.002);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 130 * pulse);
+        g.addColorStop(0,   "rgba(180,80,255,0.5)");
+        g.addColorStop(0.4, "rgba(120,40,200,0.2)");
+        g.addColorStop(1,   "rgba(0,0,0,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+
+        // Spawn particles from center + occasional orbital ring
+        if (Math.random() < 0.5) spawnAt(cx, cy);
+        if (Math.random() < 0.06) {
+          const a = Math.random() * Math.PI * 2, r = 55 + Math.random() * 45;
+          spawnAt(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        }
+
+        // Update and draw
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.trail.push({ x: p.x, y: p.y });
+          if (p.trail.length > 8) p.trail.shift();
+          p.x += p.vx; p.y += p.vy;
+          p.vx *= 1.015; p.vy *= 1.015;
+          p.life -= p.decay;
+          if (p.life <= 0) { particles.splice(i, 1); continue; }
+          // Trail dots
+          p.trail.forEach((pt, j) => {
+            ctx.globalAlpha = (j / p.trail.length) * p.life * 0.55;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, p.size * 0.45 * ((j + 1) / p.trail.length), 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+          });
+          // Main sparkle
+          ctx.globalAlpha = p.life * 0.9;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+      rafId = requestAnimationFrame(animate);
+
+      // ── Run initGame after first paint ──────────────────────────────────────
+      setTimeout(() => { initGame(gender, name, desc, prefs); }, 50);
+
+      // ── Transition: canvas fade → CSS spinner → window close ───────────────
+      function transitionToSpinner() {
+        const canvasEl   = document.getElementById("ery-canvas");
+        const labelEl    = document.getElementById("ery-label");
+        const spinnerEl  = document.getElementById("ery-spinner");
+        if (canvasEl)  canvasEl.style.opacity  = "0.15";
+        if (labelEl)   labelEl.style.display   = "none";
+        if (spinnerEl) spinnerEl.style.display  = "flex";
+        setTimeout(() => {
+          oc.window.hide();
+          document.body.innerHTML = "";
+        }, SPINNER_MS);
+      }
     }
 
     showStep1();
