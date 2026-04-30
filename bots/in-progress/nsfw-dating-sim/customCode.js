@@ -156,6 +156,46 @@
   };
 
   // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 2b — WORLD SETTINGS & STORY TONES
+  // ════════════════════════════════════════════════════════════════════════════
+
+  const WORLD_SETTINGS = [
+    { id: "medieval_fantasy",     label: "⚔️ Medieval Fantasy",       desc: "Swords, magic, mythic kingdoms",          cues: "medieval fantasy castle magic swords kingdom" },
+    { id: "modern_day",           label: "🏙️ Modern Day",              desc: "Contemporary city with hidden magic",      cues: "modern city urban contemporary everyday street" },
+    { id: "cyberpunk",            label: "🤖 Cyberpunk",               desc: "Neon-lit dystopia, chrome and code",      cues: "cyberpunk neon dystopia megacity chrome implants hologram" },
+    { id: "post_apocalypse",      label: "☢️ Post-Apocalyptic",        desc: "Ruins of civilization, survival first",   cues: "post-apocalyptic ruins wasteland survival decayed settlement" },
+    { id: "space_opera",          label: "🚀 Space Opera",             desc: "Epic adventures across the galaxy",       cues: "space opera galaxy starship alien cosmos nebula" },
+    { id: "steampunk",            label: "⚙️ Steampunk",               desc: "Victorian steam power and invention",     cues: "steampunk Victorian steam engines airship gears brass clockwork" },
+    { id: "feudal_japan",         label: "🏯 Feudal Japan",            desc: "Samurai, shinobi, ancient spirits",       cues: "feudal Japan samurai shinobi shrine spirits cherry blossom" },
+    { id: "urban_fantasy",        label: "🌆 Urban Fantasy",           desc: "Magic hidden beneath modern streets",     cues: "urban fantasy modern hidden magic supernatural city alley" },
+    { id: "dark_fantasy",         label: "🌑 Dark Fantasy",            desc: "Grimdark world of shadow and peril",      cues: "dark fantasy grim shadow corruption bleak dangerous monsters" },
+    { id: "high_fantasy",         label: "🌟 High Fantasy",            desc: "Epic quests, ancient prophecies",         cues: "high fantasy epic quest ancient prophecy elves dwarves vast realm" },
+    { id: "solarpunk",            label: "🌿 Solarpunk",               desc: "Hopeful green-tech utopian future",       cues: "solarpunk green technology sustainable utopia nature harmony city" },
+    { id: "dieselpunk",           label: "🔧 Dieselpunk",              desc: "Interwar diesel-powered alt-history",     cues: "dieselpunk interwar diesel machines industrial alternate history smog" },
+    { id: "western",              label: "🤠 Western",                 desc: "Frontier towns, outlaws, vast plains",    cues: "western frontier town saloon outlaw plains desert canyon" },
+    { id: "supernatural_thriller",label: "👻 Supernatural Thriller",   desc: "Horror, mystery, things that bump",       cues: "supernatural thriller horror mystery gothic paranormal fog shadow" },
+    { id: "ancient_mythology",    label: "🏛️ Ancient Mythology",       desc: "Gods, heroes, legendary beasts",          cues: "ancient mythology gods heroes olympus temple legend creature" }
+  ];
+
+  const STORY_TONES = [
+    { id: "dark_romance",      label: "🖤 Dark Romance",         desc: "Intense passion with danger and depth" },
+    { id: "slow_burn",         label: "🕯️ Slow Burn",            desc: "Tension builds gradually over time" },
+    { id: "enemies_to_lovers", label: "⚔️❤️ Enemies to Lovers",  desc: "Rivals who can't deny the pull" },
+    { id: "slice_of_life",     label: "☕ Slice of Life",        desc: "Quiet moments, everyday connection" },
+    { id: "giddy_friendship",  label: "😄 Giddy Friendship",     desc: "Warm, fun, and lighthearted bonds" },
+    { id: "action_adventure",  label: "💥 Action & Adventure",   desc: "High stakes, fast pace, epic moments" },
+    { id: "psychological",     label: "🧠 Psychological",        desc: "Mind games, unreliable truths, deep tension" },
+    { id: "comedy",            label: "😂 Comedy",               desc: "Laughs, mishaps, and absurd moments" },
+    { id: "found_family",      label: "🏠 Found Family",         desc: "Unlikely people becoming true companions" },
+    { id: "tragedy",           label: "💔 Tragedy",              desc: "Beautiful things that hurt to lose" },
+    { id: "redemption",        label: "✨ Redemption",           desc: "Rising from darkness toward the light" },
+    { id: "forbidden_love",    label: "🚫❤️ Forbidden Love",     desc: "Love that cannot and must not be" },
+    { id: "epic_quest",        label: "🗺️ Epic Quest",           desc: "A grand journey with world-altering stakes" },
+    { id: "coming_of_age",     label: "🌱 Coming of Age",        desc: "Growth, identity, and finding your place" },
+    { id: "mystery_intrigue",  label: "🔍 Mystery & Intrigue",   desc: "Secrets, deceptions, and revelations" }
+  ];
+
+  // ════════════════════════════════════════════════════════════════════════════
   // SECTION 3 — KINK / CONSENT SYSTEM
   // ════════════════════════════════════════════════════════════════════════════
 
@@ -676,6 +716,11 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       return `${ch.name.split(" ")[0]}@${cs?.currentLocation || ch.location}`;
     }).join(", ");
 
+    const worldLabel = (g.worldSettings || ["medieval_fantasy"])
+      .map(id => WORLD_SETTINGS.find(w => w.id === id)?.label || id).join(" + ");
+    const toneLabel = (g.storyTones || ["dark_romance"])
+      .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
+
     let reminder = `[GAME STATE]
 Player: ${g.playerName} | Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}
 HP: ${g.hp}/${g.maxHp} | Mana: ${g.mana}/${g.maxMana} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}
@@ -685,8 +730,9 @@ ${lockedGates ? `Stat gates not yet met: ${lockedGates}` : "All stat gates clear
 Active Quests: ${activeQs}
 Active Character: ${charLine}
 Companions (first 4): ${scheduleSnip}
+World Setting: ${worldLabel} | Story Tone: ${toneLabel}
 ${g.gameOver ? `[GAME OVER — Ending: ${g.ending}. Only /ng+ is accepted.]` : ""}
-Use /help for all commands. Narrate immersively in second person.`;
+Use /help for all commands. Narrate immersively in second person, consistent with the world setting and story tone.`;
 
     reminder += buildConsentBlock(g);
     reminder += buildNsfwProfileBlock(g);
@@ -714,6 +760,7 @@ Use /help for all commands. Narrate immersively in second person.`;
       { name: "\uD83D\uDE34 Rest",         message: "/rest",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
       { name: "\u2697\uFE0F Craft",        message: "/craft ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
       { name: "\uD83C\uDFC6 Achievements", message: "/achievements",  insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "\uD83D\uDDBC\uFE0F Image",       message: "/image ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
       { name: "\uD83D\uDD1E Kinks",        message: "/kinks",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
       { name: "\u2753 Help",               message: "/help",          insertionType: "replace", autoSend: true,  clearAfterSend: false }
     ];
@@ -1355,15 +1402,12 @@ Use /help for all commands. Narrate immersively in second person.`;
         return;
       }
       const legacy = { gold: 500, affectionBonus: 10, prevEnding: g.ending };
-      const gender = g.gender;
-      const name   = g.playerName;
-      const desc   = g.playerDesc;
-      const bodyPrefs = g.bodyTypePrefs;
-      const kinks  = g.enabledKinks || [];
-      initGame(gender, name, desc, bodyPrefs);
+      const kinks  = g.enabledKinks   || [];
+      const worlds = g.worldSettings  || ["medieval_fantasy"];
+      const tones  = g.storyTones     || ["dark_romance"];
+      initGame(g.gender, g.playerName, g.playerDesc, g.bodyTypePrefs, kinks, worlds, tones);
       cd.game.gold += legacy.gold;
       cd.game.ngPlusBonus = legacy;
-      cd.game.enabledKinks = kinks;
       getActiveChars().forEach(ch => {
         cd.game.characters[ch.id].affection += legacy.affectionBonus;
       });
@@ -1377,7 +1421,7 @@ Use /help for all commands. Narrate immersively in second person.`;
     // ── /help ─────────────────────────────────────────────────────────────────
     if (cmd === "help") {
       oc.thread.messages.push({ author: "system",
-        content: `**\u2753 Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}` });
+        content: `**\u2753 Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Visuals**\n/image — scene image\n/image pov — what you see (player POV)\n/image charpov — what active char sees\n/image action — action climax (uses last 3 messages)\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}` });
       return;
     }
 
@@ -1445,150 +1489,146 @@ Use /help for all commands. Narrate immersively in second person.`;
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // SECTION 11 — OPENING UI (setup wizard: 3 steps)
+  // SECTION 11 — OPENING UI (setup wizard: 4 steps)
   // ════════════════════════════════════════════════════════════════════════════
 
   function showOpeningUI() {
-    const stepStyles = `
-      font-family:'Segoe UI',sans-serif;
-      background:linear-gradient(135deg,#0d0d2e,#1a0a1a);
-      color:#eee; padding:28px; border-radius:14px;
-      max-width:540px; min-height:400px;`;
-
-    const btnStyle = (color) => `
-      width:100%;padding:11px;border:none;border-radius:8px;cursor:pointer;
-      background:linear-gradient(135deg,${color});color:white;
-      font-size:14px;font-weight:bold;margin-top:8px;`;
-
-    const inputStyle = `
-      width:100%;padding:10px;border-radius:8px;background:#1e1e3a;
-      border:1px solid #444;color:#eee;font-size:14px;box-sizing:border-box;`;
+    const ss = `font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:28px;border-radius:14px;max-width:540px;min-height:400px;`;
+    const bs = (c) => `width:100%;padding:11px;border:none;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,${c});color:white;font-size:14px;font-weight:bold;margin-top:8px;`;
+    const is = `width:100%;padding:10px;border-radius:8px;background:#1e1e3a;border:1px solid #444;color:#eee;font-size:14px;box-sizing:border-box;`;
 
     // ── STEP 1: Gender / Name / Description ──
     function step1() {
       oc.window.show(`
-        <div style="${stepStyles}">
+        <div style="${ss}">
           <h2 style="text-align:center;color:#ff6b9d;margin:0 0 6px;">⚔️ Chronicles of the Void King</h2>
-          <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 18px;">Step 1 of 3 — Your Character</p>
-
+          <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 18px;">Step 1 of 4 — Your Character</p>
           <div style="display:flex;gap:10px;margin-bottom:16px;">
-            <button id="gF" onclick="selectGender('female')" style="${btnStyle("#c44569,#ff6b9d")}">♀ Female Companions</button>
-            <button id="gM" onclick="selectGender('male')"   style="${btnStyle("#1565c0,#42a5f5")}">♂ Male Companions</button>
+            <button id="gF" onclick="sel('female')" style="${bs("#c44569,#ff6b9d")}">♀ Female Companions</button>
+            <button id="gM" onclick="sel('male')"   style="${bs("#1565c0,#42a5f5")}">♂ Male Companions</button>
           </div>
-
           <label style="font-size:13px;color:#aaa;">Your name</label>
-          <input id="pName" placeholder="Traveler" style="${inputStyle}margin-bottom:10px;" />
-
+          <input id="pName" placeholder="Traveler" style="${is}margin-bottom:10px;" />
           <label style="font-size:13px;color:#aaa;">Your appearance (optional)</label>
-          <textarea id="pDesc" placeholder="Short description of how you look..."
-            style="${inputStyle}height:70px;resize:vertical;margin-bottom:10px;"></textarea>
-
-          <button onclick="goStep2()" style="${btnStyle("#2e7d32,#66bb6a")}">Next →</button>
+          <textarea id="pDesc" placeholder="Short description of how you look..." style="${is}height:70px;resize:vertical;margin-bottom:10px;"></textarea>
+          <button onclick="go()" style="${bs("#2e7d32,#66bb6a")}">Next → Preferences</button>
         </div>
         <script>
-          let selGender = 'female';
-          function selectGender(g) {
-            selGender = g;
-            document.getElementById('gF').style.opacity = g==='female'?'1':'0.5';
-            document.getElementById('gM').style.opacity = g==='male' ?'1':'0.5';
-          }
-          selectGender('female');
-          function goStep2() {
-            const name = document.getElementById('pName').value.trim() || 'Traveler';
-            const desc = document.getElementById('pDesc').value.trim();
-            oc.sendMessage('/setup_step2 ' + JSON.stringify({gender:selGender,name,desc}));
-          }
+          let _g='female';
+          function sel(g){_g=g;document.getElementById('gF').style.opacity=g==='female'?'1':'0.5';document.getElementById('gM').style.opacity=g==='male'?'1':'0.5';}
+          sel('female');
+          function go(){oc.sendMessage('/setup_step2 '+JSON.stringify({gender:_g,name:document.getElementById('pName').value.trim()||'Traveler',desc:document.getElementById('pDesc').value.trim()}));}
         </script>
       `);
     }
 
     // ── STEP 2: Body-type preferences ──
     function step2(data) {
-      const bodyCards = Object.entries(BODY_TYPES).map(([id, bt]) => `
+      const cards = Object.entries(BODY_TYPES).map(([id,bt])=>`
         <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:13px;">
-          <input type="checkbox" value="${id}" data-bt="${id}"
-            style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
+          <input type="checkbox" value="${id}" data-bt="${id}" style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
           <div><strong>${bt.label}</strong><br><span style="color:#aaa;font-size:11px;">${bt.desc}</span></div>
         </label>`).join("");
-
       oc.window.show(`
-        <div style="${stepStyles}max-height:82vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 2 of 3 — Preferences</h2>
-          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 12px;">Which body types are you attracted to? (Check all that apply)</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
-            ${bodyCards}
-          </div>
+        <div style="${ss}max-height:82vh;overflow-y:auto;">
+          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 2 of 4 — Preferences</h2>
+          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 12px;">Which body types attract you? (check all that apply)</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">${cards}</div>
           <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=true)"
-              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">All</button>
-            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=false)"
-              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">None</button>
+            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=true)" style="${bs("#555,#777")}font-size:12px;margin:0;">All</button>
+            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=false)" style="${bs("#555,#777")}font-size:12px;margin:0;">None</button>
           </div>
-          <button onclick="goStep3()" style="${btnStyle("#7b1fa2,#ab47bc")}">Next → Kink Settings</button>
+          <button onclick="go()" style="${bs("#7b1fa2,#ab47bc")}">Next → World & Tone</button>
         </div>
         <script>
-          const _data = ${JSON.stringify(data)};
-          function goStep3() {
-            const boxes = document.querySelectorAll('[data-bt]');
-            const prefs = [];
-            boxes.forEach(cb => { if (cb.checked) prefs.push(cb.value); });
-            oc.sendMessage('/setup_step3 ' + JSON.stringify({..._data, bodyTypePrefs: prefs}));
+          const _d=${JSON.stringify(data)};
+          function go(){const p=[];document.querySelectorAll('[data-bt]').forEach(cb=>{if(cb.checked)p.push(cb.value);});oc.sendMessage('/setup_step3 '+JSON.stringify({..._d,bodyTypePrefs:p}));}
+        </script>
+      `);
+    }
+
+    // ── STEP 3: World Setting + Story Tone ──
+    function step3(data) {
+      const worldCards = WORLD_SETTINGS.map(w=>`
+        <label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
+          <input type="checkbox" data-ws="${w.id}" style="accent-color:#4fc3f7;cursor:pointer;" />
+          <div><span style="font-size:13px;">${w.label}</span><br><span style="color:#aaa;font-size:10px;">${w.desc}</span></div>
+        </label>`).join("");
+      const toneCards = STORY_TONES.map(t=>`
+        <label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
+          <input type="checkbox" data-st="${t.id}" style="accent-color:#ff6b9d;cursor:pointer;" />
+          <div><span style="font-size:13px;">${t.label}</span><br><span style="color:#aaa;font-size:10px;">${t.desc}</span></div>
+        </label>`).join("");
+      oc.window.show(`
+        <div style="${ss}max-height:85vh;overflow-y:auto;">
+          <h2 style="text-align:center;color:#4fc3f7;margin:0 0 4px;">Step 3 of 4 — World & Tone</h2>
+          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 10px;">Choose <strong>up to 2 world settings</strong> and <strong>up to 3 story tones</strong>.</p>
+          <h3 style="color:#4fc3f7;margin:6px 0 6px;font-size:13px;">🌍 World Setting (pick 1–2)</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">${worldCards}</div>
+          <h3 style="color:#ff6b9d;margin:6px 0 6px;font-size:13px;">🎭 Story Tone (pick 1–3)</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">${toneCards}</div>
+          <div id="err" style="color:#ff6b9d;font-size:12px;min-height:16px;margin-bottom:4px;"></div>
+          <button onclick="go()" style="${bs("#c62828,#ef5350")}">Next → Content Settings</button>
+        </div>
+        <script>
+          const _d=${JSON.stringify(data)};
+          function go(){
+            const ws=[],st=[];
+            document.querySelectorAll('[data-ws]').forEach(cb=>{if(cb.checked)ws.push(cb.dataset.ws);});
+            document.querySelectorAll('[data-st]').forEach(cb=>{if(cb.checked)st.push(cb.dataset.st);});
+            if(ws.length<1||ws.length>2){document.getElementById('err').textContent='Please select 1 or 2 world settings.';return;}
+            if(st.length<1||st.length>3){document.getElementById('err').textContent='Please select 1 to 3 story tones.';return;}
+            oc.sendMessage('/setup_step4 '+JSON.stringify({..._d,worldSettings:ws,storyTones:st}));
           }
         </script>
       `);
     }
 
-    // ── STEP 3: Kink / Consent menu ──
-    function step3(data) {
-      const kinkCards = KINKS.map(k => `
+    // ── STEP 4: Kink / Consent ──
+    function step4(data) {
+      const kinkCards = KINKS.map(k=>`
         <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
-          <input type="checkbox" data-kink="${k.id}"
-            style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
+          <input type="checkbox" data-kink="${k.id}" style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
           <span>${k.emoji} ${k.label}</span>
         </label>`).join("");
-
       oc.window.show(`
-        <div style="${stepStyles}max-height:82vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 3 of 3 — 🔞 Consent & Kinks</h2>
-          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 4px;">
-            ✅ Check what you <strong>consent to</strong>.<br>
-            ❌ Unchecked kinks are <strong>absolutely banned</strong> from the story — permanently, unless you change them later via /kinks.
+        <div style="${ss}max-height:85vh;overflow-y:auto;">
+          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 4 of 4 — 🔞 Consent & Kinks</h2>
+          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 8px;">
+            ✅ Check = <strong>consented, may appear</strong>.<br>
+            ❌ Unchecked = <strong>absolutely banned</strong> — never appears, period. Change anytime via /kinks.
           </p>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">
-            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=true)"
-              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">Select All</button>
-            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=false)"
-              style="${btnStyle("#555,#777")}font-size:12px;margin:0;">Deselect All</button>
+            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=true)" style="${bs("#555,#777")}font-size:12px;margin:0;">Select All</button>
+            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=false)" style="${bs("#555,#777")}font-size:12px;margin:0;">Deselect All</button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
-            ${kinkCards}
-          </div>
-          <button onclick="startGame()" style="${btnStyle("#c62828,#ef5350")}font-size:16px;">⚔️ Begin Your Journey</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">${kinkCards}</div>
+          <button onclick="go()" style="${bs("#c62828,#ef5350")}font-size:15px;">🌀 Generate World & Begin</button>
         </div>
         <script>
-          const _d = ${JSON.stringify(data)};
-          function startGame() {
-            const boxes   = document.querySelectorAll('[data-kink]');
-            const enabled = [];
-            boxes.forEach(cb => { if (cb.checked) enabled.push(cb.dataset.kink); });
-            oc.sendMessage('/setup_start ' + JSON.stringify({..._d, enabledKinks: enabled}));
+          const _d=${JSON.stringify(data)};
+          function go(){
+            const en=[];
+            document.querySelectorAll('[data-kink]').forEach(cb=>{if(cb.checked)en.push(cb.dataset.kink);});
+            oc.sendMessage('/setup_start '+JSON.stringify({..._d,enabledKinks:en}));
           }
         </script>
       `);
     }
 
-    // Expose step functions so the message handler can call them
+    // Expose step callbacks for message handler
     cd._uiStep2 = step2;
     cd._uiStep3 = step3;
+    cd._uiStep4 = step4;
     step1();
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // SECTION 12 — GAME INIT & MIGRATION
+  // SECTION 12 — GAME INIT, PREGENERATION & MIGRATION
   // ════════════════════════════════════════════════════════════════════════════
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks) {
-    const chars     = gender === "female" ? FEMALE_CHARS : MALE_CHARS;
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones) {
+    const chars      = gender === "female" ? FEMALE_CHARS : MALE_CHARS;
     const sideQuests = buildSideQuests(chars);
     const quests     = [
       ...MAIN_QUESTS.map(q => ({ ...q, progress: 0, completed: false })),
@@ -1597,54 +1637,106 @@ Use /help for all commands. Narrate immersively in second person.`;
 
     const characters = {};
     chars.forEach(ch => {
-      characters[ch.id] = {
-        affection: 0, met: false,
-        currentLocation: ch.location,
-        dialogueStage: 0, questProgress: 0
-      };
+      characters[ch.id] = { affection: 0, met: false, currentLocation: ch.location, dialogueStage: 0, questProgress: 0 };
     });
 
     cd.game = {
-      initialized:      true,
-      gender,
-      playerName:       playerName || "Traveler",
-      playerDesc:       playerDesc || "",
-      bodyTypePrefs:    bodyTypePrefs || [],
-      enabledKinks:     enabledKinks  || [],
-      location:         "town_square",
-      gold:             50,
-      inventory:        [],
-      level:            1,
-      xp:               0,
-      xpToNext:         100,
-      hp:               30,
-      maxHp:            30,
-      mana:             20,
-      maxMana:          20,
+      initialized: true, gender,
+      playerName:  playerName   || "Traveler",
+      playerDesc:  playerDesc   || "",
+      bodyTypePrefs: bodyTypePrefs || [],
+      enabledKinks:  enabledKinks  || [],
+      worldSettings: worldSettings || ["medieval_fantasy"],
+      storyTones:    storyTones    || ["dark_romance"],
+      location: "town_square", gold: 50, inventory: [],
+      level: 1, xp: 0, xpToNext: 100,
+      hp: 30, maxHp: 30, mana: 20, maxMana: 20,
       skills: {
         combat: { strength: 1, defense: 1, speed: 1 },
         social: { charm: 1, persuasion: 1, empathy: 1 },
         magic:  { spellpower: 1, resistance: 1, mana: 1 }
       },
-      characters,
-      quests,
-      activeCharacterId: null,
-      time:             { totalMinutes: 8 * 60, day: 1 },
-      lastTrained:      {},
-      priceModifiers:   {},
-      achievements:     [],
-      trainingCount:    0,
-      craftingCount:    0,
-      gameOver:         false,
-      ending:           null,
-      betrayed:         [],
-      questNotification:false,
-      ngPlusBonus:      null,
-      storyline:        buildStoryline(chars, playerName)
+      characters, quests, activeCharacterId: null,
+      time: { totalMinutes: 8 * 60, day: 1 }, lastTrained: {}, priceModifiers: {},
+      achievements: [], trainingCount: 0, craftingCount: 0,
+      gameOver: false, ending: null, betrayed: [], questNotification: false,
+      ngPlusBonus: null, storyline: buildStoryline(chars, playerName)
     };
 
     regeneratePriceModifiers(cd.game);
     updateCompanionSchedules(cd.game);
+    updateReminder();
+    updateShortcutButtons();
+  }
+
+  // Pregenerate world: background image + companion portraits + intro text
+  async function pregenerate(data) {
+    oc.window.hide();
+    oc.thread.messages.push({ author: "system", content: "🌀 Generating your world — please wait a moment…" });
+
+    // World cues for image generation
+    const worldCues = (data.worldSettings || ["medieval_fantasy"])
+      .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
+    const worldLabel = (data.worldSettings || [])
+      .map(id => WORLD_SETTINGS.find(w => w.id === id)?.label || id).join(" & ");
+    const toneLabel = (data.storyTones || [])
+      .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
+
+    // 1. Background image
+    try {
+      const bg = await oc.generateImage({
+        prompt: `${worldCues} atmospheric scenic establishing shot wide angle cinematic digital art no people`,
+        negativePrompt: "people, characters, portraits, text, ui"
+      });
+      if (bg?.url) oc.thread.character.scene.background.url = bg.url;
+    } catch(e) { console.warn("bg image failed:", e?.message); }
+
+    // 2. Companion portraits — store in customData for later use
+    const chars = data.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
+    cd._portraits = {};
+    for (const ch of chars) {
+      try {
+        const r = await oc.generateImage({
+          prompt: `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`,
+          negativePrompt: "nsfw, explicit, nude"
+        });
+        if (r?.url) cd._portraits[ch.id] = r.url;
+      } catch(e) { console.warn(`portrait failed (${ch.id}):`, e?.message); }
+    }
+
+    // 3. Init game state
+    initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones);
+    const g = cd.game;
+
+    // 4. Build intro (3-4 paragraphs, world-setting-aware)
+    const arrivals = [
+      `A blinding rift of light deposited you here without warning — the portal already collapsed before you could gather your bearings.`,
+      `You awoke on cold stone, the last thing you remember being a trembling in reality itself and then: silence, and this.`,
+      `One moment you were somewhere else entirely. The next — this place, this sky, these sounds. No explanation offered.`,
+      `A voice that was not quite a voice said your name, and then you were here, as though you had always been meant to arrive.`
+    ];
+    const arrival = arrivals[g.time.day % arrivals.length];
+
+    const worldDescLine = (data.worldSettings || []).map(id => {
+      const w = WORLD_SETTINGS.find(x => x.id === id);
+      return w ? `${w.label} — ${w.desc}` : id;
+    }).join(" and ");
+
+    const intro = [
+      `The realm of Eryndel is shaped by the forces of ${worldDescLine}. It is a world that does not wait politely for newcomers to catch their breath. ${arrival} Around you, the Town Square of Moonveil hums with purposeful noise — merchants hawk their wares, distant steel rings from the training grounds beyond the east gate, and above it all the silhouette of Moonveil Castle cuts the sky like a drawn blade.`,
+      `The tone of your story has already etched itself into the fabric of fate: ${toneLabel}. Whether by destiny or coincidence, you have been dropped into precisely the intersection where such stories begin. A notice board near the fountain is fresh with ink — *"Sought: brave souls to investigate the Void King's stirrings. Report to the castle or enquire within."* Someone nailed it there this morning. The flyers are still damp.`,
+      `You are not entirely alone. Scattered across Moonveil and its surroundings are people whose paths will cross yours — some by accident, some by design, and at least one by something that cannot yet be explained. They have their own lives, their own schedules, their own reasons for being here. Whether they become allies, rivals, or something more intimate is entirely up to you.`,
+      `You stand at the fountain's edge${data.desc ? `, ${data.desc}` : ""}, the morning young and the world wide open. A cold wind off the castle hill carries the smell of ${worldCues.split(" ").slice(0, 2).join(" and ")}. Your first lead awaits — and the realm is watching to see what kind of person you are.`
+    ].join("\n\n");
+
+    // Remove the "generating" placeholder
+    const idx = oc.thread.messages.findLastIndex(m => m.content?.includes("Generating your world"));
+    if (idx >= 0) oc.thread.messages.splice(idx, 1);
+
+    oc.thread.messages.push({ author: "system",
+      content: `✨ **World ready!**  Setting: ${worldLabel}  |  Tone: ${toneLabel}\n🔞 ${g.enabledKinks.length} kink(s) enabled. Type /kinks to adjust consent at any time.` });
+    oc.thread.messages.push({ author: "ai", content: intro });
+
     updateReminder();
     updateShortcutButtons();
   }
@@ -1665,8 +1757,10 @@ Use /help for all commands. Narrate immersively in second person.`;
     if (g.ending      === undefined) g.ending     = null;
     if (!g.priceModifiers)          g.priceModifiers = {};
     if (g.questNotification === undefined) g.questNotification = false;
-    if (!g.enabledKinks)            g.enabledKinks = [];
-    if (!g.ngPlusBonus)             g.ngPlusBonus  = null;
+    if (!g.enabledKinks)            g.enabledKinks  = [];
+    if (!g.worldSettings)           g.worldSettings = ["medieval_fantasy"];
+    if (!g.storyTones)              g.storyTones    = ["dark_romance"];
+    if (!g.ngPlusBonus)             g.ngPlusBonus   = null;
     if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName);
     // Ensure quests have a visible field
     if (g.quests) {
@@ -1696,31 +1790,22 @@ Use /help for all commands. Narrate immersively in second person.`;
       const text = message.content?.trim() || "";
 
       if (text.startsWith("/setup_step2 ")) {
-        try {
-          const data = JSON.parse(text.slice("/setup_step2 ".length));
-          cd._pendingSetup = data;
-          if (cd._uiStep2) cd._uiStep2(data);
-        } catch (e) {}
+        try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep2?.(d); } catch(_) {}
         return;
       }
       if (text.startsWith("/setup_step3 ")) {
-        try {
-          const data = JSON.parse(text.slice("/setup_step3 ".length));
-          cd._pendingSetup = data;
-          if (cd._uiStep3) cd._uiStep3(data);
-        } catch (e) {}
+        try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep3?.(d); } catch(_) {}
+        return;
+      }
+      if (text.startsWith("/setup_step4 ")) {
+        try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep4?.(d); } catch(_) {}
         return;
       }
       if (text.startsWith("/setup_start ")) {
         try {
-          const data = JSON.parse(text.slice("/setup_start ".length));
-          oc.window.hide();
-          initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks);
-          oc.thread.messages.push({ author: "system",
-            content: `\u2694\uFE0F **Welcome to Eryndel, ${data.name}!**\nYour journey begins at the Town Square. Type /help for all commands, or simply start talking to explore the world.${data.enabledKinks?.length ? `\n\uD83D\uDD12 ${data.enabledKinks.length} kink(s) enabled. Type /kinks to adjust at any time.` : "\n\uD83D\uDD12 All kinks currently disabled. Type /kinks to enable content you consent to."}` });
-          updateReminder();
-          updateShortcutButtons();
-        } catch (e) {
+          const data = JSON.parse(text.slice(13));
+          pregenerate(data);
+        } catch(e) {
           oc.thread.messages.push({ author: "system", content: "Setup error. Please refresh and try again." });
         }
         return;
@@ -1736,6 +1821,37 @@ Use /help for all commands. Narrate immersively in second person.`;
       handleKinkSave(message);
       return;
     }
+
+    // ── /image [pov|charpov|action] ──────────────────────────────────────────
+    if (text.startsWith("/image")) {
+      const mode = (text.split(/\s+/)[1] || "normal").toLowerCase();
+      const loc  = LOCATIONS[g.location] || { name: g.location };
+      const wc   = (g.worldSettings || ["medieval_fantasy"])
+        .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
+      const ach  = g.activeCharacterId ? getChar(g.activeCharacterId) : null;
+      let prompt;
+      if (mode === "pov") {
+        prompt = `first person point of view ${loc.name} ${wc} what the player sees looking around atmospheric immersive`;
+      } else if (mode === "charpov" || mode === "char") {
+        const ck = ach?.imageKeywords || "beautiful companion character";
+        prompt = `${ck} looking at the viewer from their perspective close up intimate moment ${wc}`;
+      } else if (mode === "action") {
+        const recent = oc.thread.messages.slice(-3).map(m => m.content || "").join(" ").slice(0, 300);
+        prompt = `dynamic action scene ${wc} ${recent} cinematic climax mid-action dramatic digital art`;
+      } else {
+        prompt = `${loc.name} scene ${wc} atmospheric cinematic digital art establishing shot`;
+      }
+      oc.thread.messages.push({ author: "system", content: `\uD83C\uDFA8 Generating image (${mode})…` });
+      try {
+        const r = await oc.generateImage({ prompt, negativePrompt: "text, watermark, ui, hud" });
+        if (r?.url) oc.thread.messages.push({ author: "system", content: `![${mode} image](${r.url})` });
+        else oc.thread.messages.push({ author: "system", content: "Image generation returned no result." });
+      } catch(e) {
+        oc.thread.messages.push({ author: "system", content: "Image generation failed." });
+      }
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     if (text.startsWith("/")) {
       handleCommand(message);

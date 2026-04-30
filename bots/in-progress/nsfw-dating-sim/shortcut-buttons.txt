@@ -1,6 +1,6 @@
-# Shortcut buttons — all 15 entries, all 5 fields present
-# Source of truth is updateShortcutButtons() in customCode.js
-# This file documents the initial/default set embedded in the export JSON.
+# Shortcut buttons — all 16 entries, all 5 required fields present
+# Dynamic source of truth: updateShortcutButtons() in customCode.js
+# Static initial set embedded in nsfw-dating-sim.export.json
 
 @name=📊 Status
 @message=/status
@@ -78,6 +78,12 @@
 @message=/achievements
 @insertionType=replace
 @autoSend=true
+@clearAfterSend=false
+
+@name=🖼️ Image
+@message=/image 
+@insertionType=replace
+@autoSend=false
 @clearAfterSend=false
 
 @name=🔞 Kinks
