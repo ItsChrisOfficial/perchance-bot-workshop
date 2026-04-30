@@ -129,4 +129,4 @@ Slash commands splice the command message from `oc.thread.messages` and inject a
 |---|---|
 | **Target lifecycle state** | in-progress |
 | **Target version** | 0.1.0 |
-| **BOT_CATALOG.md entry** | Not yet — draft after v0.1 validation |
+| **BOT_CATALOG.md entry** | Added — in-progress entry with passed verification state |
