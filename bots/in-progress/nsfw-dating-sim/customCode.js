@@ -2,23 +2,23 @@
   const cd = oc.thread.customData;
 
   const FEMALE_CHARS = [
-    { id: "yuki", name: "Yuki Frostmere", archetype: "Ice Mage", personality: "tsundere", location: "castle", imageKeywords: "yuki frostmere ice mage silver hair blue eyes cold beauty pale skin elegant robes" },
-    { id: "aria", name: "Aria Hearthbloom", archetype: "Healer", personality: "gentle nurturing", location: "inn", imageKeywords: "aria hearthbloom healer pink hair green eyes soft warm smile white robes glowing hands" },
-    { id: "sakura", name: "Sakura Windstep", archetype: "Ninja", personality: "energetic playful", location: "forest", imageKeywords: "sakura windstep ninja cherry blossom pink hair ponytail athletic lithe red eyes agile" },
-    { id: "luna", name: "Luna Darkmoore", archetype: "Dark Mage", personality: "mysterious seductive", location: "dungeon", imageKeywords: "luna darkmoore dark mage purple hair violet eyes pale skin dark robes mysterious alluring" },
-    { id: "hana", name: "Hana Goldleaf", archetype: "Merchant", personality: "cheerful bubbly", location: "market", imageKeywords: "hana goldleaf merchant orange hair amber eyes bright smile merchant apron cheerful" },
-    { id: "mei", name: "Mei Silverscript", archetype: "Scholar", personality: "bookworm intellectual", location: "castle", imageKeywords: "mei silverscript scholar blue hair glasses studious spectacles scrolls pensive intelligent" },
-    { id: "rei", name: "Rei Ironheart", archetype: "Warrior", personality: "stoic honorable", location: "training_grounds", imageKeywords: "rei ironheart warrior red hair determined armor strong muscular brave battle-ready" }
+    { id: "yuki", name: "Yuki Frostmere", archetype: "Ice Mage", personality: "tsundere", location: "castle", imageKeywords: "yuki frostmere ice mage silver hair blue eyes ultrapetite youthful tiny frame delicate features pale skin elegant robes" },
+    { id: "aria", name: "Aria Hearthbloom", archetype: "Healer", personality: "gentle nurturing", location: "inn", imageKeywords: "aria hearthbloom healer pink hair green eyes plump busty full figured soft generous curves warm smile white robes glowing hands" },
+    { id: "sakura", name: "Sakura Windstep", archetype: "Ninja", personality: "energetic playful", location: "forest", imageKeywords: "sakura windstep ninja cherry blossom pink hair ponytail lithe athletic toned slender compact build red eyes agile" },
+    { id: "luna", name: "Luna Darkmoore", archetype: "Dark Mage", personality: "mysterious seductive", location: "dungeon", imageKeywords: "luna darkmoore dark mage purple hair violet eyes curvy hourglass figure full bust seductive pale skin dark robes alluring" },
+    { id: "hana", name: "Hana Goldleaf", archetype: "Merchant", personality: "cheerful bubbly", location: "market", imageKeywords: "hana goldleaf merchant orange hair amber eyes chubby plus size round soft full figured bright smile merchant apron cheerful" },
+    { id: "mei", name: "Mei Silverscript", archetype: "Scholar", personality: "bookworm intellectual", location: "castle", imageKeywords: "mei silverscript scholar blue hair glasses elfin slender willowy tall graceful pointed ears spectacles scrolls pensive intelligent" },
+    { id: "rei", name: "Rei Ironheart", archetype: "Warrior", personality: "stoic honorable", location: "training_grounds", imageKeywords: "rei ironheart warrior red hair determined armor muscular toned powerful athletic strong defined build battle-ready fierce" }
   ];
 
   const MALE_CHARS = [
-    { id: "kael", name: "Kael Embervane", archetype: "Fire Warrior", personality: "passionate bold", location: "training_grounds", imageKeywords: "kael embervane fire warrior red hair muscular flame tattoos passionate intense battle-hardened" },
-    { id: "zeph", name: "Zeph Galewing", archetype: "Wind Dancer", personality: "flirtatious charming", location: "market", imageKeywords: "zeph galewing wind dancer teal hair handsome confident charming smile breezy outfit" },
-    { id: "orion", name: "Orion Shadowcloak", archetype: "Dark Knight", personality: "brooding mysterious", location: "dungeon", imageKeywords: "orion shadowcloak dark knight silver hair dark armor brooding intense violet eyes mysterious" },
-    { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble", location: "castle", imageKeywords: "sol brightmane paladin golden hair kind eyes radiant armor noble gentle glowing holy" },
-    { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous", location: "inn", imageKeywords: "ash quickfingers rogue dark hair wiry nimble playful smirk leather gear daggers" },
-    { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic", location: "castle", imageKeywords: "dex inksworth scholar brown hair glasses eager enthusiastic studious books quill" },
-    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", imageKeywords: "rex stonecrusher berserker white hair huge muscular fierce scarred war paint primal" }
+    { id: "kael", name: "Kael Embervane", archetype: "Fire Warrior", personality: "passionate bold", location: "training_grounds", imageKeywords: "kael embervane fire warrior red hair heavily muscular broad powerful chest flame tattoos passionate intense battle-hardened" },
+    { id: "zeph", name: "Zeph Galewing", archetype: "Wind Dancer", personality: "flirtatious charming", location: "market", imageKeywords: "zeph galewing wind dancer teal hair lean dancer build lithe flexible graceful handsome charming smile breezy outfit" },
+    { id: "orion", name: "Orion Shadowcloak", archetype: "Dark Knight", personality: "brooding mysterious", location: "dungeon", imageKeywords: "orion shadowcloak dark knight silver hair tall imposing broad-shouldered dark armor brooding intense violet eyes mysterious" },
+    { id: "sol", name: "Sol Brightmane", archetype: "Paladin", personality: "kind noble", location: "castle", imageKeywords: "sol brightmane paladin golden hair athletic toned build radiant armor kind eyes noble gentle glowing holy" },
+    { id: "ash", name: "Ash Quickfingers", archetype: "Rogue", personality: "playful mischievous", location: "inn", imageKeywords: "ash quickfingers rogue dark hair wiry slim compact nimble playful smirk leather gear daggers agile" },
+    { id: "dex", name: "Dex Inksworth", archetype: "Scholar", personality: "nerdy enthusiastic", location: "castle", imageKeywords: "dex inksworth scholar brown hair lanky slender tall awkward build glasses eager enthusiastic studious books quill" },
+    { id: "rex", name: "Rex Stonecrusher", archetype: "Berserker", personality: "fierce loyal", location: "forest", imageKeywords: "rex stonecrusher berserker white hair hulking massive huge barrel-chested thick neck scarred war paint primal fierce" }
   ];
 
   const LOCATIONS = {
