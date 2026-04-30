@@ -1,0 +1,41 @@
+@name=Status
+@message=/status
+
+@name=Inventory
+@message=/inventory
+
+@name=Skills
+@message=/skills
+
+@name=Quest Log
+@message=/quests
+
+@name=Explore
+@message=/explore
+
+@name=Shop
+@message=/shop
+
+@name=Characters
+@message=/chars
+
+@name=Talk
+@message=/talk
+
+@name=Gift
+@message=/gift
+
+@name=Go: Inn
+@message=/go inn
+
+@name=Go: Market
+@message=/go market
+
+@name=Go: Forest
+@message=/go forest
+
+@name=Go: Castle
+@message=/go castle
+
+@name=Help
+@message=/help
