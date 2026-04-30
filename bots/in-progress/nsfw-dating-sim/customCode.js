@@ -194,13 +194,28 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   }
 
   // ── Kink consent helpers ────────────────────────────────────────────────────
+  // Kink states: null/undefined = banned | "both" = give+receive | "give" = perform only | "receive" = receive only
+  // Backward compat: true is treated as "both".
+  function getKinkState(kinks, id) {
+    const v = kinks && kinks[id];
+    if (!v) return null;
+    if (v === true) return "both";
+    return v; // "both" | "give" | "receive"
+  }
+
   // Returns the kink consent block for injection into roleInstruction / reminder.
   function buildKinkFragment(kinks) {
-    const enabled  = KINKS.filter(k => kinks && kinks[k.id]);
-    const disabled = KINKS.filter(k => !kinks || !kinks[k.id]);
-    const allowedStr  = enabled.length  ? enabled.map(k => k.label).join(", ") : "None";
-    const bannedStr   = disabled.length ? disabled.map(k => k.label).join(", ") : "None";
-    return `\n\n[KINK CONSENT — ABSOLUTE RULES]\nCONSENTED (may appear): ${allowedStr}\nSTRICTLY PROHIBITED (must NEVER appear, under any circumstances, regardless of story context): ${bannedStr}\nThese rules are non-negotiable and override all other story directions.`;
+    const both    = KINKS.filter(k => getKinkState(kinks, k.id) === "both");
+    const giveOnly= KINKS.filter(k => getKinkState(kinks, k.id) === "give");
+    const recvOnly= KINKS.filter(k => getKinkState(kinks, k.id) === "receive");
+    const banned  = KINKS.filter(k => !getKinkState(kinks, k.id));
+    const fmt = arr => arr.length ? arr.map(k => k.label).join(", ") : "None";
+    return `\n\n[KINK CONSENT — ABSOLUTE RULES]\n` +
+      `FULLY CONSENTED — give & receive (may appear freely): ${fmt(both)}\n` +
+      `GIVE ONLY — player may PERFORM on others, must NEVER receive: ${fmt(giveOnly)}\n` +
+      `RECEIVE ONLY — player may RECEIVE from others, must NEVER perform/give: ${fmt(recvOnly)}\n` +
+      `STRICTLY PROHIBITED — must NEVER appear under any circumstances: ${fmt(banned)}\n` +
+      `These rules are non-negotiable and override all other story directions.`;
   }
 
   function initGame(gender, playerName, playerDesc, bodyTypePrefs, kinks) {
@@ -544,89 +559,111 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   }
 
   // ── In-game kink settings window ────────────────────────────────────────────
-  // Opens a 3-column × 12-row grid overlay. Changes take effect immediately and
-  // persist via cd.game.kinks, roleInstruction, and reminderMessage.
+  // Opens a 3-column × 12-row grid overlay. Click a card to cycle through 4 consent states.
+  // Changes take effect immediately and persist via cd.game.kinks, roleInstruction, and reminderMessage.
   function showKinkSettingsWindow() {
     const g = cd.game;
     if (!g) return;
     oc.window.show();
-    const kinks = g.kinks || {};
+    const kinks = Object.assign({}, g.kinks || {});
+
+    // 4-state cycle: null → "both" → "give" → "receive" → null
+    const CYCLE = [null, "both", "give", "receive"];
+    const STATE_META = {
+      "null":    { symbol: "⊘", label: "Off",          border: "rgba(200,150,255,0.18)", bg: "rgba(255,255,255,0.03)", text: "#705090", badge: "#5a4070" },
+      "both":    { symbol: "↕", label: "Give & Receive",border: "#d4a0ff",                bg: "rgba(212,160,255,0.13)", text: "#e8d5ff", badge: "#d4a0ff" },
+      "give":    { symbol: "↑", label: "Give Only",     border: "#40b8b8",                bg: "rgba(64,184,184,0.10)", text: "#b0e0e0", badge: "#30a0a0" },
+      "receive": { symbol: "↓", label: "Receive Only",  border: "#e8a030",                bg: "rgba(232,160,48,0.10)", text: "#ffe0b0", badge: "#c87810" }
+    };
+
+    function cycleState(id) {
+      const cur = getKinkState(kinks, id);
+      const idx = CYCLE.indexOf(cur);
+      const next = CYCLE[(idx + 1) % CYCLE.length];
+      kinks[id] = next;
+    }
+
+    function countEnabled() { return KINKS.filter(k => getKinkState(kinks, k.id)).length; }
+
+    function buildLegendRow() {
+      return Object.entries(STATE_META).map(([s, m]) =>
+        `<span style="display:inline-flex;align-items:center;gap:4px;margin:0 8px;font-size:0.72em;color:${m.badge};white-space:nowrap;">` +
+        `<span style="font-weight:900;">${m.symbol}</span> ${m.label}</span>`
+      ).join("");
+    }
 
     function render() {
       const COLS = 3;
-      // Build rows: chunk KINKS into rows of COLS
       const rows = [];
       for (let i = 0; i < KINKS.length; i += COLS) rows.push(KINKS.slice(i, i + COLS));
 
-      const rowsHtml = rows.map(row => `
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
-    ${row.map(k => {
-      const on = !!kinks[k.id];
-      return `<label title="${k.desc}" style="display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:8px;cursor:pointer;
-        border:1.5px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.18)"};
-        background:${on ? "rgba(212,160,255,0.13)" : "rgba(255,255,255,0.03)"};
-        transition:all 0.12s;user-select:none;">
-        <input type="checkbox" data-kid="${k.id}" ${on ? "checked" : ""} style="accent-color:#d4a0ff;width:15px;height:15px;flex-shrink:0;cursor:pointer;" />
-        <span style="font-size:0.72em;color:${on ? "#e8d5ff" : "#a080c8"};line-height:1.25;">${k.emoji} ${k.label}</span>
-      </label>`;
-    }).join("")}
-  </div>`).join("");
+      const rowsHtml = rows.map(row =>
+        `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;">` +
+        row.map(k => {
+          const st = getKinkState(kinks, k.id);
+          const m  = STATE_META[String(st)];
+          return `<div data-kid="${k.id}" title="${k.desc}\n\nClick to cycle: Off → Both → Give → Receive" ` +
+            `style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;cursor:pointer;` +
+            `border:1.5px solid ${m.border};background:${m.bg};transition:all 0.12s;user-select:none;">` +
+            `<span style="font-size:1.1em;flex-shrink:0;">${k.emoji}</span>` +
+            `<span style="flex:1;font-size:0.68em;color:${m.text};line-height:1.2;">${k.label}</span>` +
+            `<span style="font-size:0.78em;font-weight:900;color:${m.badge};flex-shrink:0;" title="${m.label}">${m.symbol}</span>` +
+            `</div>`;
+        }).join("") +
+        `</div>`
+      ).join("");
 
-      const enabledCount = KINKS.filter(k => kinks[k.id]).length;
+      const cnt = countEnabled();
+      const cntText = cnt === 0 ? "No kinks enabled — vanilla mode" : cnt === KINKS.length ? "All kinks enabled" : `${cnt} of ${KINKS.length} kinks enabled`;
 
       document.body.style.cssText = "margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a0a2e,#2d1b4e);color:#e8d5ff;min-height:100vh;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px;box-sizing:border-box;";
-      document.body.innerHTML = `
-<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:22px 24px;max-width:740px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-  <h1 style="text-align:center;font-size:1.35em;color:#d4a0ff;margin:0 0 3px;">🔞 Kink Consent Settings</h1>
-  <p style="text-align:center;color:#b088cc;font-size:0.8em;margin:0 0 4px;">✅ Checked = consented &amp; allowed &nbsp;|&nbsp; ☐ Unchecked = <strong style="color:#ff7070;">strictly prohibited</strong></p>
-  <p style="text-align:center;color:#705090;font-size:0.75em;margin:0 0 14px;">Changes take effect immediately. You may update these at any time during play.</p>
-  ${rowsHtml}
-  <p id="kinkCount" style="text-align:center;font-size:0.8em;color:${enabledCount > 0 ? "#d4a0ff" : "#705090"};margin:10px 0 16px;">${enabledCount === 0 ? "No kinks enabled — vanilla mode" : enabledCount === KINKS.length ? "All kinks enabled" : `${enabledCount} of ${KINKS.length} kinks enabled`}</p>
-  <div style="display:flex;gap:10px;justify-content:center;">
-    <button id="kinkSelectAll" style="padding:9px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Select All</button>
-    <button id="kinkClearAll"  style="padding:9px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Clear All</button>
-    <button id="kinkSave" style="flex:1;padding:11px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1em;cursor:pointer;font-weight:bold;">💾 Save &amp; Close</button>
-  </div>
-</div>`;
+      document.body.innerHTML =
+        `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:20px 22px;max-width:740px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">` +
+        `<h1 style="text-align:center;font-size:1.35em;color:#d4a0ff;margin:0 0 4px;">🔞 Kink Consent Settings</h1>` +
+        `<p style="text-align:center;color:#ff7070;font-size:0.74em;font-weight:600;margin:0 0 4px;">Unchecked kinks are <strong>strictly prohibited</strong> — they will never occur, no exceptions.</p>` +
+        `<p style="text-align:center;margin:0 0 10px;line-height:1.8;">${buildLegendRow()}</p>` +
+        `<p style="text-align:center;color:#705090;font-size:0.72em;margin:0 0 10px;">Click a card to cycle its consent state. Changes take effect immediately.</p>` +
+        rowsHtml +
+        `<p id="kinkCount" style="text-align:center;font-size:0.8em;color:${cnt > 0 ? "#d4a0ff" : "#705090"};margin:10px 0 14px;">${cntText}</p>` +
+        `<div style="display:flex;gap:10px;justify-content:center;">` +
+        `<button id="kinkSelectAll" style="padding:9px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Select All (Both)</button>` +
+        `<button id="kinkClearAll"  style="padding:9px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Clear All</button>` +
+        `<button id="kinkSave" style="flex:1;padding:11px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1em;cursor:pointer;font-weight:bold;">💾 Save &amp; Close</button>` +
+        `</div></div>`;
 
-      // Wire checkboxes for live state (no re-render needed; label styles update on save)
-      document.querySelectorAll("input[data-kid]").forEach(cb => {
-        cb.addEventListener("change", () => {
-          kinks[cb.dataset.kid] = cb.checked;
-          const cnt = KINKS.filter(k => kinks[k.id]).length;
-          const el = document.getElementById("kinkCount");
-          if (el) {
-            el.textContent = cnt === 0 ? "No kinks enabled — vanilla mode" : cnt === KINKS.length ? "All kinks enabled" : `${cnt} of ${KINKS.length} kinks enabled`;
-            el.style.color = cnt > 0 ? "#d4a0ff" : "#705090";
-          }
+      // Wire card clicks → cycle state → re-render
+      document.querySelectorAll("[data-kid]").forEach(el => {
+        el.addEventListener("click", () => {
+          cycleState(el.dataset.kid);
+          render();
         });
       });
 
       document.getElementById("kinkSelectAll").addEventListener("click", () => {
-        KINKS.forEach(k => { kinks[k.id] = true; });
+        KINKS.forEach(k => { kinks[k.id] = "both"; });
         render();
       });
       document.getElementById("kinkClearAll").addEventListener("click", () => {
-        KINKS.forEach(k => { kinks[k.id] = false; });
+        KINKS.forEach(k => { kinks[k.id] = null; });
         render();
       });
       document.getElementById("kinkSave").addEventListener("click", () => {
-        // Sync final checkbox states into kinks object
-        document.querySelectorAll("input[data-kid]").forEach(cb => {
-          kinks[cb.dataset.kid] = cb.checked;
-        });
-        g.kinks = kinks;
-        // Rebuild roleInstruction and reminderMessage with updated kink rules
+        g.kinks = { ...kinks };
         const resolvedDesc = g.playerDesc || "An adventurer who has arrived in Eryndel seeking purpose.";
         oc.thread.character.roleInstruction = `You are a narrator and companion in the realm of Eryndel. The player character is ${g.playerName}: ${resolvedDesc} Narrate immersively in second person. Refer to the player as "${g.playerName}" or "you".${buildKinkFragment(g.kinks)}`;
         updateReminder();
         oc.window.hide();
         document.body.innerHTML = "";
-        const enabledLabels = KINKS.filter(k => g.kinks[k.id]).map(k => k.label);
-        oc.thread.messages.push({
-          author: "system",
-          content: `🔞 **Kink Consent Updated**\n${enabledLabels.length === 0 ? "All kinks disabled — vanilla mode only." : `Enabled (${enabledLabels.length}): ${enabledLabels.join(", ")}`}\nAll unchecked kinks are strictly prohibited for the remainder of this session.`
-        });
+        const bothList = KINKS.filter(k => getKinkState(g.kinks, k.id) === "both").map(k => k.label);
+        const giveList = KINKS.filter(k => getKinkState(g.kinks, k.id) === "give").map(k => k.label);
+        const recvList = KINKS.filter(k => getKinkState(g.kinks, k.id) === "receive").map(k => k.label);
+        const lines = ["🔞 **Kink Consent Updated**"];
+        if (bothList.length) lines.push(`↕ Give & Receive (${bothList.length}): ${bothList.join(", ")}`);
+        if (giveList.length) lines.push(`↑ Give Only (${giveList.length}): ${giveList.join(", ")}`);
+        if (recvList.length) lines.push(`↓ Receive Only (${recvList.length}): ${recvList.join(", ")}`);
+        if (!bothList.length && !giveList.length && !recvList.length) lines.push("All kinks disabled — vanilla mode only.");
+        lines.push("All unchecked kinks are strictly prohibited.");
+        oc.thread.messages.push({ author: "system", content: lines.join("\n") });
       });
     }
 
@@ -736,73 +773,83 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       });
     }
 
-    // ── Step 3: kink consent menu (3 columns × 12 rows) ─────────────────────
+    // ── Step 3: kink consent menu (3 columns × 12 rows, 4-state cycle) ──────────
     function showStep3(gender, name, desc, prefs) {
       const kinks = {};
-      const COLS = 3;
+      const CYCLE = [null, "both", "give", "receive"];
+      const STATE_META = {
+        "null":    { symbol: "⊘", label: "Off",           border: "rgba(200,150,255,0.18)", bg: "rgba(255,255,255,0.03)", text: "#705090", badge: "#5a4070" },
+        "both":    { symbol: "↕", label: "Give & Receive", border: "#d4a0ff",                bg: "rgba(212,160,255,0.13)", text: "#e8d5ff", badge: "#d4a0ff" },
+        "give":    { symbol: "↑", label: "Give Only",      border: "#40b8b8",                bg: "rgba(64,184,184,0.10)", text: "#b0e0e0", badge: "#30a0a0" },
+        "receive": { symbol: "↓", label: "Receive Only",   border: "#e8a030",                bg: "rgba(232,160,48,0.10)", text: "#ffe0b0", badge: "#c87810" }
+      };
+
+      function cycleState(id) {
+        const cur = getKinkState(kinks, id);
+        const idx = CYCLE.indexOf(cur);
+        kinks[id] = CYCLE[(idx + 1) % CYCLE.length];
+      }
+      function countEnabled() { return KINKS.filter(k => getKinkState(kinks, k.id)).length; }
+
+      function buildLegendRow() {
+        return Object.entries(STATE_META).map(([s, m]) =>
+          `<span style="display:inline-flex;align-items:center;gap:3px;margin:0 6px;font-size:0.7em;color:${m.badge};white-space:nowrap;">` +
+          `<span style="font-weight:900;">${m.symbol}</span> ${m.label}</span>`
+        ).join("");
+      }
 
       function renderStep3() {
+        const COLS = 3;
         const rows = [];
         for (let i = 0; i < KINKS.length; i += COLS) rows.push(KINKS.slice(i, i + COLS));
 
-        const rowsHtml = rows.map(row => `
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;">
-    ${row.map(k => {
-          const on = !!kinks[k.id];
-          return `<label title="${k.desc}" style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;cursor:pointer;
-            border:1.5px solid ${on ? "#d4a0ff" : "rgba(200,150,255,0.18)"};
-            background:${on ? "rgba(212,160,255,0.13)" : "rgba(255,255,255,0.03)"};
-            transition:all 0.12s;user-select:none;">
-            <input type="checkbox" data-kid="${k.id}" ${on ? "checked" : ""} style="accent-color:#d4a0ff;width:14px;height:14px;flex-shrink:0;cursor:pointer;" />
-            <span style="font-size:0.7em;color:${on ? "#e8d5ff" : "#a080c8"};line-height:1.2;">${k.emoji} ${k.label}</span>
-          </label>`;
-        }).join("")}
-  </div>`).join("");
+        const rowsHtml = rows.map(row =>
+          `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;">` +
+          row.map(k => {
+            const st = getKinkState(kinks, k.id);
+            const m  = STATE_META[String(st)];
+            return `<div data-kid="${k.id}" title="${k.desc}\n\nClick to cycle: Off → Both → Give → Receive" ` +
+              `style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:8px;cursor:pointer;` +
+              `border:1.5px solid ${m.border};background:${m.bg};transition:all 0.12s;user-select:none;">` +
+              `<span style="font-size:1em;flex-shrink:0;">${k.emoji}</span>` +
+              `<span style="flex:1;font-size:0.66em;color:${m.text};line-height:1.2;">${k.label}</span>` +
+              `<span style="font-size:0.82em;font-weight:900;color:${m.badge};flex-shrink:0;">${m.symbol}</span>` +
+              `</div>`;
+          }).join("") +
+          `</div>`
+        ).join("");
 
-        const enabledCount = KINKS.filter(k => kinks[k.id]).length;
+        const cnt = countEnabled();
+        const cntText = cnt === 0 ? "No kinks enabled — vanilla mode" : cnt === KINKS.length ? "All kinks enabled" : `${cnt} of ${KINKS.length} kinks enabled`;
 
-        document.body.innerHTML = `
-<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:20px 22px;max-width:740px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-  <h1 style="text-align:center;font-size:1.3em;color:#d4a0ff;margin:0 0 3px;">🔞 Kink &amp; Content Consent</h1>
-  <p style="text-align:center;color:#b088cc;font-size:0.78em;margin:0 0 3px;">✅ Check a kink to <strong style="color:#d4a0ff;">consent</strong> to it appearing in your story.</p>
-  <p style="text-align:center;color:#ff7070;font-size:0.74em;font-weight:600;margin:0 0 12px;">☐ Unchecked = <strong>strictly prohibited</strong> — it will never occur, no exceptions.</p>
-  ${rowsHtml}
-  <p id="kinkCount3" style="text-align:center;font-size:0.8em;color:${enabledCount > 0 ? "#d4a0ff" : "#705090"};margin:10px 0 14px;">${enabledCount === 0 ? "No kinks enabled — vanilla mode" : enabledCount === KINKS.length ? "All kinks enabled" : `${enabledCount} of ${KINKS.length} kinks enabled`}</p>
-  <div style="display:flex;gap:10px;align-items:center;">
-    <button id="s3Back"      style="flex:0 0 auto;padding:11px 15px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.95em;cursor:pointer;">← Back</button>
-    <button id="s3SelectAll" style="flex:0 0 auto;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Select All</button>
-    <button id="s3ClearAll"  style="flex:0 0 auto;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.88em;cursor:pointer;">Clear All</button>
-    <button id="s3Start"     style="flex:1;padding:13px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:1em;cursor:pointer;font-weight:bold;letter-spacing:0.05em;">✨ Start Adventure</button>
-  </div>
-</div>`;
+        document.body.innerHTML =
+          `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.3);border-radius:16px;padding:18px 20px;max-width:740px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">` +
+          `<h1 style="text-align:center;font-size:1.25em;color:#d4a0ff;margin:0 0 3px;">🔞 Kink &amp; Content Consent</h1>` +
+          `<p style="text-align:center;color:#ff7070;font-size:0.73em;font-weight:600;margin:0 0 3px;">⊘ Off = <strong>strictly prohibited</strong> — never occurs, no exceptions.</p>` +
+          `<p style="text-align:center;margin:0 0 4px;line-height:1.8;">${buildLegendRow()}</p>` +
+          `<p style="text-align:center;color:#705090;font-size:0.7em;margin:0 0 10px;">Click a card to cycle its consent state.</p>` +
+          rowsHtml +
+          `<p id="kinkCount3" style="text-align:center;font-size:0.78em;color:${cnt > 0 ? "#d4a0ff" : "#705090"};margin:8px 0 12px;">${cntText}</p>` +
+          `<div style="display:flex;gap:8px;align-items:center;">` +
+          `<button id="s3Back"      style="flex:0 0 auto;padding:10px 13px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.9em;cursor:pointer;">← Back</button>` +
+          `<button id="s3SelectAll" style="flex:0 0 auto;padding:10px 11px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.82em;cursor:pointer;">All: Both</button>` +
+          `<button id="s3GiveAll"   style="flex:0 0 auto;padding:10px 11px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #30a0a0;color:#80d0d0;font-size:0.82em;cursor:pointer;">All: ↑ Give</button>` +
+          `<button id="s3RecvAll"   style="flex:0 0 auto;padding:10px 11px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #c87810;color:#ffc060;font-size:0.82em;cursor:pointer;">All: ↓ Recv</button>` +
+          `<button id="s3ClearAll"  style="flex:0 0 auto;padding:10px 11px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid #7a4faa;color:#c9a8ee;font-size:0.82em;cursor:pointer;">Clear</button>` +
+          `<button id="s3Start"     style="flex:1;padding:12px;border-radius:10px;background:linear-gradient(135deg,#7a2d9e,#4a1570);border:none;color:#fff;font-size:0.95em;cursor:pointer;font-weight:bold;">✨ Start</button>` +
+          `</div></div>`;
 
-        // Live checkbox → counter
-        document.querySelectorAll("input[data-kid]").forEach(cb => {
-          cb.addEventListener("change", () => {
-            kinks[cb.dataset.kid] = cb.checked;
-            const cnt = KINKS.filter(k => kinks[k.id]).length;
-            const el = document.getElementById("kinkCount3");
-            if (el) {
-              el.textContent = cnt === 0 ? "No kinks enabled — vanilla mode" : cnt === KINKS.length ? "All kinks enabled" : `${cnt} of ${KINKS.length} kinks enabled`;
-              el.style.color = cnt > 0 ? "#d4a0ff" : "#705090";
-            }
-          });
+        // Wire card clicks → cycle → re-render
+        document.querySelectorAll("[data-kid]").forEach(el => {
+          el.addEventListener("click", () => { cycleState(el.dataset.kid); renderStep3(); });
         });
 
-        document.getElementById("s3Back").addEventListener("click", () => showStep2(gender, name, desc));
-        document.getElementById("s3SelectAll").addEventListener("click", () => {
-          KINKS.forEach(k => { kinks[k.id] = true; });
-          renderStep3();
-        });
-        document.getElementById("s3ClearAll").addEventListener("click", () => {
-          KINKS.forEach(k => { kinks[k.id] = false; });
-          renderStep3();
-        });
+        document.getElementById("s3Back").addEventListener("click",      () => showStep2(gender, name, desc));
+        document.getElementById("s3SelectAll").addEventListener("click",  () => { KINKS.forEach(k => { kinks[k.id] = "both"; });    renderStep3(); });
+        document.getElementById("s3GiveAll").addEventListener("click",    () => { KINKS.forEach(k => { kinks[k.id] = "give"; });    renderStep3(); });
+        document.getElementById("s3RecvAll").addEventListener("click",    () => { KINKS.forEach(k => { kinks[k.id] = "receive"; }); renderStep3(); });
+        document.getElementById("s3ClearAll").addEventListener("click",   () => { KINKS.forEach(k => { kinks[k.id] = null; });      renderStep3(); });
         document.getElementById("s3Start").addEventListener("click", () => {
-          // Sync final checkbox state
-          document.querySelectorAll("input[data-kid]").forEach(cb => {
-            kinks[cb.dataset.kid] = cb.checked;
-          });
           showLoadingSequence(gender, name, desc, prefs, { ...kinks });
         });
       }
