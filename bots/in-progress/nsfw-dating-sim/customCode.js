@@ -1859,9 +1859,15 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // SECTION 13 — BOOT & EVENT HANDLER
   // ════════════════════════════════════════════════════════════════════════════
 
+  // Always reset the pregen flag on fresh code evaluation — customData persists
+  // across page reloads, so a stale true from a crashed or interrupted session
+  // would permanently block showOpeningUI() on every subsequent load.
+  // The in-memory guard inside pregenerate() is sufficient to prevent double-runs
+  // within a single page session.
+  cd._pregenerating = false;
+
   if (!cd.game?.initialized) {
-    // Don't re-open the setup wizard if pregeneration is already running
-    if (!cd._pregenerating) showOpeningUI();
+    showOpeningUI();
   } else {
     migrateGame(cd.game);
     updateReminder();
