@@ -790,7 +790,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       { name: "\uD83D\uDE34 Rest",         message: "/rest",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
       { name: "\u2697\uFE0F Craft",        message: "/craft ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
       { name: "\uD83C\uDFC6 Achievements", message: "/achievements",  insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83D\uDDBC\uFE0F Image",       message: "/image ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "🖼️ Image",       message: "/image",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
       { name: "\uD83D\uDD1E Kinks",        message: "/kinks",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
       { name: "\u2753 Help",               message: "/help",          insertionType: "replace", autoSend: true,  clearAfterSend: false }
     ];
@@ -1451,7 +1451,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     // ── /help ─────────────────────────────────────────────────────────────────
     if (cmd === "help") {
       oc.thread.messages.push({ author: "system",
-        content: `**\u2753 Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Visuals**\n/image — scene image\n/image pov — what you see (player POV)\n/image charpov — what active char sees\n/image action — action climax (uses last 3 messages)\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}` });
+        content: `**\u2753 Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Visuals**\n/image — scene image\n/image_pov — what you see (player POV)\n/image_charpov — what active char sees\n/image_action — action climax (uses last 3 messages)\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}` });
       return;
     }
 
@@ -2253,9 +2253,17 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     const g    = cd.game;
     const text = message.content?.trim() || "";
 
-    // ── /image [pov|charpov|action] ──────────────────────────────────────────
-    if (text.startsWith("/image")) {
-      const mode = (text.split(/\s+/)[1] || "normal").toLowerCase();
+    // ── /image | /image_pov | /image_charpov | /image_action ─────────────────
+    // Each variant is a separate command (underscore, no space) so the AI
+    // treats the full token as one command rather than splitting on the space
+    // and treating "pov" / "charpov" / "action" as a description argument.
+    if (text.startsWith("/image_pov") || text.startsWith("/image_charpov") ||
+        text.startsWith("/image_action") || text === "/image" || text.startsWith("/image ")) {
+      let mode;
+      if (text.startsWith("/image_pov"))     mode = "pov";
+      else if (text.startsWith("/image_charpov") || text.startsWith("/image_char")) mode = "charpov";
+      else if (text.startsWith("/image_action")) mode = "action";
+      else                                    mode = "normal";
       const loc  = LOCATIONS[g.location] || { name: g.location };
       const wc   = (g.worldSettings || ["medieval_fantasy"])
         .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
