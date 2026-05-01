@@ -728,8 +728,11 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const toneLabel = (g.storyTones || ["dark_romance"])
       .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
 
+    // Apply player identity so the AI sees the user by their chosen name
+    oc.thread.userCharacter.name = g.playerName || "Traveler";
+
     let reminder = `[GAME STATE]
-Player: ${g.playerName} | Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}
+Player: ${g.playerName}${g.playerDesc ? ` — ${g.playerDesc}` : ""} | Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}
 Player Dynamic Role: ${(g.playerRole || "switch").toUpperCase()} — ${
   g.playerRole === "dom"    ? "Player is DOMINANT: all companions must treat the player as the dominant party. If a companion is also dominant by nature, play up the delicious tension and playful power struggle — neither yields easily." :
   g.playerRole === "sub"    ? "Player is SUBMISSIVE: companions take the lead; dominant companions thrive here, nurturing ones protect, equal ones guide gently." :
@@ -2179,6 +2182,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (!g.worldSettings)           g.worldSettings = ["medieval_fantasy"];
     if (!g.storyTones)              g.storyTones    = ["dark_romance"];
     if (!g.playerRole)              g.playerRole    = "switch";
+    if (g.playerDesc  === undefined) g.playerDesc   = "";
     if (!g.ngPlusBonus)             g.ngPlusBonus   = null;
     if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName);
     // Ensure quests have a visible field
