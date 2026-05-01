@@ -751,6 +751,7 @@ Active Character: ${charLine}
 Companions (first 4): ${scheduleSnip}
 World Setting: ${worldLabel} | Story Tone: ${toneLabel}
 ${g.gameOver ? `[GAME OVER — Ending: ${g.ending}. Only /ng+ is accepted.]` : ""}
+[CHARACTER APPEARANCE — STANDING RULE] Every character in the scene who is not explicitly nude is dressed in varying degrees of scantily clad, provocative, and alluring attire — always sexy and visually appealing. Skimpy, revealing clothing is the default; more modest dress is the exception and must be story-justified. If a character is nude, omit all clothing descriptions entirely — do not mention garments, fabric, or undressing.
 Use /help for all commands. Narrate immersively in second person, consistent with the world setting and story tone.`;
 
     reminder += buildConsentBlock(g);
