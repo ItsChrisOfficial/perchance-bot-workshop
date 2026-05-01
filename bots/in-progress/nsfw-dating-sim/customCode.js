@@ -1679,13 +1679,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         </div>
 
         <div class="btn-row">
-          <button id="selectAll" class="btn-sm">Select All</button>
-          <button id="deselectAll" class="btn-sm">Deselect All</button>
+          <button type="button" id="selectAll" class="btn-sm">Select All</button>
+          <button type="button" id="deselectAll" class="btn-sm">Deselect All</button>
         </div>
 
         <div class="kink-grid">${kinkCards}</div>
 
-        <button id="saveKinks" class="btn btn-pink">💾 Save Consent Settings</button>
+        <button type="button" id="saveKinks" class="btn btn-pink">💾 Save Consent Settings</button>
       </div>
     `;
 
@@ -1732,15 +1732,15 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
       document.body.innerHTML = `
         ${UI_CSS}
-        <div class="wizard">
+        <div class="wizard" style="max-height:100vh;overflow-y:auto;">
           ${_stepBar(1)}
           <div class="wiz-icon">⚔️</div>
           <h2 class="wiz-title" style="color:var(--pink);">Chronicles of the Void King</h2>
           <p class="wiz-sub">Step 1 of 4 — Your Character</p>
 
           <div class="gender-row">
-            <button id="gF" class="gender-btn female">♀<br><span style="font-size:12px;font-weight:500;">Female Companions</span></button>
-            <button id="gM" class="gender-btn male">♂<br><span style="font-size:12px;font-weight:500;">Male Companions</span></button>
+            <button type="button" id="gF" class="gender-btn female">♀<br><span style="font-size:12px;font-weight:500;">Female Companions</span></button>
+            <button type="button" id="gM" class="gender-btn male">♂<br><span style="font-size:12px;font-weight:500;">Male Companions</span></button>
           </div>
 
           <label class="field-label" for="pName">Your name</label>
@@ -1749,7 +1749,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           <label class="field-label">Your appearance <span style="font-weight:400;font-size:10px;">(optional)</span></label>
           <div class="input-row">
             <textarea id="pDesc" class="field-input" placeholder="Short description of how you look…"></textarea>
-            <button id="aiBtn" class="ai-btn">✨ AI<br>Generate</button>
+            <button type="button" id="aiBtn" class="ai-btn">✨ AI<br>Generate</button>
           </div>
 
           <label class="field-label">Your dynamic role</label>
@@ -1760,12 +1760,12 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
             <strong>Sub</strong> — you are treated as the submissive partner.
           </div>
           <div class="role-row">
-            <button id="rDom" class="role-btn dom">👑<br>Dominant</button>
-            <button id="rSwitch" class="role-btn switch">⚡<br>Switch</button>
-            <button id="rSub" class="role-btn sub">🌸<br>Submissive</button>
+            <button type="button" id="rDom" class="role-btn dom">👑<br>Dominant</button>
+            <button type="button" id="rSwitch" class="role-btn switch">⚡<br>Switch</button>
+            <button type="button" id="rSub" class="role-btn sub">🌸<br>Submissive</button>
           </div>
 
-          <button id="goBtn" class="btn btn-green" style="margin-top:4px;">Next → Preferences</button>
+          <button type="button" id="goBtn" class="btn btn-green" style="margin-top:4px;">Next → Preferences</button>
         </div>
       `;
 
@@ -1781,10 +1781,11 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       }
       function selRole(r) {
         _r = r;
-        ['dom','switch','sub'].forEach(id => {
-          const el = document.getElementById('r' + id.charAt(0).toUpperCase() + id.slice(1));
-          el.classList.toggle('dim', r !== id);
-          el.classList.toggle('selected', r === id);
+        [['dom','rDom'],['switch','rSwitch'],['sub','rSub']].forEach(([name,id]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle('dim', r !== name);
+          el.classList.toggle('selected', r === name);
         });
       }
       sel(_g);
@@ -1835,11 +1836,11 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           <div class="check-grid">${cards}</div>
 
           <div class="btn-row">
-            <button id="allBt" class="btn-sm">Select All</button>
-            <button id="noneBt" class="btn-sm">Select None</button>
+            <button type="button" id="allBt" class="btn-sm">Select All</button>
+            <button type="button" id="noneBt" class="btn-sm">Select None</button>
           </div>
 
-          <button id="goBtn" class="btn btn-purple">Next → World &amp; Tone</button>
+          <button type="button" id="goBtn" class="btn btn-purple">Next → World &amp; Tone</button>
         </div>
       `;
 
@@ -1891,7 +1892,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           <div class="check-grid">${toneCards}</div>
 
           <div id="err" class="err-msg"></div>
-          <button id="goBtn" class="btn btn-red">Next → Content Settings</button>
+          <button type="button" id="goBtn" class="btn btn-red">Next → Content Settings</button>
         </div>
       `;
 
@@ -1929,13 +1930,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           </div>
 
           <div class="btn-row">
-            <button id="selectAll" class="btn-sm">Select All</button>
-            <button id="deselectAll" class="btn-sm">Deselect All</button>
+            <button type="button" id="selectAll" class="btn-sm">Select All</button>
+            <button type="button" id="deselectAll" class="btn-sm">Deselect All</button>
           </div>
 
           <div class="kink-grid">${kinkCards}</div>
 
-          <button id="goBtn" class="btn btn-red" style="font-size:16px;">🌀 Generate World &amp; Begin</button>
+          <button type="button" id="goBtn" class="btn btn-red" style="font-size:16px;">🌀 Generate World &amp; Begin</button>
         </div>
       `;
 
@@ -2194,14 +2195,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // within a single page session.
   cd._pregenerating = false;
 
-  if (!cd.game?.initialized) {
-    showOpeningUI();
-  } else {
-    migrateGame(cd.game);
-    updateReminder();
-    updateShortcutButtons();
-  }
-
+  // Register the MessageAdded handler FIRST, before showOpeningUI() / migrateGame()
+  // so that wizard navigation works even if the init block throws.
   oc.thread.on("MessageAdded", async ({ message }) => {
     if (!cd.game?.initialized) {
       // Setup wizard message routing
@@ -2322,4 +2317,12 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     updateReminder();
     updateShortcutButtons();
   });
+
+  if (!cd.game?.initialized) {
+    showOpeningUI();
+  } else {
+    migrateGame(cd.game);
+    updateReminder();
+    updateShortcutButtons();
+  }
 })();
