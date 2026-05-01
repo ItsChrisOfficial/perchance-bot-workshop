@@ -1429,37 +1429,235 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // SECTION 10 — KINK MENU (in-play)
+  // SECTION 10 — SHARED UI DESIGN SYSTEM + KINK MENU
   // ════════════════════════════════════════════════════════════════════════════
+
+  // Shared CSS injected into every panel — one design system for all UI screens.
+  const UI_CSS = `
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --bg:          #0a0a1a;
+        --card:        #13132c;
+        --border:      #252550;
+        --border-hi:   #3a3a70;
+        --text:        #e8e8f0;
+        --muted:       #8888aa;
+        --pink:        #ff6b9d;
+        --pink-dark:   #c44569;
+        --blue:        #42a5f5;
+        --blue-dark:   #1565c0;
+        --cyan:        #4fc3f7;
+        --purple:      #ab47bc;
+        --purple-dark: #7b1fa2;
+        --green:       #66bb6a;
+        --green-dark:  #2e7d32;
+        --red:         #ef5350;
+        --red-dark:    #c62828;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text); font-size: 14px; line-height: 1.5; }
+
+      /* ── Scrollbar ── */
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #5555aa; }
+
+      /* ── Wizard shell ── */
+      .wizard {
+        max-width: 540px; margin: 0 auto; padding: 22px 18px 28px;
+        min-height: 100%; background: linear-gradient(160deg, #0d0d2e 0%, #1a0a1a 100%);
+      }
+
+      /* ── Step progress bar ── */
+      .step-bar { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; }
+      .step-pip {
+        height: 5px; border-radius: 3px; background: var(--border);
+        transition: background 0.3s, width 0.3s;
+      }
+      .step-pip.active { background: var(--pink); }
+      .step-pip.done   { background: var(--pink-dark); }
+
+      /* ── Page header ── */
+      .wiz-title { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 3px; }
+      .wiz-sub   { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+      .wiz-icon  { text-align: center; font-size: 32px; margin-bottom: 8px; }
+
+      /* ── Gender toggle ── */
+      .gender-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+      .gender-btn {
+        padding: 16px 8px; border: 2px solid transparent; border-radius: 12px;
+        cursor: pointer; font-size: 14px; font-weight: 700; color: #fff;
+        transition: all 0.2s ease; text-align: center; line-height: 1.4;
+      }
+      .gender-btn.female { background: linear-gradient(135deg, var(--pink-dark), var(--pink)); }
+      .gender-btn.male   { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); }
+      .gender-btn.dim    { opacity: 0.38; transform: scale(0.96); }
+      .gender-btn:hover  { transform: translateY(-2px) scale(1); opacity: 1; }
+      .gender-btn.female:hover { box-shadow: 0 6px 22px rgba(255,107,157,0.35); }
+      .gender-btn.male:hover   { box-shadow: 0 6px 22px rgba(66,165,245,0.35); }
+      .gender-btn.selected { border-color: rgba(255,255,255,0.45); }
+
+      /* ── Field labels ── */
+      .field-label {
+        display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.7px;
+        text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
+      }
+
+      /* ── Text inputs ── */
+      .field-input {
+        width: 100%; padding: 11px 14px; border-radius: 10px;
+        background: #191933; border: 1.5px solid var(--border);
+        color: var(--text); font-size: 14px; outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 14px;
+        font-family: inherit;
+      }
+      .field-input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255,107,157,0.12); }
+      textarea.field-input { resize: vertical; min-height: 68px; }
+      .input-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 14px; }
+      .input-row .field-input { margin-bottom: 0; flex: 1; }
+
+      /* ── AI generate button ── */
+      .ai-btn {
+        padding: 10px 11px; border: none; border-radius: 10px; line-height: 1.3;
+        background: linear-gradient(135deg, var(--purple-dark), var(--purple));
+        color: #fff; font-size: 11px; font-weight: 700; cursor: pointer;
+        white-space: nowrap; align-self: flex-start; transition: all 0.2s;
+      }
+      .ai-btn:hover   { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(171,71,188,0.4); }
+      .ai-btn:disabled { opacity: 0.45; transform: none; cursor: not-allowed; }
+
+      /* ── Primary CTA buttons ── */
+      .btn {
+        width: 100%; padding: 14px; border: none; border-radius: 10px;
+        color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+        transition: all 0.2s; letter-spacing: 0.3px; display: block; text-align: center;
+      }
+      .btn:hover  { transform: translateY(-2px); }
+      .btn:active { transform: translateY(0); }
+      .btn-pink   { background: linear-gradient(135deg, var(--pink-dark), var(--pink)); }
+      .btn-pink:hover   { box-shadow: 0 7px 22px rgba(255,107,157,0.35); }
+      .btn-blue   { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); }
+      .btn-blue:hover   { box-shadow: 0 7px 22px rgba(66,165,245,0.35); }
+      .btn-purple { background: linear-gradient(135deg, var(--purple-dark), var(--purple)); }
+      .btn-purple:hover { box-shadow: 0 7px 22px rgba(171,71,188,0.35); }
+      .btn-green  { background: linear-gradient(135deg, var(--green-dark), var(--green)); }
+      .btn-green:hover  { box-shadow: 0 7px 22px rgba(102,187,106,0.35); }
+      .btn-red    { background: linear-gradient(135deg, var(--red-dark), var(--red)); }
+      .btn-red:hover    { box-shadow: 0 7px 22px rgba(239,83,80,0.35); }
+
+      /* ── Util row (Select All / None) ── */
+      .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+      .btn-sm {
+        flex: 1; padding: 8px 12px; border-radius: 8px;
+        background: transparent; border: 1.5px solid var(--border);
+        color: var(--muted); font-size: 12px; font-weight: 600;
+        cursor: pointer; transition: all 0.18s; letter-spacing: 0.3px;
+      }
+      .btn-sm:hover { border-color: var(--pink); color: var(--pink); background: rgba(255,107,157,0.07); }
+
+      /* ── Section labels ── */
+      .section-label {
+        font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+        text-transform: uppercase; margin: 16px 0 9px;
+        padding-bottom: 7px; border-bottom: 1px solid;
+      }
+      .label-cyan  { color: var(--cyan);  border-color: rgba(79,195,247,0.2); }
+      .label-pink  { color: var(--pink);  border-color: rgba(255,107,157,0.2); }
+
+      /* ── Check cards (body-type, world, tone) ── */
+      .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+      .check-card {
+        display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px;
+        background: rgba(255,255,255,0.04); border: 1.5px solid transparent;
+        border-radius: 10px; cursor: pointer; transition: all 0.15s; user-select: none;
+      }
+      .check-card:hover { background: rgba(255,255,255,0.08); border-color: var(--border-hi); }
+      .check-card input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--pink); flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+      .card-text strong { display: block; font-size: 12px; font-weight: 700; margin-bottom: 1px; }
+      .card-text small  { color: var(--muted); font-size: 10px; line-height: 1.3; }
+
+      /* ── Kink cards ── */
+      .kink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+      .kink-card {
+        display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+        background: rgba(255,255,255,0.04); border: 1.5px solid transparent;
+        border-radius: 10px; cursor: pointer; font-size: 12px;
+        transition: all 0.15s; user-select: none;
+      }
+      .kink-card:hover { background: rgba(255,255,255,0.08); border-color: var(--border-hi); }
+      .kink-card input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--pink); flex-shrink: 0; cursor: pointer; }
+
+      /* ── Info / consent box ── */
+      .info-box {
+        background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+        border-radius: 10px; padding: 11px 14px; font-size: 12px;
+        color: var(--muted); margin-bottom: 14px; line-height: 1.65;
+      }
+      .info-box strong { color: var(--text); }
+
+      /* ── Error message ── */
+      .err-msg { color: var(--red); font-size: 12px; min-height: 18px; margin-bottom: 6px; padding: 0 2px; }
+
+      /* ── Loading screen ── */
+      .loading-screen {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; min-height: 100vh; padding: 40px 24px;
+        background: linear-gradient(160deg, #0d0d2e 0%, #1a0a1a 100%); text-align: center;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spinner {
+        width: 52px; height: 52px; margin-bottom: 20px;
+        border: 3px solid rgba(255,107,157,0.18);
+        border-top-color: var(--pink);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      .loading-title  { color: var(--pink); font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+      .loading-body   { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+      .loading-step   { color: var(--cyan); font-size: 13px; font-weight: 600; }
+      .loading-detail { color: #666688; font-size: 11px; margin-top: 6px; }
+    </style>
+  `;
+
+  // Helper: render step-progress dots (1-indexed active, total = 4)
+  function _stepBar(active) {
+    return `<div class="step-bar">${[1,2,3,4].map(i =>
+      `<div class="step-pip ${i < active ? 'done' : i === active ? 'active' : ''}" style="width:${i === active ? 36 : 26}px;"></div>`
+    ).join('')}</div>`;
+  }
 
   function showKinkMenu() {
     const g = cd.game;
     const enabled = g.enabledKinks || [];
 
-    const kinkCheckboxes = KINKS.map(k => `
-      <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:13px;">
-        <input type="checkbox" data-kink="${k.id}" ${enabled.includes(k.id) ? "checked" : ""}
-          style="width:16px;height:16px;accent-color:#ff6b9d;cursor:pointer;" />
+    const kinkCards = KINKS.map(k => `
+      <label class="kink-card">
+        <input type="checkbox" data-kink="${k.id}" ${enabled.includes(k.id) ? "checked" : ""} />
         <span>${k.emoji} ${k.label}</span>
       </label>`).join("");
 
     document.body.innerHTML = `
-      <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:560px;color:#eee;background:#1a1a2e;border-radius:12px;max-height:80vh;overflow-y:auto;">
-        <h2 style="text-align:center;color:#ff6b9d;margin:0 0 8px;">🔞 Consent &amp; Kink Settings</h2>
-        <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 12px;">
-          ✅ Checked = consented — <strong>may appear</strong> in story.<br>
-          ❌ Unchecked = <strong>absolutely banned</strong> — will never appear under any circumstances.
-        </p>
-        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
-          <button id="selectAll" style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Select All</button>
-          <button id="deselectAll" style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Deselect All</button>
+      ${UI_CSS}
+      <div class="wizard" style="max-width:560px;">
+        <div class="wiz-icon">🔞</div>
+        <h2 class="wiz-title" style="color:var(--pink);">Consent &amp; Kink Settings</h2>
+        <p class="wiz-sub">Your comfort defines the story.</p>
+
+        <div class="info-box">
+          <strong>✅ Checked</strong> — consented, <strong>may appear</strong> in the story.<br>
+          <strong>❌ Unchecked</strong> — <strong>absolutely banned</strong> — will never appear under any circumstances.
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;">
-          ${kinkCheckboxes}
+
+        <div class="btn-row">
+          <button id="selectAll" class="btn-sm">Select All</button>
+          <button id="deselectAll" class="btn-sm">Deselect All</button>
         </div>
-        <button id="saveKinks" style="width:100%;padding:12px;background:linear-gradient(135deg,#ff6b9d,#c44569);border:none;border-radius:8px;color:white;font-size:15px;font-weight:bold;cursor:pointer;">
-          💾 Save Consent Settings
-        </button>
+
+        <div class="kink-grid">${kinkCards}</div>
+
+        <button id="saveKinks" class="btn btn-pink">💾 Save Consent Settings</button>
       </div>
     `;
 
@@ -1498,41 +1696,46 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // ════════════════════════════════════════════════════════════════════════════
 
   function showOpeningUI() {
-    const ss = `font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:28px;border-radius:14px;max-width:540px;min-height:400px;`;
-    const bs = (c) => `width:100%;padding:11px;border:none;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,${c});color:white;font-size:14px;font-weight:bold;margin-top:8px;`;
-    const is = `width:100%;padding:10px;border-radius:8px;background:#1e1e3a;border:1px solid #444;color:#eee;font-size:14px;box-sizing:border-box;`;
 
     // ── STEP 1: Gender / Name / Description ──
     function step1(opts = {}) {
       let _g = opts.gender || "female";
 
       document.body.innerHTML = `
-        <div style="${ss}">
-          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 6px;">⚔️ Chronicles of the Void King</h2>
-          <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 18px;">Step 1 of 4 — Your Character</p>
-          <div style="display:flex;gap:10px;margin-bottom:16px;">
-            <button id="gF" style="${bs("#c44569,#ff6b9d")}">♀ Female Companions</button>
-            <button id="gM" style="${bs("#1565c0,#42a5f5")}">♂ Male Companions</button>
+        ${UI_CSS}
+        <div class="wizard">
+          ${_stepBar(1)}
+          <div class="wiz-icon">⚔️</div>
+          <h2 class="wiz-title" style="color:var(--pink);">Chronicles of the Void King</h2>
+          <p class="wiz-sub">Step 1 of 4 — Your Character</p>
+
+          <div class="gender-row">
+            <button id="gF" class="gender-btn female">♀<br><span style="font-size:12px;font-weight:500;">Female Companions</span></button>
+            <button id="gM" class="gender-btn male">♂<br><span style="font-size:12px;font-weight:500;">Male Companions</span></button>
           </div>
-          <label style="font-size:13px;color:#aaa;">Your name</label>
-          <input id="pName" placeholder="Traveler" style="${is}margin-bottom:10px;" />
-          <label style="font-size:13px;color:#aaa;">Your appearance (optional)</label>
-          <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:10px;">
-            <textarea id="pDesc" placeholder="Short description of how you look..." style="${is}height:70px;resize:vertical;flex:1;"></textarea>
-            <button id="aiBtn" title="AI will expand your notes into a full description" style="padding:8px 10px;border:none;border-radius:8px;background:linear-gradient(135deg,#7b1fa2,#ab47bc);color:white;font-size:12px;cursor:pointer;white-space:nowrap;align-self:flex-start;">✨ AI<br>Generate</button>
+
+          <label class="field-label" for="pName">Your name</label>
+          <input id="pName" class="field-input" placeholder="Traveler" />
+
+          <label class="field-label">Your appearance <span style="font-weight:400;font-size:10px;">(optional)</span></label>
+          <div class="input-row">
+            <textarea id="pDesc" class="field-input" placeholder="Short description of how you look…"></textarea>
+            <button id="aiBtn" class="ai-btn">✨ AI<br>Generate</button>
           </div>
-          <button id="goBtn" style="${bs("#2e7d32,#66bb6a")}">Next → Preferences</button>
+
+          <button id="goBtn" class="btn btn-green" style="margin-top:4px;">Next → Preferences</button>
         </div>
       `;
 
-      // Restore any prefilled values safely via property (avoids HTML-escaping issues)
       document.getElementById('pName').value = opts.name || '';
       document.getElementById('pDesc').value = opts.desc || '';
 
       function sel(g) {
         _g = g;
-        document.getElementById('gF').style.opacity = g === 'female' ? '1' : '0.5';
-        document.getElementById('gM').style.opacity = g === 'male' ? '1' : '0.5';
+        document.getElementById('gF').classList.toggle('dim', g !== 'female');
+        document.getElementById('gF').classList.toggle('selected', g === 'female');
+        document.getElementById('gM').classList.toggle('dim', g !== 'male');
+        document.getElementById('gM').classList.toggle('selected', g === 'male');
       }
       sel(_g);
 
@@ -1558,22 +1761,30 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
     // ── STEP 2: Body-type preferences ──
     function step2(data) {
-      const cards = Object.entries(BODY_TYPES).map(([id,bt]) => `
-        <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:13px;">
-          <input type="checkbox" value="${id}" data-bt="${id}" style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
-          <div><strong>${bt.label}</strong><br><span style="color:#aaa;font-size:11px;">${bt.desc}</span></div>
+      const cards = Object.entries(BODY_TYPES).map(([id, bt]) => `
+        <label class="check-card">
+          <input type="checkbox" value="${id}" data-bt="${id}" />
+          <div class="card-text">
+            <strong>${bt.label}</strong>
+            <small>${bt.desc}</small>
+          </div>
         </label>`).join("");
 
       document.body.innerHTML = `
-        <div style="${ss}max-height:82vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 2 of 4 — Preferences</h2>
-          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 12px;">Which body types attract you? (check all that apply)</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">${cards}</div>
-          <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <button id="allBt" style="${bs("#555,#777")}font-size:12px;margin:0;">All</button>
-            <button id="noneBt" style="${bs("#555,#777")}font-size:12px;margin:0;">None</button>
+        ${UI_CSS}
+        <div class="wizard" style="max-height:100vh;overflow-y:auto;">
+          ${_stepBar(2)}
+          <h2 class="wiz-title" style="color:var(--pink);">Preferences</h2>
+          <p class="wiz-sub">Step 2 of 4 — Which body types attract you? (check all that apply)</p>
+
+          <div class="check-grid">${cards}</div>
+
+          <div class="btn-row">
+            <button id="allBt" class="btn-sm">Select All</button>
+            <button id="noneBt" class="btn-sm">Select None</button>
           </div>
-          <button id="goBtn" style="${bs("#7b1fa2,#ab47bc")}">Next → World &amp; Tone</button>
+
+          <button id="goBtn" class="btn btn-purple">Next → World &amp; Tone</button>
         </div>
       `;
 
@@ -1595,26 +1806,37 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     // ── STEP 3: World Setting + Story Tone ──
     function step3(data) {
       const worldCards = WORLD_SETTINGS.map(w => `
-        <label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
-          <input type="checkbox" data-ws="${w.id}" style="accent-color:#4fc3f7;cursor:pointer;" />
-          <div><span style="font-size:13px;">${w.label}</span><br><span style="color:#aaa;font-size:10px;">${w.desc}</span></div>
+        <label class="check-card">
+          <input type="checkbox" data-ws="${w.id}" />
+          <div class="card-text">
+            <strong>${w.label}</strong>
+            <small>${w.desc}</small>
+          </div>
         </label>`).join("");
       const toneCards = STORY_TONES.map(t => `
-        <label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
-          <input type="checkbox" data-st="${t.id}" style="accent-color:#ff6b9d;cursor:pointer;" />
-          <div><span style="font-size:13px;">${t.label}</span><br><span style="color:#aaa;font-size:10px;">${t.desc}</span></div>
+        <label class="check-card">
+          <input type="checkbox" data-st="${t.id}" style="accent-color:var(--cyan);" />
+          <div class="card-text">
+            <strong>${t.label}</strong>
+            <small>${t.desc}</small>
+          </div>
         </label>`).join("");
 
       document.body.innerHTML = `
-        <div style="${ss}max-height:85vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#4fc3f7;margin:0 0 4px;">Step 3 of 4 — World &amp; Tone</h2>
-          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 10px;">Choose <strong>up to 2 world settings</strong> and <strong>up to 3 story tones</strong>.</p>
-          <h3 style="color:#4fc3f7;margin:6px 0 6px;font-size:13px;">🌍 World Setting (pick 1–2)</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">${worldCards}</div>
-          <h3 style="color:#ff6b9d;margin:6px 0 6px;font-size:13px;">🎭 Story Tone (pick 1–3)</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">${toneCards}</div>
-          <div id="err" style="color:#ff6b9d;font-size:12px;min-height:16px;margin-bottom:4px;"></div>
-          <button id="goBtn" style="${bs("#c62828,#ef5350")}">Next → Content Settings</button>
+        ${UI_CSS}
+        <div class="wizard" style="max-height:100vh;overflow-y:auto;">
+          ${_stepBar(3)}
+          <h2 class="wiz-title" style="color:var(--cyan);">World &amp; Tone</h2>
+          <p class="wiz-sub">Step 3 of 4 — Shape the stage of your story.</p>
+
+          <p class="section-label label-cyan">🌍 World Setting <span style="font-weight:400;font-size:10px;">(pick 1–2)</span></p>
+          <div class="check-grid">${worldCards}</div>
+
+          <p class="section-label label-pink">🎭 Story Tone <span style="font-weight:400;font-size:10px;">(pick 1–3)</span></p>
+          <div class="check-grid">${toneCards}</div>
+
+          <div id="err" class="err-msg"></div>
+          <button id="goBtn" class="btn btn-red">Next → Content Settings</button>
         </div>
       `;
 
@@ -1622,8 +1844,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         const ws = [], st = [];
         document.querySelectorAll('[data-ws]').forEach(cb => { if (cb.checked) ws.push(cb.dataset.ws); });
         document.querySelectorAll('[data-st]').forEach(cb => { if (cb.checked) st.push(cb.dataset.st); });
-        if (ws.length < 1 || ws.length > 2) { document.getElementById('err').textContent = 'Please select 1 or 2 world settings.'; return; }
-        if (st.length < 1 || st.length > 3) { document.getElementById('err').textContent = 'Please select 1 to 3 story tones.'; return; }
+        if (ws.length < 1 || ws.length > 2) { document.getElementById('err').textContent = '⚠️ Please select 1 or 2 world settings.'; return; }
+        if (st.length < 1 || st.length > 3) { document.getElementById('err').textContent = '⚠️ Please select 1 to 3 story tones.'; return; }
         oc.sendMessage('/setup_step4 ' + JSON.stringify({ ...data, worldSettings: ws, storyTones: st }));
       });
 
@@ -1633,24 +1855,32 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     // ── STEP 4: Kink / Consent ──
     function step4(data) {
       const kinkCards = KINKS.map(k => `
-        <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
-          <input type="checkbox" data-kink="${k.id}" style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
+        <label class="kink-card">
+          <input type="checkbox" data-kink="${k.id}" />
           <span>${k.emoji} ${k.label}</span>
         </label>`).join("");
 
       document.body.innerHTML = `
-        <div style="${ss}max-height:85vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 4 of 4 — 🔞 Consent &amp; Kinks</h2>
-          <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 8px;">
-            ✅ Check = <strong>consented, may appear</strong>.<br>
-            ❌ Unchecked = <strong>absolutely banned</strong> — never appears, period. Change anytime via /kinks.
-          </p>
-          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">
-            <button id="selectAll" style="${bs("#555,#777")}font-size:12px;margin:0;">Select All</button>
-            <button id="deselectAll" style="${bs("#555,#777")}font-size:12px;margin:0;">Deselect All</button>
+        ${UI_CSS}
+        <div class="wizard" style="max-height:100vh;overflow-y:auto;">
+          ${_stepBar(4)}
+          <div class="wiz-icon">🔞</div>
+          <h2 class="wiz-title" style="color:var(--pink);">Consent &amp; Kinks</h2>
+          <p class="wiz-sub">Step 4 of 4 — Define your boundaries. Change anytime with /kinks.</p>
+
+          <div class="info-box">
+            <strong>✅ Checked</strong> — consented, <strong>may appear</strong> in the story.<br>
+            <strong>❌ Unchecked</strong> — <strong>absolutely banned</strong> — never appears, no exceptions.
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">${kinkCards}</div>
-          <button id="goBtn" style="${bs("#c62828,#ef5350")}font-size:15px;">🌀 Generate World &amp; Begin</button>
+
+          <div class="btn-row">
+            <button id="selectAll" class="btn-sm">Select All</button>
+            <button id="deselectAll" class="btn-sm">Deselect All</button>
+          </div>
+
+          <div class="kink-grid">${kinkCards}</div>
+
+          <button id="goBtn" class="btn btn-red" style="font-size:16px;">🌀 Generate World &amp; Begin</button>
         </div>
       `;
 
@@ -1741,16 +1971,16 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     const chars = data.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
 
     // Loading overlay with live status — updates document.body.innerHTML at each stage
-    const _ls = `font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:40px;border-radius:14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;`;
     function showStatus(step, detail) {
       console.log(`[Pregen] ${step}${detail ? ": " + detail : ""}`);
       document.body.innerHTML = `
-        <div style="${_ls}">
-          <div style="font-size:52px;margin-bottom:14px;">🌀</div>
-          <h2 style="color:#ff6b9d;margin:0 0 8px;">Weaving Your World…</h2>
-          <p style="color:#aaa;font-size:13px;margin:0 0 8px;">Generating characters &amp; world — please wait…</p>
-          <p style="color:#7ec8e3;font-size:12px;margin:0;">${step}</p>
-          ${detail ? `<p style="color:#888;font-size:11px;margin:4px 0 0;">${detail}</p>` : ""}
+        ${UI_CSS}
+        <div class="loading-screen">
+          <div class="spinner"></div>
+          <h2 class="loading-title">Weaving Your World…</h2>
+          <p class="loading-body">Generating characters &amp; world — please wait…</p>
+          <p class="loading-step">${step}</p>
+          ${detail ? `<p class="loading-detail">${detail}</p>` : ""}
         </div>
       `;
       oc.window.show();
