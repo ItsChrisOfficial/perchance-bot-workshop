@@ -1685,16 +1685,14 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
   // Pregenerate world: background image + companion portraits + intro text
   async function pregenerate(data) {
-    // Loading overlay — stays visible until everything is ready
-    oc.window.show(`
-      <div style="font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:40px;border-radius:14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;">
-        <div style="font-size:52px;margin-bottom:14px;">🌀</div>
-        <h2 style="color:#ff6b9d;margin:0 0 8px;">Weaving Your World…</h2>
-        <p style="color:#aaa;font-size:13px;margin:0;">Generating characters &amp; world — please wait…</p>
-      </div>
-    `);
+    // Guard against concurrent pregeneration (e.g., rapid UI double-submit)
+    if (cd._pregenerating) return;
+    cd._pregenerating = true;
 
-    const worldCues = (data.worldSettings || ["medieval_fantasy"])
+    const allBodyTypeIds = Object.keys(BODY_TYPES);
+    const useCharDefault = !data.bodyTypePrefs?.length || data.bodyTypePrefs.length >= allBodyTypeIds.length;
+
+    const worldCues  = (data.worldSettings || ["medieval_fantasy"])
       .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
     const worldLabel = (data.worldSettings || [])
       .map(id => WORLD_SETTINGS.find(w => w.id === id)?.label || id).join(" & ");
@@ -1702,66 +1700,128 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
     const chars = data.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
 
-    // 1. Character prompt triggers — prime AI lore for each companion in this world/tone
-    for (const ch of chars) {
-      oc.thread.messages.push({
-        author: "system",
-        content: `[Character context: ${ch.name} | ${ch.archetype}] In a ${worldLabel} world with ${toneLabel} tone: ${ch.nsfwPersonality}`,
-        hiddenFrom: [], expectsReply: false
-      });
+    // Loading overlay with live status — refreshed at each stage via oc.window.show()
+    const _ls = `font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:40px;border-radius:14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;`;
+    function showStatus(step, detail) {
+      console.log(`[Pregen] ${step}${detail ? ": " + detail : ""}`);
+      oc.window.show(`
+        <div style="${_ls}">
+          <div style="font-size:52px;margin-bottom:14px;">🌀</div>
+          <h2 style="color:#ff6b9d;margin:0 0 8px;">Weaving Your World…</h2>
+          <p style="color:#aaa;font-size:13px;margin:0 0 8px;">Generating characters &amp; world — please wait…</p>
+          <p style="color:#7ec8e3;font-size:12px;margin:0;">${step}</p>
+          ${detail ? `<p style="color:#888;font-size:11px;margin:4px 0 0;">${detail}</p>` : ""}
+        </div>
+      `);
     }
 
-    // 2. All images in parallel — portraits + background
-    cd._portraits = {};
-    await Promise.all([
-      oc.generateImage({
-        prompt: `${worldCues} atmospheric scenic establishing shot wide angle cinematic digital art no people`,
-        negativePrompt: "people, characters, portraits, text, ui"
-      }).then(r => { if (r?.url) oc.thread.character.scene.background.url = r.url; })
-        .catch(e => console.warn("bg image failed:", e?.message)),
-      ...chars.map(ch =>
+    // Build per-character image prompt: use character's natural description as default;
+    // if the user selected specific (not all/none) body types, inject those preferences.
+    function charImagePrompt(ch) {
+      if (useCharDefault) {
+        return `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`;
+      }
+      const prefDesc = data.bodyTypePrefs
+        .map(id => BODY_TYPES[id]?.desc || "")
+        .filter(Boolean)
+        .join(", ");
+      return `${ch.imageKeywords} body type ${prefDesc} ${worldCues} portrait character art detailed digital illustration`;
+    }
+
+    showStatus("Starting…", "Preparing world generation");
+
+    try {
+      // 1. Character prompt triggers — prime AI lore for each companion in this world/tone
+      showStatus("Priming characters…", `Loading ${chars.length} companion profiles`);
+      for (const ch of chars) {
+        oc.thread.messages.push({
+          author: "system",
+          content: `[Character context: ${ch.name} | ${ch.archetype}] In a ${worldLabel} world with ${toneLabel} tone: ${ch.nsfwPersonality}`,
+          hiddenFrom: [], expectsReply: false
+        });
+      }
+
+      // 2. All images in parallel — portraits + background; save dataURL (persists) over url
+      showStatus("Generating images…", `Background + ${chars.length} portraits (parallel)`);
+      cd._portraits = {};
+      await Promise.all([
         oc.generateImage({
-          prompt: `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`,
-          negativePrompt: "nsfw, explicit, nude"
-        }).then(r => { if (r?.url) cd._portraits[ch.id] = r.url; })
-          .catch(e => console.warn(`portrait failed (${ch.id}):`, e?.message))
-      )
-    ]);
+          prompt: `${worldCues} atmospheric scenic establishing shot wide angle cinematic digital art no people`,
+          negativePrompt: "people, characters, portraits, text, ui"
+        }).then(r => {
+          const bgUrl = r?.dataURL || r?.url;
+          if (bgUrl) oc.thread.character.scene.background.url = bgUrl;
+          console.log("[Pregen] Background:", r?.dataURL ? "dataURL saved" : (r?.url ? "url saved" : "no result"));
+        }).catch(e => console.warn("bg image failed:", e?.message)),
+        ...chars.map(ch =>
+          oc.generateImage({
+            prompt: charImagePrompt(ch),
+            negativePrompt: "nsfw, explicit, nude"
+          }).then(r => {
+            const portraitUrl = r?.dataURL || r?.url;
+            if (portraitUrl) cd._portraits[ch.id] = portraitUrl;
+            console.log(`[Pregen] Portrait ${ch.id}:`, r?.dataURL ? "dataURL saved" : (r?.url ? "url saved" : "no result"));
+          }).catch(e => console.warn(`portrait failed (${ch.id}):`, e?.message))
+        )
+      ]);
 
-    // 3. Init game state
-    initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones);
-    const g = cd.game;
+      // 3. Init game state
+      showStatus("Initialising world…", "Setting up game state");
+      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones);
+      const g = cd.game;
 
-    // 4. World narrative — 3-4 paragraphs; last = what player sees around them
-    const arrivals = [
-      `A blinding rift of light deposited you here without warning — the portal already collapsed before you could gather your bearings.`,
-      `You awoke on cold stone, the last thing you remember being a trembling in reality itself and then: silence, and this.`,
-      `One moment you were somewhere else entirely. The next — this place, this sky, these sounds. No explanation offered.`,
-      `A voice that was not quite a voice said your name, and then you were here, as though you had always been meant to arrive.`
-    ];
-    const arrival = arrivals[g.time.day % arrivals.length];
-    const worldDescLine = (data.worldSettings || []).map(id => {
-      const w = WORLD_SETTINGS.find(x => x.id === id);
-      return w ? `${w.label} — ${w.desc}` : id;
-    }).join(" and ");
+      // 4. World narrative — 3-4 paragraphs; last = what player sees around them
+      showStatus("Writing your story…", "Composing the opening narrative");
+      const arrivals = [
+        `A blinding rift of light deposited you here without warning — the portal already collapsed before you could gather your bearings.`,
+        `You awoke on cold stone, the last thing you remember being a trembling in reality itself and then: silence, and this.`,
+        `One moment you were somewhere else entirely. The next — this place, this sky, these sounds. No explanation offered.`,
+        `A voice that was not quite a voice said your name, and then you were here, as though you had always been meant to arrive.`
+      ];
+      const arrival = arrivals[g.time.day % arrivals.length];
+      const worldDescLine = (data.worldSettings || []).map(id => {
+        const w = WORLD_SETTINGS.find(x => x.id === id);
+        return w ? `${w.label} — ${w.desc}` : id;
+      }).join(" and ");
 
-    const intro = [
-      `The realm of Eryndel is shaped by the forces of ${worldDescLine}. It is a world that does not wait politely for newcomers to catch their breath. ${arrival} Around you, the Town Square of Moonveil hums with purposeful noise — merchants hawk their wares, distant steel rings from the training grounds beyond the east gate, and above it all the silhouette of Moonveil Castle cuts the sky like a drawn blade.`,
-      `The tone of your story has already etched itself into the fabric of fate: ${toneLabel}. Whether by destiny or coincidence, you have been dropped into precisely the intersection where such stories begin. A notice board near the fountain is fresh with ink — *"Sought: brave souls to investigate the Void King's stirrings. Report to the castle or enquire within."* Someone nailed it there this morning. The flyers are still damp.`,
-      `You are not entirely alone. Scattered across Moonveil and its surroundings are people whose paths will cross yours — some by accident, some by design, and at least one by something that cannot yet be explained. They have their own lives, their own schedules, their own reasons for being here. Whether they become allies, rivals, or something more intimate is entirely up to you.`,
-      `You stand at the fountain's edge${data.desc ? `, ${data.desc}` : ""}, the morning young and the world wide open. A cold wind off the castle hill carries the smell of ${worldCues.split(" ").slice(0, 2).join(" and ")}. Your first lead awaits — and the realm is watching to see what kind of person you are.`
-    ].join("\n\n");
+      const intro = [
+        `The realm of Eryndel is shaped by the forces of ${worldDescLine}. It is a world that does not wait politely for newcomers to catch their breath. ${arrival} Around you, the Town Square of Moonveil hums with purposeful noise — merchants hawk their wares, distant steel rings from the training grounds beyond the east gate, and above it all the silhouette of Moonveil Castle cuts the sky like a drawn blade.`,
+        `The tone of your story has already etched itself into the fabric of fate: ${toneLabel}. Whether by destiny or coincidence, you have been dropped into precisely the intersection where such stories begin. A notice board near the fountain is fresh with ink — *"Sought: brave souls to investigate the Void King's stirrings. Report to the castle or enquire within."* Someone nailed it there this morning. The flyers are still damp.`,
+        `You are not entirely alone. Scattered across Moonveil and its surroundings are people whose paths will cross yours — some by accident, some by design, and at least one by something that cannot yet be explained. They have their own lives, their own schedules, their own reasons for being here. Whether they become allies, rivals, or something more intimate is entirely up to you.`,
+        `You stand at the fountain's edge${data.desc ? `, ${data.desc}` : ""}, the morning young and the world wide open. A cold wind off the castle hill carries the smell of ${worldCues.split(" ").slice(0, 2).join(" and ")}. Your first lead awaits — and the realm is watching to see what kind of person you are.`
+      ].join("\n\n");
 
-    oc.thread.messages.push({ author: "system",
-      content: `✨ **World ready!**  Setting: ${worldLabel}  |  Tone: ${toneLabel}\n🔞 ${g.enabledKinks.length} kink(s) enabled. Type /kinks to adjust consent at any time.`,
-      expectsReply: false });
-    oc.thread.messages.push({ author: "ai", content: intro, expectsReply: false });
+      oc.thread.messages.push({ author: "system",
+        content: `✨ **World ready!**  Setting: ${worldLabel}  |  Tone: ${toneLabel}\n🔞 ${g.enabledKinks.length} kink(s) enabled. Type /kinks to adjust consent at any time.`,
+        expectsReply: false });
+      oc.thread.messages.push({ author: "ai", content: intro, expectsReply: false });
 
-    updateReminder();
-    updateShortcutButtons();
+      // 5. Character image triggers — register each portrait in the thread so the AI can reference them
+      showStatus("Applying character images…", "Registering portrait triggers");
+      for (const ch of chars) {
+        const portraitUrl = cd._portraits[ch.id];
+        oc.thread.messages.push({
+          author: "system",
+          content: portraitUrl
+            ? `[Image trigger: ${ch.name} | ${ch.archetype}] Portrait ready. ${ch.imageKeywords}. Image: ![${ch.name}](${portraitUrl})`
+            : `[Image trigger: ${ch.name} | ${ch.archetype}] Portrait unavailable — use description: ${ch.imageKeywords}`,
+          hiddenFrom: [],
+          expectsReply: false
+        });
+      }
 
-    // 5. Pop loading screen — fully removes the window (hide() leaves an invisible overlay)
-    oc.window.pop();
+      updateReminder();
+      updateShortcutButtons();
+
+      showStatus("Done!", "Your world is ready");
+      console.log("[Pregen] Complete — popping loading screen");
+    } catch (err) {
+      console.error("[Pregen] Error during pregeneration:", err);
+    } finally {
+      // Pop loading screen first, then clear flag so the boot guard stays effective until the window is gone
+      oc.window.pop();
+      cd._pregenerating = false;
+    }
   }
 
   // Add missing fields for older save states
@@ -1800,7 +1860,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // ════════════════════════════════════════════════════════════════════════════
 
   if (!cd.game?.initialized) {
-    showOpeningUI();
+    // Don't re-open the setup wizard if pregeneration is already running
+    if (!cd._pregenerating) showOpeningUI();
   } else {
     migrateGame(cd.game);
     updateReminder();
