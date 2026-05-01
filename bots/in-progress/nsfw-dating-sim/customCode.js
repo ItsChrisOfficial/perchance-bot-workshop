@@ -758,6 +758,17 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     reminder += `\n[Storyline]\n${g.storyline?.slice(0, 900) || ""}`;
 
     oc.thread.character.reminderMessage = reminder;
+
+    // Populate oc.thread.imagePromptTriggers so Perchance's auto-image engine knows each
+    // character's portrait prompt.  One entry per companion: name, archetype, image keywords,
+    // and the pre-generated portrait dataUrl when available.
+    oc.thread.imagePromptTriggers = chars.map(ch => {
+      const portraitUrl = cd._portraits && cd._portraits[ch.id];
+      return portraitUrl
+        ? `${ch.name} (${ch.archetype}): ${ch.imageKeywords}. Portrait: ${portraitUrl}`
+        : `${ch.name} (${ch.archetype}): ${ch.imageKeywords}`;
+    }).join("\n");
+
     const hour2 = getGameHour(g);
     applyEnvironmentStyle(g.location, hour2);
   }
