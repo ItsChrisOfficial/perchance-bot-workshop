@@ -2050,12 +2050,18 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       oc.window.show();
     }
 
-    // Build per-character image prompt: always use the character's own image keywords.
-    // Player body-type preferences describe the PLAYER and must not alter companion portraits.
+    // Build per-character image prompt.
+    // If the player selected a specific subset of body types (at least one but not all), those
+    // preferences override the companion's prebaked imageKeywords so the player's attraction
+    // profile shapes how companions look.  When zero or all body types are selected the player
+    // expressed no meaningful preference, so we fall back to the companion's own prebaked keywords.
     function charImagePrompt(ch) {
-      // Intentionally uses only ch.imageKeywords — data.bodyTypePrefs are player-only preferences
-      // and must not override a companion's pre-defined appearance.
-      return `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`;
+      const prefs = data.bodyTypePrefs || [];
+      const usePrefs = prefs.length > 0 && prefs.length < allBodyTypeIds.length;
+      const bodyDesc = usePrefs
+        ? prefs.map(id => BODY_TYPES[id]?.desc || id).join(", ")
+        : ch.imageKeywords;
+      return `${bodyDesc} ${worldCues} portrait character art detailed digital illustration`;
     }
 
     showStatus("Starting…", "Preparing world generation");
@@ -2074,6 +2080,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       // 2. All images in parallel — portraits + background; save dataURL (persists) over url
       showStatus("Generating images…", `Background + ${chars.length} portraits (parallel)`);
       cd._portraits = {};
+      let bgSceneMsg = null;
       await Promise.all([
         oc.textToImage({
           prompt: `${worldCues} atmospheric scenic establishing shot wide angle cinematic digital art no people`,
@@ -2083,11 +2090,12 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           if (bgUrl) {
             // Scene background is set via a message with a scene property (documented OpenCharacters API).
             // oc.thread.character has no scene override — only name/avatar/reminderMessage/roleInstruction.
-            oc.thread.messages.push({
+            bgSceneMsg = {
               author: "system", content: "",
               hiddenFrom: ["user", "ai"], expectsReply: false,
               scene: { background: { url: bgUrl } }
-            });
+            };
+            oc.thread.messages.push(bgSceneMsg);
           }
           console.log("[Pregen] Background:", bgUrl ? "scene message pushed" : "no result");
         }).catch(e => console.warn("bg image failed:", e?.message)),
@@ -2132,7 +2140,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       oc.thread.messages.push({ author: "system",
         content: `✨ **World ready!**  Setting: ${worldLabel}  |  Tone: ${toneLabel}\n🔞 ${g.enabledKinks.length} kink(s) enabled. Type /kinks to adjust consent at any time.`,
         expectsReply: false });
-      oc.thread.messages.push({ author: "ai", content: intro, expectsReply: false });
+      const introMsg = { author: "ai", content: intro, expectsReply: false };
+      oc.thread.messages.push(introMsg);
 
       // 5. Character image triggers — register each portrait in the thread so the AI can reference them
       showStatus("Applying character images…", "Registering portrait triggers");
@@ -2150,6 +2159,12 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
       updateReminder();
       updateShortcutButtons();
+
+      // Clean up all staging messages — leave only the scene background (drives the bg image)
+      // and the intro narrative the player will read.  All character-priming, "World ready!",
+      // and portrait-trigger messages are staging artefacts not meant for the final thread.
+      const keepMessages = [bgSceneMsg, introMsg].filter(Boolean);
+      oc.thread.messages.splice(0, oc.thread.messages.length, ...keepMessages);
 
       showStatus("Done!", "Your world is ready");
       console.log("[Pregen] Complete — popping loading screen");
