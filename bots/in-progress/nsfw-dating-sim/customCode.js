@@ -1797,12 +1797,14 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       document.getElementById('rSwitch').addEventListener('click', () => selRole('switch'));
       document.getElementById('rSub').addEventListener('click', () => selRole('sub'));
       document.getElementById('goBtn').addEventListener('click', () => {
-        oc.sendMessage('/setup_step2 ' + JSON.stringify({
+        const d = {
           gender: _g,
           playerRole: _r,
           name: document.getElementById('pName').value.trim() || 'Traveler',
           desc: document.getElementById('pDesc').value.trim()
-        }));
+        };
+        cd._pendingSetup = d;
+        step2(d);
       });
       document.getElementById('aiBtn').addEventListener('click', () => {
         const btn = document.getElementById('aiBtn');
@@ -1853,7 +1855,9 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       document.getElementById('goBtn').addEventListener('click', () => {
         const p = [];
         document.querySelectorAll('[data-bt]').forEach(cb => { if (cb.checked) p.push(cb.value); });
-        oc.sendMessage('/setup_step3 ' + JSON.stringify({ ...data, bodyTypePrefs: p }));
+        const d = { ...data, bodyTypePrefs: p };
+        cd._pendingSetup = d;
+        step3(d);
       });
 
       oc.window.show();
@@ -1902,7 +1906,9 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         document.querySelectorAll('[data-st]').forEach(cb => { if (cb.checked) st.push(cb.dataset.st); });
         if (ws.length < 1 || ws.length > 2) { document.getElementById('err').textContent = '⚠️ Please select 1 or 2 world settings.'; return; }
         if (st.length < 1 || st.length > 3) { document.getElementById('err').textContent = '⚠️ Please select 1 to 3 story tones.'; return; }
-        oc.sendMessage('/setup_step4 ' + JSON.stringify({ ...data, worldSettings: ws, storyTones: st }));
+        const d = { ...data, worldSettings: ws, storyTones: st };
+        cd._pendingSetup = d;
+        step4(d);
       });
 
       oc.window.show();
@@ -1949,7 +1955,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       document.getElementById('goBtn').addEventListener('click', () => {
         const en = [];
         document.querySelectorAll('[data-kink]').forEach(cb => { if (cb.checked) en.push(cb.dataset.kink); });
-        oc.sendMessage('/setup_start ' + JSON.stringify({ ...data, enabledKinks: en }));
+        pregenerate({ ...data, enabledKinks: en });
       });
 
       oc.window.show();
