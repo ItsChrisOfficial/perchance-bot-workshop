@@ -2050,6 +2050,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     // Build per-character image prompt: always use the character's own image keywords.
     // Player body-type preferences describe the PLAYER and must not alter companion portraits.
     function charImagePrompt(ch) {
+      // Intentionally uses only ch.imageKeywords — data.bodyTypePrefs are player-only preferences
+      // and must not override a companion's pre-defined appearance.
       return `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`;
     }
 
