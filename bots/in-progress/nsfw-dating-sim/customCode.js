@@ -1443,18 +1443,16 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         <span>${k.emoji} ${k.label}</span>
       </label>`).join("");
 
-    oc.window.show(`
+    document.body.innerHTML = `
       <div style="font-family:'Segoe UI',sans-serif;padding:20px;max-width:560px;color:#eee;background:#1a1a2e;border-radius:12px;max-height:80vh;overflow-y:auto;">
-        <h2 style="text-align:center;color:#ff6b9d;margin:0 0 8px;">🔞 Consent & Kink Settings</h2>
+        <h2 style="text-align:center;color:#ff6b9d;margin:0 0 8px;">🔞 Consent &amp; Kink Settings</h2>
         <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 12px;">
           ✅ Checked = consented — <strong>may appear</strong> in story.<br>
           ❌ Unchecked = <strong>absolutely banned</strong> — will never appear under any circumstances.
         </p>
         <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
-          <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=true)"
-            style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Select All</button>
-          <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=false)"
-            style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Deselect All</button>
+          <button id="selectAll" style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Select All</button>
+          <button id="deselectAll" style="background:#333;color:#eee;border:1px solid #555;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Deselect All</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;">
           ${kinkCheckboxes}
@@ -1463,16 +1461,23 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           💾 Save Consent Settings
         </button>
       </div>
-      <script>
-        document.getElementById('saveKinks').addEventListener('click', () => {
-          const boxes = document.querySelectorAll('[data-kink]');
-          const enabled = [];
-          boxes.forEach(cb => { if (cb.checked) enabled.push(cb.dataset.kink); });
-          oc.sendMessage('/kinks_save ' + enabled.join(','));
-          oc.window.hide();
-        });
-      </script>
-    `);
+    `;
+
+    document.getElementById('selectAll').addEventListener('click', () => {
+      document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = true);
+    });
+    document.getElementById('deselectAll').addEventListener('click', () => {
+      document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = false);
+    });
+    document.getElementById('saveKinks').addEventListener('click', () => {
+      const boxes = document.querySelectorAll('[data-kink]');
+      const sel = [];
+      boxes.forEach(cb => { if (cb.checked) sel.push(cb.dataset.kink); });
+      oc.sendMessage('/kinks_save ' + sel.join(','));
+      oc.window.hide();
+    });
+
+    oc.window.show();
   }
 
   // Internal command to persist kink selection (triggered by the kink menu UI)
@@ -1499,134 +1504,169 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
     // ── STEP 1: Gender / Name / Description ──
     function step1(opts = {}) {
-      const pfG = opts.gender || "female";
-      const pfN = JSON.stringify(opts.name || "");
-      const pfD = JSON.stringify(opts.desc || "");
-      oc.window.show(`
+      let _g = opts.gender || "female";
+
+      document.body.innerHTML = `
         <div style="${ss}">
           <h2 style="text-align:center;color:#ff6b9d;margin:0 0 6px;">⚔️ Chronicles of the Void King</h2>
           <p style="text-align:center;font-size:13px;color:#aaa;margin:0 0 18px;">Step 1 of 4 — Your Character</p>
           <div style="display:flex;gap:10px;margin-bottom:16px;">
-            <button id="gF" onclick="sel('female')" style="${bs("#c44569,#ff6b9d")}">♀ Female Companions</button>
-            <button id="gM" onclick="sel('male')"   style="${bs("#1565c0,#42a5f5")}">♂ Male Companions</button>
+            <button id="gF" style="${bs("#c44569,#ff6b9d")}">♀ Female Companions</button>
+            <button id="gM" style="${bs("#1565c0,#42a5f5")}">♂ Male Companions</button>
           </div>
           <label style="font-size:13px;color:#aaa;">Your name</label>
-          <input id="pName" placeholder="Traveler" value=${pfN} style="${is}margin-bottom:10px;" />
+          <input id="pName" placeholder="Traveler" style="${is}margin-bottom:10px;" />
           <label style="font-size:13px;color:#aaa;">Your appearance (optional)</label>
           <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:10px;">
-            <textarea id="pDesc" placeholder="Short description of how you look..." style="${is}height:70px;resize:vertical;flex:1;">${pfD.slice(1,-1)}</textarea>
-            <button id="aiBtn" onclick="aiGen()" title="AI will expand your notes into a full description" style="padding:8px 10px;border:none;border-radius:8px;background:linear-gradient(135deg,#7b1fa2,#ab47bc);color:white;font-size:12px;cursor:pointer;white-space:nowrap;align-self:flex-start;">✨ AI<br>Generate</button>
+            <textarea id="pDesc" placeholder="Short description of how you look..." style="${is}height:70px;resize:vertical;flex:1;"></textarea>
+            <button id="aiBtn" title="AI will expand your notes into a full description" style="padding:8px 10px;border:none;border-radius:8px;background:linear-gradient(135deg,#7b1fa2,#ab47bc);color:white;font-size:12px;cursor:pointer;white-space:nowrap;align-self:flex-start;">✨ AI<br>Generate</button>
           </div>
-          <button onclick="go()" style="${bs("#2e7d32,#66bb6a")}">Next → Preferences</button>
+          <button id="goBtn" style="${bs("#2e7d32,#66bb6a")}">Next → Preferences</button>
         </div>
-        <script>
-          let _g=${JSON.stringify(pfG)};
-          function sel(g){_g=g;document.getElementById('gF').style.opacity=g==='female'?'1':'0.5';document.getElementById('gM').style.opacity=g==='male'?'1':'0.5';}
-          sel(_g);
-          function go(){oc.sendMessage('/setup_step2 '+JSON.stringify({gender:_g,name:document.getElementById('pName').value.trim()||'Traveler',desc:document.getElementById('pDesc').value.trim()}));}
-          function aiGen(){
-            const btn=document.getElementById('aiBtn');
-            btn.textContent='⏳…';btn.disabled=true;
-            const name=document.getElementById('pName').value.trim()||'Traveler';
-            const notes=document.getElementById('pDesc').value.trim();
-            oc.sendMessage('/setup_ai_desc '+JSON.stringify({gender:_g,name,notes}));
-          }
-        </script>
-      `);
+      `;
+
+      // Restore any prefilled values safely via property (avoids HTML-escaping issues)
+      document.getElementById('pName').value = opts.name || '';
+      document.getElementById('pDesc').value = opts.desc || '';
+
+      function sel(g) {
+        _g = g;
+        document.getElementById('gF').style.opacity = g === 'female' ? '1' : '0.5';
+        document.getElementById('gM').style.opacity = g === 'male' ? '1' : '0.5';
+      }
+      sel(_g);
+
+      document.getElementById('gF').addEventListener('click', () => sel('female'));
+      document.getElementById('gM').addEventListener('click', () => sel('male'));
+      document.getElementById('goBtn').addEventListener('click', () => {
+        oc.sendMessage('/setup_step2 ' + JSON.stringify({
+          gender: _g,
+          name: document.getElementById('pName').value.trim() || 'Traveler',
+          desc: document.getElementById('pDesc').value.trim()
+        }));
+      });
+      document.getElementById('aiBtn').addEventListener('click', () => {
+        const btn = document.getElementById('aiBtn');
+        btn.textContent = '⏳…'; btn.disabled = true;
+        const name = document.getElementById('pName').value.trim() || 'Traveler';
+        const notes = document.getElementById('pDesc').value.trim();
+        oc.sendMessage('/setup_ai_desc ' + JSON.stringify({ gender: _g, name, notes }));
+      });
+
+      oc.window.show();
     }
 
     // ── STEP 2: Body-type preferences ──
     function step2(data) {
-      const cards = Object.entries(BODY_TYPES).map(([id,bt])=>`
+      const cards = Object.entries(BODY_TYPES).map(([id,bt]) => `
         <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:13px;">
           <input type="checkbox" value="${id}" data-bt="${id}" style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
           <div><strong>${bt.label}</strong><br><span style="color:#aaa;font-size:11px;">${bt.desc}</span></div>
         </label>`).join("");
-      oc.window.show(`
+
+      document.body.innerHTML = `
         <div style="${ss}max-height:82vh;overflow-y:auto;">
           <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 2 of 4 — Preferences</h2>
           <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 12px;">Which body types attract you? (check all that apply)</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">${cards}</div>
           <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=true)" style="${bs("#555,#777")}font-size:12px;margin:0;">All</button>
-            <button onclick="document.querySelectorAll('[data-bt]').forEach(cb=>cb.checked=false)" style="${bs("#555,#777")}font-size:12px;margin:0;">None</button>
+            <button id="allBt" style="${bs("#555,#777")}font-size:12px;margin:0;">All</button>
+            <button id="noneBt" style="${bs("#555,#777")}font-size:12px;margin:0;">None</button>
           </div>
-          <button onclick="go()" style="${bs("#7b1fa2,#ab47bc")}">Next → World & Tone</button>
+          <button id="goBtn" style="${bs("#7b1fa2,#ab47bc")}">Next → World &amp; Tone</button>
         </div>
-        <script>
-          const _d=${JSON.stringify(data)};
-          function go(){const p=[];document.querySelectorAll('[data-bt]').forEach(cb=>{if(cb.checked)p.push(cb.value);});oc.sendMessage('/setup_step3 '+JSON.stringify({..._d,bodyTypePrefs:p}));}
-        </script>
-      `);
+      `;
+
+      document.getElementById('allBt').addEventListener('click', () => {
+        document.querySelectorAll('[data-bt]').forEach(cb => cb.checked = true);
+      });
+      document.getElementById('noneBt').addEventListener('click', () => {
+        document.querySelectorAll('[data-bt]').forEach(cb => cb.checked = false);
+      });
+      document.getElementById('goBtn').addEventListener('click', () => {
+        const p = [];
+        document.querySelectorAll('[data-bt]').forEach(cb => { if (cb.checked) p.push(cb.value); });
+        oc.sendMessage('/setup_step3 ' + JSON.stringify({ ...data, bodyTypePrefs: p }));
+      });
+
+      oc.window.show();
     }
 
     // ── STEP 3: World Setting + Story Tone ──
     function step3(data) {
-      const worldCards = WORLD_SETTINGS.map(w=>`
+      const worldCards = WORLD_SETTINGS.map(w => `
         <label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
           <input type="checkbox" data-ws="${w.id}" style="accent-color:#4fc3f7;cursor:pointer;" />
           <div><span style="font-size:13px;">${w.label}</span><br><span style="color:#aaa;font-size:10px;">${w.desc}</span></div>
         </label>`).join("");
-      const toneCards = STORY_TONES.map(t=>`
+      const toneCards = STORY_TONES.map(t => `
         <label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
           <input type="checkbox" data-st="${t.id}" style="accent-color:#ff6b9d;cursor:pointer;" />
           <div><span style="font-size:13px;">${t.label}</span><br><span style="color:#aaa;font-size:10px;">${t.desc}</span></div>
         </label>`).join("");
-      oc.window.show(`
+
+      document.body.innerHTML = `
         <div style="${ss}max-height:85vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#4fc3f7;margin:0 0 4px;">Step 3 of 4 — World & Tone</h2>
+          <h2 style="text-align:center;color:#4fc3f7;margin:0 0 4px;">Step 3 of 4 — World &amp; Tone</h2>
           <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 10px;">Choose <strong>up to 2 world settings</strong> and <strong>up to 3 story tones</strong>.</p>
           <h3 style="color:#4fc3f7;margin:6px 0 6px;font-size:13px;">🌍 World Setting (pick 1–2)</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">${worldCards}</div>
           <h3 style="color:#ff6b9d;margin:6px 0 6px;font-size:13px;">🎭 Story Tone (pick 1–3)</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">${toneCards}</div>
           <div id="err" style="color:#ff6b9d;font-size:12px;min-height:16px;margin-bottom:4px;"></div>
-          <button onclick="go()" style="${bs("#c62828,#ef5350")}">Next → Content Settings</button>
+          <button id="goBtn" style="${bs("#c62828,#ef5350")}">Next → Content Settings</button>
         </div>
-        <script>
-          const _d=${JSON.stringify(data)};
-          function go(){
-            const ws=[],st=[];
-            document.querySelectorAll('[data-ws]').forEach(cb=>{if(cb.checked)ws.push(cb.dataset.ws);});
-            document.querySelectorAll('[data-st]').forEach(cb=>{if(cb.checked)st.push(cb.dataset.st);});
-            if(ws.length<1||ws.length>2){document.getElementById('err').textContent='Please select 1 or 2 world settings.';return;}
-            if(st.length<1||st.length>3){document.getElementById('err').textContent='Please select 1 to 3 story tones.';return;}
-            oc.sendMessage('/setup_step4 '+JSON.stringify({..._d,worldSettings:ws,storyTones:st}));
-          }
-        </script>
-      `);
+      `;
+
+      document.getElementById('goBtn').addEventListener('click', () => {
+        const ws = [], st = [];
+        document.querySelectorAll('[data-ws]').forEach(cb => { if (cb.checked) ws.push(cb.dataset.ws); });
+        document.querySelectorAll('[data-st]').forEach(cb => { if (cb.checked) st.push(cb.dataset.st); });
+        if (ws.length < 1 || ws.length > 2) { document.getElementById('err').textContent = 'Please select 1 or 2 world settings.'; return; }
+        if (st.length < 1 || st.length > 3) { document.getElementById('err').textContent = 'Please select 1 to 3 story tones.'; return; }
+        oc.sendMessage('/setup_step4 ' + JSON.stringify({ ...data, worldSettings: ws, storyTones: st }));
+      });
+
+      oc.window.show();
     }
 
     // ── STEP 4: Kink / Consent ──
     function step4(data) {
-      const kinkCards = KINKS.map(k=>`
+      const kinkCards = KINKS.map(k => `
         <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:6px;cursor:pointer;font-size:12px;">
           <input type="checkbox" data-kink="${k.id}" style="width:15px;height:15px;accent-color:#ff6b9d;cursor:pointer;" />
           <span>${k.emoji} ${k.label}</span>
         </label>`).join("");
-      oc.window.show(`
+
+      document.body.innerHTML = `
         <div style="${ss}max-height:85vh;overflow-y:auto;">
-          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 4 of 4 — 🔞 Consent & Kinks</h2>
+          <h2 style="text-align:center;color:#ff6b9d;margin:0 0 4px;">Step 4 of 4 — 🔞 Consent &amp; Kinks</h2>
           <p style="text-align:center;font-size:12px;color:#aaa;margin:0 0 8px;">
             ✅ Check = <strong>consented, may appear</strong>.<br>
             ❌ Unchecked = <strong>absolutely banned</strong> — never appears, period. Change anytime via /kinks.
           </p>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">
-            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=true)" style="${bs("#555,#777")}font-size:12px;margin:0;">Select All</button>
-            <button onclick="document.querySelectorAll('[data-kink]').forEach(cb=>cb.checked=false)" style="${bs("#555,#777")}font-size:12px;margin:0;">Deselect All</button>
+            <button id="selectAll" style="${bs("#555,#777")}font-size:12px;margin:0;">Select All</button>
+            <button id="deselectAll" style="${bs("#555,#777")}font-size:12px;margin:0;">Deselect All</button>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">${kinkCards}</div>
-          <button onclick="go()" style="${bs("#c62828,#ef5350")}font-size:15px;">🌀 Generate World & Begin</button>
+          <button id="goBtn" style="${bs("#c62828,#ef5350")}font-size:15px;">🌀 Generate World &amp; Begin</button>
         </div>
-        <script>
-          const _d=${JSON.stringify(data)};
-          function go(){
-            const en=[];
-            document.querySelectorAll('[data-kink]').forEach(cb=>{if(cb.checked)en.push(cb.dataset.kink);});
-            oc.sendMessage('/setup_start '+JSON.stringify({..._d,enabledKinks:en}));
-          }
-        </script>
-      `);
+      `;
+
+      document.getElementById('selectAll').addEventListener('click', () => {
+        document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = true);
+      });
+      document.getElementById('deselectAll').addEventListener('click', () => {
+        document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = false);
+      });
+      document.getElementById('goBtn').addEventListener('click', () => {
+        const en = [];
+        document.querySelectorAll('[data-kink]').forEach(cb => { if (cb.checked) en.push(cb.dataset.kink); });
+        oc.sendMessage('/setup_start ' + JSON.stringify({ ...data, enabledKinks: en }));
+      });
+
+      oc.window.show();
     }
 
     // Expose step callbacks for message handler
@@ -1700,11 +1740,11 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
     const chars = data.gender === "female" ? FEMALE_CHARS : MALE_CHARS;
 
-    // Loading overlay with live status — refreshed at each stage via oc.window.show()
+    // Loading overlay with live status — updates document.body.innerHTML at each stage
     const _ls = `font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0d0d2e,#1a0a1a);color:#eee;padding:40px;border-radius:14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;`;
     function showStatus(step, detail) {
       console.log(`[Pregen] ${step}${detail ? ": " + detail : ""}`);
-      oc.window.show(`
+      document.body.innerHTML = `
         <div style="${_ls}">
           <div style="font-size:52px;margin-bottom:14px;">🌀</div>
           <h2 style="color:#ff6b9d;margin:0 0 8px;">Weaving Your World…</h2>
@@ -1712,7 +1752,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           <p style="color:#7ec8e3;font-size:12px;margin:0;">${step}</p>
           ${detail ? `<p style="color:#888;font-size:11px;margin:4px 0 0;">${detail}</p>` : ""}
         </div>
-      `);
+      `;
+      oc.window.show();
     }
 
     // Build per-character image prompt: use character's natural description as default;
