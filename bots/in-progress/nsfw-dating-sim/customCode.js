@@ -625,19 +625,20 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     updateShortcutButtons();
   }
 
-  function getEnvironmentStyle(location, hour) {
+  function applyEnvironmentStyle(location, hour) {
     const isDark = hour < 6 || hour >= 20;
     const palettes = {
-      town_square:      isDark ? { bg: "#0d1b2a", accent: "#4a9eff", text: "#c8d8e8" } : { bg: "#f0e6c8", accent: "#d4a017", text: "#2c1810" },
-      inn:              isDark ? { bg: "#1a0f0f", accent: "#ff6b35", text: "#f0d0a0" } : { bg: "#2d1810", accent: "#ff8c42", text: "#f5dfc0" },
-      market:           isDark ? { bg: "#0f1a0f", accent: "#4caf50", text: "#c8e8c8" } : { bg: "#fff8e1", accent: "#ff9800", text: "#3e2723" },
-      forest:           isDark ? { bg: "#071207", accent: "#00ff41", text: "#a0c8a0" } : { bg: "#e8f5e9", accent: "#2e7d32", text: "#1b5e20" },
-      castle:           isDark ? { bg: "#0d0d1a", accent: "#9c27b0", text: "#d0c0e8" } : { bg: "#e8eaf6", accent: "#3f51b5", text: "#1a237e" },
-      dungeon:          isDark ? { bg: "#0a0008", accent: "#7b1fa2", text: "#c080d0" } : { bg: "#1a001a", accent: "#9c27b0", text: "#d0a0d8" },
-      training_grounds: isDark ? { bg: "#1a0d00", accent: "#ff5722", text: "#f0c8a0" } : { bg: "#fce4ec", accent: "#c62828", text: "#4a0000" }
+      town_square:      isDark ? { bg: "#0d1b2a", text: "#c8d8e8" } : { bg: "#f0e6c8", text: "#2c1810" },
+      inn:              isDark ? { bg: "#1a0f0f", text: "#f0d0a0" } : { bg: "#2d1810", text: "#f5dfc0" },
+      market:           isDark ? { bg: "#0f1a0f", text: "#c8e8c8" } : { bg: "#fff8e1", text: "#3e2723" },
+      forest:           isDark ? { bg: "#071207", text: "#a0c8a0" } : { bg: "#e8f5e9", text: "#1b5e20" },
+      castle:           isDark ? { bg: "#0d0d1a", text: "#d0c0e8" } : { bg: "#e8eaf6", text: "#1a237e" },
+      dungeon:          isDark ? { bg: "#0a0008", text: "#c080d0" } : { bg: "#1a001a", text: "#d0a0d8" },
+      training_grounds: isDark ? { bg: "#1a0d00", text: "#f0c8a0" } : { bg: "#fce4ec", text: "#4a0000" }
     };
     const p = palettes[location] || palettes.town_square;
-    return `oc.thread.style = { backgroundColor: "${p.bg}", accentColor: "${p.accent}", textColor: "${p.text}" };`;
+    // oc.thread.messageWrapperStyle is the documented thread-level message style API
+    oc.thread.messageWrapperStyle = `background: ${p.bg}; color: ${p.text};`;
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -751,7 +752,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
     oc.thread.character.reminderMessage = reminder;
     const hour2 = getGameHour(g);
-    eval(getEnvironmentStyle(g.location, hour2));
+    applyEnvironmentStyle(g.location, hour2);
   }
 
   function updateShortcutButtons() {
@@ -1699,24 +1700,15 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       const boxes = document.querySelectorAll('[data-kink]');
       const sel = [];
       boxes.forEach(cb => { if (cb.checked) sel.push(cb.dataset.kink); });
-      oc.sendMessage('/kinks_save ' + sel.join(','));
+      cd.game.enabledKinks = sel;
+      updateReminder();
+      const count = sel.length;
+      oc.thread.messages.push({ author: "system",
+        content: `\uD83D\uDD12 Consent settings saved. ${count} kink${count !== 1 ? "s" : ""} enabled. The story will strictly respect these boundaries.` });
       oc.window.hide();
     });
 
     oc.window.show();
-  }
-
-  // Internal command to persist kink selection (triggered by the kink menu UI)
-  function handleKinkSave(msg) {
-    const g    = cd.game;
-    const text = msg.content?.trim() || "";
-    const raw  = text.replace("/kinks_save ", "").trim();
-    g.enabledKinks = raw ? raw.split(",").filter(Boolean) : [];
-    const count = g.enabledKinks.length;
-    oc.thread.messages.push({ author: "system",
-      content: `\uD83D\uDD12 Consent settings saved. ${count} kink${count !== 1 ? "s" : ""} enabled. The story will strictly respect these boundaries.` });
-    updateReminder();
-    return true;
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -1806,12 +1798,25 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         cd._pendingSetup = d;
         step2(d);
       });
-      document.getElementById('aiBtn').addEventListener('click', () => {
+      document.getElementById('aiBtn').addEventListener('click', async () => {
         const btn = document.getElementById('aiBtn');
         btn.textContent = '⏳…'; btn.disabled = true;
         const name = document.getElementById('pName').value.trim() || 'Traveler';
         const notes = document.getElementById('pDesc').value.trim();
-        oc.sendMessage('/setup_ai_desc ' + JSON.stringify({ gender: _g, name, notes }));
+        try {
+          const desc = await oc.getChatCompletion({
+            messages: [{ author: "user",
+              content: `Write a vivid 2-3 sentence physical appearance description for a character named "${name}" based on these notes: "${notes || "mysterious traveler"}". Reply ONLY with the description — no greetings, no roleplay.`
+            }]
+          });
+          const textarea = document.getElementById('pDesc');
+          if (textarea) textarea.value = (desc || '').trim();
+        } catch(e) {
+          console.warn('[Setup] AI description failed:', e?.message || e);
+        } finally {
+          const b = document.getElementById('aiBtn');
+          if (b) { b.innerHTML = '✨ AI<br>Generate'; b.disabled = false; }
+        }
       });
 
       oc.window.show();
@@ -1961,11 +1966,6 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       oc.window.show();
     }
 
-    // Expose step callbacks for message handler
-    cd._uiStep1 = step1;
-    cd._uiStep2 = step2;
-    cd._uiStep3 = step3;
-    cd._uiStep4 = step4;
     step1();
   }
 
@@ -2022,9 +2022,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (cd._pregenerating) return;
     cd._pregenerating = true;
 
-    const allBodyTypeIds = Object.keys(BODY_TYPES);
-    const useCharDefault = !data.bodyTypePrefs?.length || data.bodyTypePrefs.length >= allBodyTypeIds.length;
-
+    const allBodyTypeIds = Object.keys(BODY_TYPES); // kept for reference; prefs apply only to player profile
     const worldCues  = (data.worldSettings || ["medieval_fantasy"])
       .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
     const worldLabel = (data.worldSettings || [])
@@ -2049,17 +2047,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       oc.window.show();
     }
 
-    // Build per-character image prompt: use character's natural description as default;
-    // if the user selected specific (not all/none) body types, inject those preferences.
+    // Build per-character image prompt: always use the character's own image keywords.
+    // Player body-type preferences describe the PLAYER and must not alter companion portraits.
     function charImagePrompt(ch) {
-      if (useCharDefault) {
-        return `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`;
-      }
-      const prefDesc = data.bodyTypePrefs
-        .map(id => BODY_TYPES[id]?.desc || "")
-        .filter(Boolean)
-        .join(", ");
-      return `${ch.imageKeywords} body type ${prefDesc} ${worldCues} portrait character art detailed digital illustration`;
+      return `${ch.imageKeywords} ${worldCues} portrait character art detailed digital illustration`;
     }
 
     showStatus("Starting…", "Preparing world generation");
@@ -2084,8 +2075,16 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           negativePrompt: "people, characters, portraits, text, ui"
         }).then(r => {
           const bgUrl = r?.dataUrl;
-          if (bgUrl) oc.thread.character.scene.background.url = bgUrl;
-          console.log("[Pregen] Background:", bgUrl ? "dataUrl saved" : "no result");
+          if (bgUrl) {
+            // Scene background is set via a message with a scene property (documented OpenCharacters API).
+            // oc.thread.character has no scene override — only name/avatar/reminderMessage/roleInstruction.
+            oc.thread.messages.push({
+              author: "system", content: "",
+              hiddenFrom: ["user", "ai"], expectsReply: false,
+              scene: { background: { url: bgUrl } }
+            });
+          }
+          console.log("[Pregen] Background:", bgUrl ? "scene message pushed" : "no result");
         }).catch(e => console.warn("bg image failed:", e?.message)),
         ...chars.map(ch =>
           oc.textToImage({
@@ -2152,8 +2151,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     } catch (err) {
       console.error("[Pregen] Error during pregeneration:", err);
     } finally {
-      // Pop loading screen first, then clear flag so the boot guard stays effective until the window is gone
-      oc.window.pop();
+      // Dismiss loading screen. oc.window only has show() and hide() — pop() does not exist.
+      oc.window.hide();
       cd._pregenerating = false;
     }
   }
@@ -2205,62 +2204,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // so that wizard navigation works even if the init block throws.
   oc.thread.on("MessageAdded", async ({ message }) => {
     if (!cd.game?.initialized) {
-      // Setup wizard message routing
-      const text = message.content?.trim() || "";
-
-      // AI description response — capture while awaiting AI desc generation
-      if (message.author === "ai" && cd._awaitingAiDesc) {
-        const d = cd._awaitingAiDesc;
-        cd._awaitingAiDesc = null;
-        if (cd._uiStep1) cd._uiStep1({ gender: d.gender, name: d.name, desc: message.content?.trim() || "" });
-        return;
-      }
-
-      if (text.startsWith("/setup_ai_desc ")) {
-        try {
-          const d = JSON.parse(text.slice(15));
-          cd._awaitingAiDesc = d;
-          // Guide the AI to respond with a character description only
-          oc.thread.messages.push({
-            author: "system",
-            content: `[Setup task] Write a vivid 2-3 sentence physical appearance description for a character named "${d.name}" based on these notes: "${d.notes || "mysterious traveler"}". Reply ONLY with the description — no greetings, no roleplay.`,
-            expectsReply: false
-          });
-        } catch(_) {}
-        return;
-      }
-      if (text.startsWith("/setup_step2 ")) {
-        try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep2?.(d); } catch(_) {}
-        return;
-      }
-      if (text.startsWith("/setup_step3 ")) {
-        try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep3?.(d); } catch(_) {}
-        return;
-      }
-      if (text.startsWith("/setup_step4 ")) {
-        try { const d=JSON.parse(text.slice(13)); cd._pendingSetup=d; cd._uiStep4?.(d); } catch(_) {}
-        return;
-      }
-      if (text.startsWith("/setup_start ")) {
-        try {
-          const data = JSON.parse(text.slice(13));
-          pregenerate(data);
-        } catch(e) {
-          oc.thread.messages.push({ author: "system", content: "Setup error. Please refresh and try again." });
-        }
-        return;
-      }
+      // All setup wizard steps advance via direct JS function calls (step1→step2→step3→step4→pregenerate).
+      // No hidden chat-command routing is needed during setup; ignore all messages here.
       return;
     }
 
     const g    = cd.game;
     const text = message.content?.trim() || "";
-
-    // Intercept internal kink save command
-    if (text.startsWith("/kinks_save")) {
-      handleKinkSave(message);
-      return;
-    }
 
     // ── /image [pov|charpov|action] ──────────────────────────────────────────
     if (text.startsWith("/image")) {
