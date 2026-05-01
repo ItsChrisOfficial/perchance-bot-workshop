@@ -2079,22 +2079,22 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       showStatus("Generating images…", `Background + ${chars.length} portraits (parallel)`);
       cd._portraits = {};
       await Promise.all([
-        oc.generateImage({
+        oc.textToImage({
           prompt: `${worldCues} atmospheric scenic establishing shot wide angle cinematic digital art no people`,
           negativePrompt: "people, characters, portraits, text, ui"
         }).then(r => {
-          const bgUrl = r?.dataURL || r?.url;
+          const bgUrl = r?.dataUrl;
           if (bgUrl) oc.thread.character.scene.background.url = bgUrl;
-          console.log("[Pregen] Background:", r?.dataURL ? "dataURL saved" : (r?.url ? "url saved" : "no result"));
+          console.log("[Pregen] Background:", bgUrl ? "dataUrl saved" : "no result");
         }).catch(e => console.warn("bg image failed:", e?.message)),
         ...chars.map(ch =>
-          oc.generateImage({
+          oc.textToImage({
             prompt: charImagePrompt(ch),
             negativePrompt: "nsfw, explicit, nude"
           }).then(r => {
-            const portraitUrl = r?.dataURL || r?.url;
+            const portraitUrl = r?.dataUrl;
             if (portraitUrl) cd._portraits[ch.id] = portraitUrl;
-            console.log(`[Pregen] Portrait ${ch.id}:`, r?.dataURL ? "dataURL saved" : (r?.url ? "url saved" : "no result"));
+            console.log(`[Pregen] Portrait ${ch.id}:`, portraitUrl ? "dataUrl saved" : "no result");
           }).catch(e => console.warn(`portrait failed (${ch.id}):`, e?.message))
         )
       ]);
@@ -2283,8 +2283,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       }
       oc.thread.messages.push({ author: "system", content: `\uD83C\uDFA8 Generating image (${mode})…`, expectsReply: false });
       try {
-        const r = await oc.generateImage({ prompt, negativePrompt: "text, watermark, ui, hud" });
-        if (r?.url) oc.thread.messages.push({ author: "system", content: `![${mode} image](${r.url})`, expectsReply: false });
+        const r = await oc.textToImage({ prompt, negativePrompt: "text, watermark, ui, hud" });
+        if (r?.dataUrl) oc.thread.messages.push({ author: "system", content: `![${mode} image](${r.dataUrl})`, expectsReply: false });
         else oc.thread.messages.push({ author: "system", content: "Image generation returned no result.", expectsReply: false });
       } catch(e) {
         oc.thread.messages.push({ author: "system", content: "Image generation failed.", expectsReply: false });
