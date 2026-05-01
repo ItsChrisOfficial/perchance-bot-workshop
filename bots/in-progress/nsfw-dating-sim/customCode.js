@@ -728,8 +728,12 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     const toneLabel = (g.storyTones || ["dark_romance"])
       .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
 
-    // Apply player identity so the AI sees the user by their chosen name
+    // Apply player identity so the AI sees the user by their chosen name, description, and role
     oc.thread.userCharacter.name = g.playerName || "Traveler";
+    oc.thread.userCharacter.description = [
+      g.playerDesc || "",
+      g.playerRole ? `Dynamic: ${g.playerRole.toUpperCase()}` : ""
+    ].filter(Boolean).join(" | ");
 
     let reminder = `[GAME STATE]
 Player: ${g.playerName}${g.playerDesc ? ` — ${g.playerDesc}` : ""} | Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}
@@ -2144,26 +2148,31 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       oc.thread.messages.push(introMsg);
 
       // 5. Character image triggers — register each portrait in the thread so the AI can reference them
+      // These messages are permanent gameplay context (the AI uses them to display portraits during
+      // the session) and must survive the staging-message cleanup at the end of this function.
       showStatus("Applying character images…", "Registering portrait triggers");
+      const portraitTriggerMsgs = [];
       for (const ch of chars) {
         const portraitUrl = cd._portraits[ch.id];
-        oc.thread.messages.push({
+        const trigMsg = {
           author: "system",
           content: portraitUrl
             ? `[Image trigger: ${ch.name} | ${ch.archetype}] Portrait ready. ${ch.imageKeywords}. Image: ![${ch.name}](${portraitUrl})`
             : `[Image trigger: ${ch.name} | ${ch.archetype}] Portrait unavailable — use description: ${ch.imageKeywords}`,
           hiddenFrom: [],
           expectsReply: false
-        });
+        };
+        oc.thread.messages.push(trigMsg);
+        portraitTriggerMsgs.push(trigMsg);
       }
 
       updateReminder();
       updateShortcutButtons();
 
-      // Clean up all staging messages — leave only the scene background (drives the bg image)
-      // and the intro narrative the player will read.  All character-priming, "World ready!",
-      // and portrait-trigger messages are staging artefacts not meant for the final thread.
-      const keepMessages = [bgSceneMsg, introMsg].filter(Boolean);
+      // Clean up staging messages — keep only: scene background (drives bg image), intro narrative,
+      // and portrait trigger messages (permanent AI context for displaying character portraits).
+      // Character-priming and "World ready!" messages are staging artefacts and are removed.
+      const keepMessages = [bgSceneMsg, introMsg, ...portraitTriggerMsgs].filter(Boolean);
       oc.thread.messages.splice(0, oc.thread.messages.length, ...keepMessages);
 
       showStatus("Done!", "Your world is ready");
