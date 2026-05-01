@@ -673,7 +673,13 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       photoStatus = stage >= charDef.photoMinStage ? "\uD83D\uDD13 UNLOCKED" : `\uD83D\uDD12 LOCKED (needs stage ${charDef.photoMinStage})`;
     }
 
-    return `\n\u2550\u2550\u2550 ACTIVE CHARACTER NSFW PROFILE: ${charDef.name} \u2550\u2550\u2550\nRelationship: ${tier.name} (Stage ${stage}) | Affection: ${aff}\nPhysical NSFW: ${nsfwStatus}\nIntimate Photos/Messages: ${photoStatus}\nCharacter Traits: ${charDef.nsfwPersonality}\nAftercare: ${charDef.aftercare} | Role preference: ${charDef.giveReceive}\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`;
+    const playerRole = cd.game?.playerRole || "switch";
+    const roleNote = playerRole === "dom"
+      ? `Player is DOMINANT — treat them as dominant even if ${charDef.name}'s nature is also giver/dominant; play the tension.`
+      : playerRole === "sub"
+      ? `Player is SUBMISSIVE — ${charDef.name} naturally leads according to their own preference.`
+      : `Player is SWITCH — ${charDef.name} follows their natural ${charDef.giveReceive} preference.`;
+    return `\n═══ ACTIVE CHARACTER NSFW PROFILE: ${charDef.name} ═══\nRelationship: ${tier.name} (Stage ${stage}) | Affection: ${aff}\nPhysical NSFW: ${nsfwStatus}\nIntimate Photos/Messages: ${photoStatus}\nCharacter Traits: ${charDef.nsfwPersonality}\nAftercare: ${charDef.aftercare} | Character role preference: ${charDef.giveReceive}\nPlayer dynamic: ${playerRole.toUpperCase()} — ${roleNote}\n═════════════════════════════════════════════`;
   }
 
   function updateReminder() {
@@ -723,6 +729,11 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
 
     let reminder = `[GAME STATE]
 Player: ${g.playerName} | Day ${g.time.day}, ${String(hour).padStart(2,"0")}:00${festival}
+Player Dynamic Role: ${(g.playerRole || "switch").toUpperCase()} — ${
+  g.playerRole === "dom"    ? "Player is DOMINANT: all companions must treat the player as the dominant party. If a companion is also dominant by nature, play up the delicious tension and playful power struggle — neither yields easily." :
+  g.playerRole === "sub"    ? "Player is SUBMISSIVE: companions take the lead; dominant companions thrive here, nurturing ones protect, equal ones guide gently." :
+                              "Player is SWITCH: companions default to their own natural dynamic (giver/receiver) and the balance shifts organically scene by scene."
+}
 HP: ${g.hp}/${g.maxHp} | Mana: ${g.mana}/${g.maxMana} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}
 Location: ${loc.name}${locEnemies ? ` | Enemies here: ${locEnemies}` : ""}
 Skills: ${skillLine}
@@ -1499,6 +1510,23 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       .gender-btn.male:hover   { box-shadow: 0 6px 22px rgba(66,165,245,0.35); }
       .gender-btn.selected { border-color: rgba(255,255,255,0.45); }
 
+      /* ── Role toggle (Dom / Switch / Sub) ── */
+      .role-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+      .role-btn {
+        padding: 13px 6px; border: 2px solid transparent; border-radius: 12px;
+        cursor: pointer; font-size: 13px; font-weight: 700; color: #fff;
+        transition: all 0.2s ease; text-align: center; line-height: 1.4; background: #1a1a3a;
+      }
+      .role-btn.dim    { opacity: 0.38; transform: scale(0.96); }
+      .role-btn.selected { border-color: rgba(255,255,255,0.45); opacity: 1; transform: scale(1); }
+      .role-btn:hover  { opacity: 1; transform: translateY(-2px) scale(1); }
+      .role-btn.dom    { background: linear-gradient(135deg, #7b1fa2, #ab47bc); }
+      .role-btn.dom:hover    { box-shadow: 0 6px 22px rgba(171,71,188,0.38); }
+      .role-btn.switch { background: linear-gradient(135deg, #1565c0, #4fc3f7); }
+      .role-btn.switch:hover { box-shadow: 0 6px 22px rgba(79,195,247,0.38); }
+      .role-btn.sub    { background: linear-gradient(135deg, #c62828, #ef5350); }
+      .role-btn.sub:hover    { box-shadow: 0 6px 22px rgba(239,83,80,0.38); }
+
       /* ── Field labels ── */
       .field-label {
         display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.7px;
@@ -1697,9 +1725,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
   function showOpeningUI() {
 
-    // ── STEP 1: Gender / Name / Description ──
+    // ── STEP 1: Gender / Name / Description / Role ──
     function step1(opts = {}) {
       let _g = opts.gender || "female";
+      let _r = opts.playerRole || "switch";
 
       document.body.innerHTML = `
         ${UI_CSS}
@@ -1723,6 +1752,19 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
             <button id="aiBtn" class="ai-btn">✨ AI<br>Generate</button>
           </div>
 
+          <label class="field-label">Your dynamic role</label>
+          <div class="info-box" style="margin-bottom:10px;font-size:11px;">
+            How companions treat you in intimate situations.<br>
+            <strong>Dom</strong> — you are always treated as the dominant partner (even with dominant NPCs — expect playful conflict).<br>
+            <strong>Switch</strong> — fluid; the NPC leads based on their own nature.<br>
+            <strong>Sub</strong> — you are treated as the submissive partner.
+          </div>
+          <div class="role-row">
+            <button id="rDom" class="role-btn dom">👑<br>Dominant</button>
+            <button id="rSwitch" class="role-btn switch">⚡<br>Switch</button>
+            <button id="rSub" class="role-btn sub">🌸<br>Submissive</button>
+          </div>
+
           <button id="goBtn" class="btn btn-green" style="margin-top:4px;">Next → Preferences</button>
         </div>
       `;
@@ -1737,13 +1779,26 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         document.getElementById('gM').classList.toggle('dim', g !== 'male');
         document.getElementById('gM').classList.toggle('selected', g === 'male');
       }
+      function selRole(r) {
+        _r = r;
+        ['dom','switch','sub'].forEach(id => {
+          const el = document.getElementById('r' + id.charAt(0).toUpperCase() + id.slice(1));
+          el.classList.toggle('dim', r !== id);
+          el.classList.toggle('selected', r === id);
+        });
+      }
       sel(_g);
+      selRole(_r);
 
       document.getElementById('gF').addEventListener('click', () => sel('female'));
       document.getElementById('gM').addEventListener('click', () => sel('male'));
+      document.getElementById('rDom').addEventListener('click', () => selRole('dom'));
+      document.getElementById('rSwitch').addEventListener('click', () => selRole('switch'));
+      document.getElementById('rSub').addEventListener('click', () => selRole('sub'));
       document.getElementById('goBtn').addEventListener('click', () => {
         oc.sendMessage('/setup_step2 ' + JSON.stringify({
           gender: _g,
+          playerRole: _r,
           name: document.getElementById('pName').value.trim() || 'Traveler',
           desc: document.getElementById('pDesc').value.trim()
         }));
@@ -1911,7 +1966,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // SECTION 12 — GAME INIT, PREGENERATION & MIGRATION
   // ════════════════════════════════════════════════════════════════════════════
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones) {
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones, playerRole) {
     const chars      = gender === "female" ? FEMALE_CHARS : MALE_CHARS;
     const sideQuests = buildSideQuests(chars);
     const quests     = [
@@ -1928,6 +1983,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       initialized: true, gender,
       playerName:  playerName   || "Traveler",
       playerDesc:  playerDesc   || "",
+      playerRole:  playerRole   || "switch",
       bodyTypePrefs: bodyTypePrefs || [],
       enabledKinks:  enabledKinks  || [],
       worldSettings: worldSettings || ["medieval_fantasy"],
@@ -2038,7 +2094,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
       // 3. Init game state
       showStatus("Initialising world…", "Setting up game state");
-      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones);
+      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones, data.playerRole);
       const g = cd.game;
 
       // 4. World narrative — 3-4 paragraphs; last = what player sees around them
@@ -2114,6 +2170,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (!g.enabledKinks)            g.enabledKinks  = [];
     if (!g.worldSettings)           g.worldSettings = ["medieval_fantasy"];
     if (!g.storyTones)              g.storyTones    = ["dark_romance"];
+    if (!g.playerRole)              g.playerRole    = "switch";
     if (!g.ngPlusBonus)             g.ngPlusBonus   = null;
     if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName);
     // Ensure quests have a visible field
