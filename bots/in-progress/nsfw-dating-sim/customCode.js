@@ -476,7 +476,78 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     g.time.day = Math.floor(g.time.totalMinutes / (24 * 60)) + 1;
     if (g.time.day > prevDay) {
       regeneratePriceModifiers(g);
-      g.lastTrained = {};
+      g.lastTrained      = {};
+      g.crownEdictActive  = false;
+      g.marketCrashActive = false;
+
+      // ── Daily calendar events ──────────────────────────────────────────────
+      checkDailyEvents(g, prevDay, g.time.day);
+
+      // ── Relationship decay (stage 3+ companion neglected 3+ days) ──────────
+      getActiveChars().forEach(ch => {
+        const cst = g.characters[ch.id];
+        if (!cst) return;
+        const tier = getRelTier(cst.affection || 0);
+        if (tier.stage < 3) return; // only penalise close/romantic bonds
+        const daysSince = g.time.day - (cst.lastTalkedDay || 0);
+        if (daysSince >= 3) {
+          const loss = (daysSince - 2) * 5; // 5 per day of neglect beyond the 2-day grace
+          cst.affection = Math.max(0, (cst.affection || 0) - loss);
+          cst.mood = daysSince >= 5 ? "angry" : "upset";
+          oc.thread.messages.push({ author: "system",
+            content: `💔 **${ch.name}** hasn't heard from you in ${daysSince} days — affection −${loss} (now ${cst.affection}). They seem ${cst.mood === "angry" ? "*very* distant" : "distant"}.` });
+        }
+        // Expire mood if needed
+        if (cst.moodExpiresDay && g.time.day > cst.moodExpiresDay) {
+          cst.mood = "neutral"; delete cst.moodExpiresDay;
+        }
+      });
+
+      // ── Rival Clash deadline penalty ───────────────────────────────────────
+      if (g.rivalClashTargets?.length && g.time.day > (g.rivalClashDay || 0) + 1) {
+        const stillPending = g.rivalClashTargets.filter(id => {
+          const cst = g.characters[id];
+          return cst && (cst.lastTalkedDay || 0) <= g.rivalClashDay;
+        });
+        if (stillPending.length > 0) {
+          stillPending.forEach(id => {
+            const cst = g.characters[id];
+            if (cst) cst.affection = Math.max(0, (cst.affection || 0) - 10);
+          });
+          const names = stillPending.map(id => getChar(id)?.name || id).join(", ");
+          oc.thread.messages.push({ author: "system",
+            content: `⚔️ **Rival Clash unresolved** — ${names} parted ways bitterly. Each lost 10 affection.` });
+          g.rivalClashTargets = [];
+        }
+      }
+
+      // ── Void Sighting reassurance deadline ────────────────────────────────
+      if (g.voidSightingTargets?.length && g.time.day > (g.voidSightingDay || 0) + 2) {
+        const stillFeared = g.voidSightingTargets.filter(id => {
+          const cst = g.characters[id];
+          return cst && (cst.lastTalkedDay || 0) <= g.voidSightingDay;
+        });
+        if (stillFeared.length > 0) {
+          const names = stillFeared.map(id => getChar(id)?.name || id).join(", ");
+          oc.thread.messages.push({ author: "system",
+            content: `👁️ **Void fear unaddressed** — ${names} still haven't been reassured. Their fear has curdled into distance.` });
+          g.voidSightingTargets = [];
+        }
+      }
+
+      // ── Training neglect (7 days without any training) ────────────────────
+      if ((g.lastTrainedDay || 0) > 0 && g.time.day - g.lastTrainedDay >= 7) {
+        const cats  = ["combat", "social", "magic"];
+        const cat   = cats[Math.floor(Math.random() * cats.length)];
+        const skills = Object.keys(g.skills[cat] || {});
+        if (skills.length) {
+          const sk = skills[Math.floor(Math.random() * skills.length)];
+          g.skills[cat][sk] = Math.max(1, (g.skills[cat][sk] || 1) - 1);
+          oc.thread.messages.push({ author: "system",
+            content: `📉 **Training Neglect** — You haven't trained in ${g.time.day - g.lastTrainedDay} days. Your ${sk} (${cat}) has deteriorated by 1 from lack of practice.` });
+        }
+        g.lastTrainedDay = g.time.day; // reset so it doesn't fire again next day
+      }
     }
     updateCompanionSchedules(g);
   }
@@ -580,48 +651,112 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   }
 
   function getQuestDepError(g, questId) {
+    // ── MQ1 hard per-step gates ──────────────────────────────────────────────
+    if (questId === "mq1") {
+      const mq1  = g.quests.find(q => q.id === "mq1");
+      const step = (mq1?.progress || 0) + 1; // next step to unlock
+      if (step === 1) {
+        const c   = MQ1_CONTACTS[g.gender] || MQ1_CONTACTS.female;
+        const dCst = g.characters[c.dungeon] || {}; const fCst = g.characters[c.forest] || {};
+        const dName = getChar(c.dungeon)?.name || c.dungeon;
+        const fName = getChar(c.forest)?.name  || c.forest;
+        const missing = [];
+        if (!dCst.met || (dCst.affection || 0) < 10) missing.push(`${dName} (affection ≥ 10, currently ${dCst.affection || 0})`);
+        if (!fCst.met || (fCst.affection || 0) < 10) missing.push(`${fName} (affection ≥ 10, currently ${fCst.affection || 0})`);
+        if (missing.length) return `You need to meet and befriend: ${missing.join(" and ")}. (Use /objectives for details.)`;
+      }
+      if (step === 2) {
+        if (g.location !== "dungeon" && g.location !== "forest")
+          return `You must be at the Dungeon or Forest to investigate the rift source. (Use /go dungeon or /go forest.)`;
+        if ((g.combatWins || 0) < 1)
+          return `You must win at least 1 combat encounter first. (Use /fight to battle an enemy in the dungeon or forest.)`;
+      }
+      if (step === 3) {
+        if (!g.inventory.includes("Void Shard"))
+          return `You need a Void Shard in your inventory. Defeat enemies in the dungeon to obtain one.`;
+      }
+      return null;
+    }
+
+    // ── MQ2 hard per-step gates (seal guardians) ─────────────────────────────
     if (questId === "mq2") {
-      const sidesDone = g.quests.filter(q => q.type === "side" && q.completed).length;
-      const mq2       = g.quests.find(q => q.id === "mq2");
-      const needed    = (mq2?.progress || 0) + 1;
-      if (sidesDone < needed)
-        return `Complete at least ${needed} side quest(s) first (${sidesDone} done).`;
+      const mq2   = g.quests.find(q => q.id === "mq2");
+      const step  = (mq2?.progress || 0) + 1;
+      const guard = (SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female)[step - 1];
+      if (guard) {
+        const cst  = g.characters[guard];
+        const tier = getRelTier(cst?.affection || 0);
+        if (tier.stage < 3) {
+          const name = getChar(guard)?.name || guard;
+          return `You need a Close bond (stage 3+) with **${name}** first. Currently: ${tier.name} (stage ${tier.stage}). Spend time with ${name} and raise their affection.`;
+        }
+      }
     }
+
+    // ── MQ3 hard gates ────────────────────────────────────────────────────────
     if (questId === "mq3") {
-      if (!g.quests.find(q => q.id === "mq1")?.completed) return "Complete **Echoes of the Rift** first.";
-      if (!g.quests.find(q => q.id === "mq2")?.completed) return "Complete **The Shattered Seal** first.";
+      if (g.mq3Locked) return `MQ3 is inaccessible — you chose the Shadow Path. Use \`/advance shadow_end\` instead.`;
+      if (!g.quests.find(q => q.id === "mq1")?.completed) return "Complete **Echoes of the Rift** (MQ1) first.";
+      if (!g.quests.find(q => q.id === "mq2")?.completed) return "Complete **The Shattered Seal** (MQ2) first.";
+      // All 4 seal guardians at stage 4+
+      const guards = SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female;
+      const notReady = guards.filter(id => getRelTier(g.characters[id]?.affection || 0).stage < 4);
+      if (notReady.length) {
+        const names = notReady.map(id => getChar(id)?.name || id).join(", ");
+        return `You need a Romantic bond (stage 4+) with all four Seal Guardians. Not yet there: **${names}**.`;
+      }
+      const sideDone = g.quests.filter(q => q.type === "side" && q.completed).length;
+      if (sideDone < 2) return `Complete at least 2 side quests first (${sideDone} done).`;
     }
+
     return null;
   }
 
   function triggerEnding(g) {
     if (g.gameOver) return;
-    const chars  = getActiveChars();
-    const affs   = chars.map(ch => g.characters[ch.id]?.affection || 0).sort((a, b) => a - b);
-    const median = affs[Math.floor(affs.length / 2)];
+    const chars      = getActiveChars();
+    const affs       = chars.map(ch => g.characters[ch.id]?.affection || 0).sort((a, b) => a - b);
+    const median     = affs[Math.floor(affs.length / 2)];
     const allHigh    = affs.every(a => a >= 75);
     const shadowPath = (g.betrayed?.length || 0) >= 3;
-    // median affection drives the "Realm Saved" ending flavour
+    const sideDone   = g.quests.filter(q => q.type === "side" && q.completed).length;
     const bondsForged = median >= 50;
-    let endingName, endingDesc;
+    let endingName, endingDesc, endingType;
+
     if (shadowPath) {
-      endingName = "\uD83C\uDF11 Shadow Path";
+      endingType = "shadow";
+      endingName = "🌑 Shadow Path";
       endingDesc = "You chose power over bonds. Eryndel's shadows welcome you, but the hearts you abandoned echo in the silence. Malachar smiles.";
     } else if (allHigh) {
-      endingName = "\uD83D\uDC9E Hearts United";
-      endingDesc = "The realm stands because of love. Every bond forged became a weapon against the void. The companions stand with you as Malachar is sealed once more.";
-    } else if (bondsForged) {
-      endingName = "\u2728 Bonds Forged, Realm Saved";
-      endingDesc = `You built real friendships (median affection ${median}) — not all hearts were won, but enough warmth filled the ritual. The seal holds. Eryndel breathes again.`;
+      endingType = "win_full";
+      endingName = "💞 Hearts United";
+      endingDesc = "The realm stands because of love. Every bond forged became a weapon against the void. The companions stand with you as Malachar is sealed once more — forever.";
+    } else if (bondsForged && sideDone >= 2) {
+      endingType = "win_bonds";
+      endingName = "✨ Bonds Forged, Realm Saved";
+      endingDesc = `You built real friendships — not all hearts were won, but enough warmth filled the ritual (median affection ${median}). The seal holds. Eryndel breathes again.`;
+    } else if (median < 30 && sideDone < 2) {
+      endingType = "win_pyrrhic";
+      endingName = "💔 A Pyrrhic Salvation";
+      endingDesc = `The realm endures, but at what cost? Your companions never truly knew you (median affection ${median}), and the bonds that could have made this victory joyful simply weren't there. The seal holds — barely. The silence afterwards is very heavy.`;
     } else {
-      endingName = "\u2694\uFE0F Realm Saved Alone";
-      endingDesc = `You faced the Void King with courage but few true allies (median affection ${median}). The victory is real, but the silence afterward is heavy. The realm endures.`;
+      endingType = "win_solo";
+      endingName = "⚔️ Realm Saved Alone";
+      endingDesc = `You faced the Void King with courage but few true allies (median affection ${median}). The victory is real, but the silence afterward is telling. The realm endures.`;
     }
-    g.gameOver = true;
-    g.ending   = endingName;
+
+    g.gameOver   = true;
+    g.ending     = endingName;
+    g.endingType = endingType;
+
     const achList = g.achievements.map(a => `${a.icon} ${a.name}`).join(", ") || "None";
+    const ngPlusNote = endingType === "win_full"    ? "+1000g, +20 affection with everyone" :
+                       endingType === "win_bonds"   ? "+500g, +10 affection" :
+                       endingType === "win_solo"    ? "+200g" :
+                       endingType === "win_pyrrhic" ? "+100g (no relationship bonus)" :
+                       endingType === "shadow"      ? "Shadow power (+2 to all combat skills)" : "";
     oc.thread.messages.push({ author: "system",
-      content: `\uD83C\uDF89 **THE END \u2014 ${endingName}**\n\n${endingDesc}\n\n**Your Journey:** Level ${g.level} | ${g.gold}g | Day ${g.time.day}\n**Achievements:** ${achList}\n\n_Type \`/ng+\` to begin New Game+ and carry your legacy forward._` });
+      content: `🎊 **THE END — ${endingName}**\n\n${endingDesc}\n\n**Your Journey:** Level ${g.level} | ${g.gold}g | Day ${g.time.day}\n**Achievements:** ${achList}\n\n${ngPlusNote ? `**NG+ Bonus:** ${ngPlusNote}\n\n` : ""}_Type \`/ng+\` to begin New Game+ and carry your legacy forward._` });
     updateShortcutButtons();
   }
 
@@ -640,6 +775,295 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     // oc.thread.messageWrapperStyle is the documented thread-level message style API
     oc.thread.messageWrapperStyle = `background: ${p.bg}; color: ${p.text};`;
   }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 6.5 — GAME RAILS: SCRIPTED EVENTS, OBJECTIVES, MOOD, DAILY CALENDAR
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // Seal guardian character IDs per gender (indices 0,1,3,6 in each gender array)
+  const SEAL_GUARDIANS = {
+    female: ["yuki", "aria", "luna", "rei"],
+    male:   ["kael", "zeph", "orion", "ash"]
+  };
+
+  // Companions to meet for MQ1 step 1 (dungeon-dweller + forest-dweller)
+  const MQ1_CONTACTS = {
+    female: { dungeon: "luna", forest: "sakura" },
+    male:   { dungeon: "orion", forest: "rex" }
+  };
+
+  // ── Mood helpers ────────────────────────────────────────────────────────────
+  function getMoodEmoji(mood) {
+    return { happy: "😊", neutral: "😐", upset: "😟", angry: "😠" }[mood] || "😐";
+  }
+
+  // ── Affection skill-gate cap ─────────────────────────────────────────────────
+  // Returns the maximum affection a character can reach before their romantic
+  // skill gate is met. Returns Infinity when the gate has already been cleared.
+  function getAffectionCap(g, charId) {
+    const req = ROMANTIC_SKILL_REQ[charId];
+    if (!req) return Infinity;
+    const skillVal = resolveSkill(g, req.path);
+    if (skillVal >= req.min) return Infinity;
+    return 74; // just below stage 4 (Romantic, starts at 75)
+  }
+
+  // Apply the cap; return true if affection was clamped, false otherwise
+  function clampAffection(g, charId) {
+    const cst = g.characters[charId];
+    if (!cst) return false;
+    const cap = getAffectionCap(g, charId);
+    if (cst.affection > cap) { cst.affection = cap; return true; }
+    return false;
+  }
+
+  // ── Quest objectives data ────────────────────────────────────────────────────
+  const QUEST_STEP_OBJECTIVES = {
+    mq1: {
+      1: (g) => {
+        const c = MQ1_CONTACTS[g.gender] || MQ1_CONTACTS.female;
+        const dCh = getChar(c.dungeon); const fCh = getChar(c.forest);
+        const dCst = g.characters[c.dungeon] || {}; const fCst = g.characters[c.forest] || {};
+        return [
+          { label: `Meet ${dCh?.name || c.dungeon}`,                                                     done: !!dCst.met },
+          { label: `Meet ${fCh?.name  || c.forest}`,                                                     done: !!fCst.met },
+          { label: `${dCh?.name || c.dungeon} affection ≥ 10 (currently ${dCst.affection || 0})`,        done: (dCst.affection || 0) >= 10 },
+          { label: `${fCh?.name  || c.forest}  affection ≥ 10 (currently ${fCst.affection || 0})`,       done: (fCst.affection || 0) >= 10 }
+        ];
+      },
+      2: (g) => [
+        { label: `Travel to the Dungeon or Forest`,                                    done: g.location === "dungeon" || g.location === "forest" },
+        { label: `Win at least 1 combat encounter (${g.combatWins || 0} won)`,         done: (g.combatWins || 0) >= 1 }
+      ],
+      3: (g) => [
+        { label: `Possess a Void Shard in your inventory`,                             done: g.inventory.includes("Void Shard") }
+      ]
+    },
+    mq2: {
+      1: (g) => { const id = (SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female)[0]; const ch = getChar(id); const t = getRelTier(g.characters[id]?.affection || 0); return [{ label: `${ch?.name || id} at Close bond (stage 3+) — currently ${t.name} (stage ${t.stage})`, done: t.stage >= 3 }]; },
+      2: (g) => { const id = (SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female)[1]; const ch = getChar(id); const t = getRelTier(g.characters[id]?.affection || 0); return [{ label: `${ch?.name || id} at Close bond (stage 3+) — currently ${t.name} (stage ${t.stage})`, done: t.stage >= 3 }]; },
+      3: (g) => { const id = (SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female)[2]; const ch = getChar(id); const t = getRelTier(g.characters[id]?.affection || 0); return [{ label: `${ch?.name || id} at Close bond (stage 3+) — currently ${t.name} (stage ${t.stage})`, done: t.stage >= 3 }]; },
+      4: (g) => { const id = (SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female)[3]; const ch = getChar(id); const t = getRelTier(g.characters[id]?.affection || 0); return [{ label: `${ch?.name || id} at Close bond (stage 3+) — currently ${t.name} (stage ${t.stage})`, done: t.stage >= 3 }]; }
+    },
+    mq3: {
+      1: (g) => {
+        const guards   = SEAL_GUARDIANS[g.gender] || SEAL_GUARDIANS.female;
+        const sideDone = g.quests.filter(q => q.type === "side" && q.completed).length;
+        const rows = guards.map(id => {
+          const ch = getChar(id); const t = getRelTier(g.characters[id]?.affection || 0);
+          return { label: `${ch?.name || id} at Romantic bond (stage 4+) — currently ${t.name} (stage ${t.stage})`, done: t.stage >= 4 };
+        });
+        rows.push({ label: `Complete at least 2 side quests (${sideDone} done)`, done: sideDone >= 2 });
+        return rows;
+      }
+    }
+  };
+
+  function getObjectivesText(g) {
+    const active = (g.quests || []).filter(q => q.visible && !q.completed);
+    if (!active.length) return "**📋 Objectives** — No active quests. Explore Moonveil, use /explore and /talk to companions!";
+    const lines = [];
+    for (const q of active) {
+      const step     = q.progress + 1;
+      const stepObjs = QUEST_STEP_OBJECTIVES[q.id]?.[step]?.(g);
+      lines.push(`**📋 ${q.title}** [Step ${q.progress}/${q.goal}]`);
+      if (stepObjs) {
+        for (const o of stepObjs) lines.push(`  ${o.done ? "✅" : "🔲"} ${o.label}`);
+      } else {
+        lines.push(`  📖 ${q.desc}`);
+      }
+    }
+    return lines.join("\n");
+  }
+
+  // ── Scripted encounter events ─────────────────────────────────────────────────
+  function checkFiredEvents(g) {
+    if (!g.firedEvents)   g.firedEvents   = [];
+    if (!g.rivalEvents)   g.rivalEvents   = [];
+    const fired = g.firedEvents;
+
+    // ── Event 1: The Tremors Begin (Day 2+) ─────────────────────────────────
+    if (!fired.includes("tremors") && g.time.day >= 2) {
+      fired.push("tremors");
+      const mq1 = g.quests.find(q => q.id === "mq1");
+      if (mq1) mq1.visible = true;
+      g.questNotification = true;
+      g.voidShardClue     = true;
+      oc.thread.messages.push({ author: "system",
+        content: `🌊 **THE TREMORS BEGIN**\n\nWithout warning the ground lurches beneath your feet. Cracks split the cobblestones in the square — a deep resonant groan rises from somewhere far below. Market stalls topple. People scatter. A cold wind carries the reek of something ancient and wrong.\n\nThen — silence. A fissure has opened near the forest road. Inside its depths, something *glows* with a sickly violet light.\n\nA voice behind you mutters: *"This started near the Shadow Dungeon three days ago. Someone should investigate."*\n\n📜 **Main Quest Discovered:** Echoes of the Rift\n💡 Use \`/objectives\` to see your current goals.` });
+      updateShortcutButtons();
+    }
+
+    // ── Event 3: Aria's Secret Revealed (companion c[1] at stage 3) ──────────
+    // (Event 2 — Rival Confrontation — is triggered inside /flirt where charId is known)
+    if (!fired.includes("aria_secret")) {
+      const chars2 = getActiveChars();
+      const ariaId = chars2[1]?.id;
+      if (ariaId) {
+        const ariaCst  = g.characters[ariaId];
+        const ariaTier = getRelTier(ariaCst?.affection || 0);
+        if (ariaTier.stage >= 3) {
+          fired.push("aria_secret");
+          const ariaName = chars2[1].name;
+          const mq2 = g.quests.find(q => q.id === "mq2");
+          if (mq2) mq2.visible = true;
+          const ariaQ = g.quests.find(q => q.id === `sq_${ariaId}` && !q.visible);
+          if (ariaQ) { ariaQ.visible = true; g.questNotification = true; }
+          if (ariaCst) ariaCst.affection = Math.max(0, (ariaCst.affection || 0) - 15);
+          oc.thread.messages.push({ author: "system",
+            content: `🔮 **${ariaName.toUpperCase()}'S SECRET REVEALED**\n\nThe door to the inn slams open. Mei storms in clutching a scroll, her face white as parchment.\n\n*"I found it in the archives,"* she says, dropping the scroll on the table. *"Every time ${ariaName} heals someone — truly heals them — a fragment of the Binding Seal weakens. Her power is* linked *to the seals. She doesn't know. If she keeps healing at this rate, the fourth seal will shatter before Malachar even needs to try."*\n\n${ariaName} goes still. The colour drains from her face.\n\n*"How long?"* she whispers.\n\n*"Days,"* says Mei.\n\n📜 **Main Quest Unlocked:** The Shattered Seal\n📜 **Side Quest Unlocked:** ${ariaName}'s Trial\n⚠️ ${ariaName} affection −15 (she is shaken)` });
+          updateShortcutButtons();
+        }
+      }
+    }
+
+    // ── Event 4: The Void King's Warning (MQ1 completed) ─────────────────────
+    if (!fired.includes("void_warning") && g.quests.find(q => q.id === "mq1")?.completed) {
+      fired.push("void_warning");
+      getActiveChars().forEach(ch => {
+        const cst = g.characters[ch.id];
+        if (cst) cst.affection = Math.max(0, (cst.affection || 0) - 5);
+      });
+      g.manaMalCharDebuff = true;
+      g.maxMana = Math.max(5, g.maxMana - 5);
+      g.mana    = Math.min(g.mana, g.maxMana);
+      oc.thread.messages.push({ author: "system",
+        content: `⚠️ **THE VOID KING'S WARNING**\n\nThe sky turns the colour of a bruise. Every light in Moonveil dims at once.\n\nThen a *voice* — not heard with ears but felt in the chest, in the teeth, in the marrow:\n\n*"You have found my footprints, little traveler. How amusing. Every step forward brings you closer to what I have already arranged. Your companions feel it too — that cold thing behind the sternum that is not quite dread but is its older cousin. Come. Come and see what sealing me truly cost the ones who tried."*\n\nThe voice fades. The lights return. But something has changed — a faint oppressive weight that makes spells harder to summon.\n\n💀 **Debuff Applied:** Malachar's Shadow — Max Mana −5 (until The Shattered Seal is complete)\n⚠️ All companion affections −5 (fear)` });
+    }
+
+    // ── Event 5: The Betrayer's Mark (3rd betrayal) ───────────────────────────
+    if (!fired.includes("betrayer_mark") && (g.betrayed?.length || 0) >= 3) {
+      fired.push("betrayer_mark");
+      g.shadowEndUnlocked = true;
+      getActiveChars().forEach(ch => {
+        if (!g.betrayed.includes(ch.id)) {
+          const cst = g.characters[ch.id];
+          if (cst) cst.affection = Math.max(0, (cst.affection || 0) - 20);
+        }
+      });
+      g.mq3Locked = true;
+      earnAchievement(g, "shadow_path");
+      oc.thread.messages.push({ author: "system",
+        content: `🔱 **THE BETRAYER'S MARK**\n\nThe Traveler's Brand on your hand pulses — and goes *black*.\n\nIt burns. Not painfully, but *knowingly*, as though something ancient within the seal has witnessed every choice and drawn its own conclusions. The remaining companions step back, one by one. Their faces are not angry — they are *afraid*. Not of Malachar. Of *you*.\n\nA shadow pools at your feet that does not match the light.\n\nMalachar's whisper returns, warmer this time:\n\n*"Now we understand each other."*\n\n🌑 The path to United Hearts is permanently closed.\n💀 A new path opens — **The Shadow Ending**: use \`/advance shadow_end\` to claim your throne.\n⚠️ All remaining companions −20 affection` });
+      updateShortcutButtons();
+    }
+  }
+
+  // ── Rival Confrontation scripted event (called from /flirt) ──────────────────
+  function fireRivalConfrontation(g, charId) {
+    if (!g.rivalEvents) g.rivalEvents = [];
+    const rivalId = CHAR_META[charId]?.rival;
+    if (!rivalId) return;
+    if (g.rivalEvents.includes(`${charId}_${rivalId}`)) return;
+    const rivalCst = g.characters[rivalId];
+    if (!rivalCst) return;
+    const rivalTier = getRelTier(rivalCst.affection || 0);
+    if (rivalTier.stage < 3) return; // rival must be at Romantic+ to trigger
+    g.rivalEvents.push(`${charId}_${rivalId}`);
+    const chName = getChar(charId)?.name   || charId;
+    const rvName = getChar(rivalId)?.name  || rivalId;
+    // Both lose 10 affection
+    const cst = g.characters[charId];
+    if (cst)    cst.affection    = Math.max(0, (cst.affection    || 0) - 10);
+    if (rivalCst) rivalCst.affection = Math.max(0, (rivalCst.affection || 0) - 10);
+    oc.thread.messages.push({ author: "system",
+      content: `💢 **RIVAL CONFRONTATION**\n\n${rvName} appears, materialising in the doorway with an expression that splits the difference between wounded pride and cold fury.\n\n*"I thought we had an understanding, ${chName},"* ${rvName} says, not looking at you. Not yet.\n\n*"We do,"* ${chName} answers, voice carefully flat.\n\n*"We did."*\n\nThe silence between them is the kind that makes bystanders find somewhere else to be. ${rvName} turns and leaves without another word.\n\n⚠️ ${chName} affection −10 (uncomfortable) | ${rvName} affection −10 (wounded)` });
+  }
+
+  // ── Daily Events Calendar ─────────────────────────────────────────────────────
+  function checkDailyEvents(g, prevDay, newDay) {
+    if (!g.dailyEventLog) g.dailyEventLog = [];
+    const log = g.dailyEventLog;
+
+    for (let d = prevDay + 1; d <= Math.min(newDay, 14); d++) {
+      if (d === 3  && !log.includes("crown_edict"))     { log.push("crown_edict");      _dailyCrownEdict(g); }
+      if (d === 5  && !log.includes("market_crash"))    { log.push("market_crash");     _dailyMarketCrash(g); }
+      if (d === 7  && !log.includes("festival_token"))  { log.push("festival_token");   _dailyFestival(g); }
+      if (d === 9  && !log.includes("void_sighting"))   { log.push("void_sighting");    _dailyVoidSighting(g); }
+      if (d === 11 && !log.includes("rival_clash"))     { log.push("rival_clash");      _dailyRivalClash(g); }
+      if (d === 13 && !log.includes("final_convergence")){ log.push("final_convergence"); _dailyFinalConvergence(g); }
+      if (d === 14 && !log.includes("void_overwhelms")) { log.push("void_overwhelms");  _dailyVoidOverwhelms(g); }
+    }
+  }
+
+  function _dailyCrownEdict(g) {
+    g.crownEdictActive = true;
+    oc.thread.messages.push({ author: "system",
+      content: `👑 **CROWN EDICT — Day 3**\n\nA herald nails a royal proclamation to the notice board:\n\n*"By order of Queen Elara IV, all training contracts in Moonveil are henceforth subject to Crown Levy for the duration of the emergency. Training fees doubled until further notice."*\n\n⚠️ **Training costs doubled today** (40g instead of 20g). The edict expires at midnight.` });
+  }
+
+  function _dailyMarketCrash(g) {
+    g.marketCrashActive = true;
+    oc.thread.messages.push({ author: "system",
+      content: `📉 **MARKET CRASH — Day 5**\n\nRumours of Void creature sightings have sent merchant caravans fleeing the road. Supply chains are broken. Every vendor in the market is gouging prices — the stalls reek of fear.\n\n⚠️ **All shop items 50% more expensive today.** The market stabilises tomorrow.` });
+  }
+
+  function _dailyFestival(g) {
+    g.inventory.push("Festival Token");
+    getActiveChars().forEach(ch => {
+      const cst = g.characters[ch.id];
+      if (cst) { cst.mood = "happy"; cst.moodExpiresDay = g.time.day + 1; }
+    });
+    oc.thread.messages.push({ author: "system",
+      content: `🎉 **FESTIVAL DAY — Day 7**\n\nThe streets explode in colour. Lanterns, music, honeyed pastry and spiced wine. Every companion has gathered in the Town Square — their spirits are high.\n\n🎫 A **Festival Token** has been added to your inventory — give it as a gift to any companion for a massive +15 affection bonus.\n😊 All companions are in a *happy* mood today.` });
+  }
+
+  function _dailyVoidSighting(g) {
+    const chars = getActiveChars();
+    const targets = [...chars].sort(() => Math.random() - 0.5).slice(0, 3).map(c => c.id);
+    g.voidSightingTargets = targets;
+    g.voidSightingDay     = g.time.day;
+    targets.forEach(id => {
+      const cst = g.characters[id];
+      if (cst) { cst.affection = Math.max(0, (cst.affection || 0) - 5); cst.mood = "upset"; }
+    });
+    const names = targets.map(id => getChar(id)?.name || id).join(", ");
+    oc.thread.messages.push({ author: "system",
+      content: `👁️ **VOID SIGHTING — Day 9**\n\nA screech above the town. Three shapeless things circle the castle — Void creatures, small but unmistakably real. Panic ripples through the streets.\n\n⚠️ **${names}** each lost 5 affection (fear) and are *upset*. Talk to each within 2 days to reassure them.` });
+  }
+
+  function _dailyRivalClash(g) {
+    const chars = getActiveChars();
+    let pair = null;
+    for (const ch of chars) {
+      const rivId = CHAR_META[ch.id]?.rival;
+      if (rivId && g.characters[rivId]) {
+        const t1 = getRelTier(g.characters[ch.id]?.affection  || 0);
+        const t2 = getRelTier(g.characters[rivId]?.affection  || 0);
+        if (t1.stage >= 2 && t2.stage >= 2) { pair = [ch.id, rivId]; break; }
+      }
+    }
+    if (!pair) pair = [chars[0]?.id, chars[1]?.id].filter(Boolean);
+    g.rivalClashTargets = pair;
+    g.rivalClashDay     = g.time.day;
+    const n1 = getChar(pair[0])?.name || pair[0];
+    const n2 = getChar(pair[1])?.name || pair[1];
+    oc.thread.messages.push({ author: "system",
+      content: `⚔️ **RIVAL CLASH — Day 11**\n\n${n1} and ${n2} have come to blows in the Town Square — shouting, a crowd forming, someone about to throw a punch.\n\n⚠️ Talk to **${n1}** or **${n2}** within 1 day or both lose 10 affection.` });
+  }
+
+  function _dailyFinalConvergence(g) {
+    getActiveChars().forEach(ch => {
+      const cst = g.characters[ch.id];
+      if (cst) cst.currentLocation = "castle";
+    });
+    oc.thread.messages.push({ author: "system",
+      content: `🏰 **THE FINAL CONVERGENCE — Day 13**\n\nQueen Elara has summoned everyone who matters to Moonveil Castle. Every companion is there. The throne room hums with tension — Malachar's stirrings are now impossible to deny.\n\n**All companions have gathered at the Castle.**\n\n⚠️ The deadline approaches: **Echoes of the Rift (MQ1) must be completed by Day 14** or the seals shatter forever.` });
+  }
+
+  function _dailyVoidOverwhelms(g) {
+    const mq1 = g.quests.find(q => q.id === "mq1");
+    if (!mq1?.completed) {
+      g.gameOver   = true;
+      g.ending     = "💀 The Void Consumed Eryndel";
+      g.endingType = "void_consumed";
+      oc.thread.messages.push({ author: "system",
+        content: `💥 **THE VOID OVERWHELMS — GAME OVER**\n\nDay 14 dawns and the last Binding Seal shatters like glass. The sound is not loud — it is *quiet*, a finality so complete that the air itself holds its breath.\n\nMalachar tears free.\n\nYou did not find the rift's source in time. The realm you might have saved is now something else entirely — something colder and darker and without mercy. The companions scatter. Some run. Some are simply gone.\n\nEryndel falls.\n\n**💀 ENDING: The Void Consumed Eryndel**\n_Your journey ended on Day ${g.time.day}, Level ${g.level}._\n_Type \`/ng+\` to begin a new timeline — the realm deserves another chance._` });
+      updateShortcutButtons();
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   // ════════════════════════════════════════════════════════════════════════════
   // SECTION 7 — STATE DISPLAY
@@ -703,7 +1127,7 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
       const cst  = g.characters[g.activeCharacterId];
       if (cdef && cst) {
         const tier = getRelTier(cst.affection || 0);
-        charLine = `${cdef.name} (${tier.name} stage ${tier.stage}, ❤️${cst.affection || 0}, loc: ${cst.currentLocation || cdef.location})`;
+        charLine = `${cdef.name} (${tier.name} stage ${tier.stage}, ❤️${cst.affection || 0}, mood: ${cst.mood || "neutral"} ${getMoodEmoji(cst.mood || "neutral")}, loc: ${cst.currentLocation || cdef.location})`;
       }
     }
 
@@ -717,16 +1141,30 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
     // Enemies at current location
     const locEnemies = (ENEMIES[g.location] || []).map(e => e.name).join(", ");
 
-    // Companion schedule summary (where everyone is right now)
-    const scheduleSnip = chars.slice(0, 4).map(ch => {
+    // Companion schedule + mood summary
+    const scheduleSnip = chars.slice(0, 5).map(ch => {
       const cs = g.characters[ch.id];
-      return `${ch.name.split(" ")[0]}@${cs?.currentLocation || ch.location}`;
+      const moodEmoji = getMoodEmoji(cs?.mood || "neutral");
+      return `${ch.name.split(" ")[0]}@${cs?.currentLocation || ch.location}${moodEmoji}`;
     }).join(", ");
 
     const worldLabel = (g.worldSettings || ["medieval_fantasy"])
       .map(id => WORLD_SETTINGS.find(w => w.id === id)?.label || id).join(" + ");
     const toneLabel = (g.storyTones || ["dark_romance"])
       .map(id => STORY_TONES.find(t => t.id === id)?.label || id).join(", ");
+
+    // Active debuffs
+    const debuffs = [];
+    if (g.manaMalCharDebuff) debuffs.push("Malachar's Shadow (Max Mana −5, until MQ2 done)");
+    if (g.crownEdictActive)  debuffs.push("Crown Edict (training costs 2×)");
+    if (g.marketCrashActive) debuffs.push("Market Crash (shop prices +50%)");
+    const debuffLine = debuffs.length ? `Active Debuffs: ${debuffs.join(" | ")}` : "";
+
+    // Daily event warning
+    const daysLeft = 14 - g.time.day;
+    const urgencyLine = daysLeft <= 3 && !g.quests.find(q => q.id === "mq1")?.completed
+      ? `⚠️ DEADLINE: MQ1 must be completed within ${daysLeft} day(s) or the Void wins!`
+      : "";
 
     // Apply player identity so the AI sees the user by their chosen name, description, and role
     oc.thread.userCharacter.name = g.playerName || "Traveler";
@@ -743,14 +1181,17 @@ Player Dynamic Role: ${(g.playerRole || "switch").toUpperCase()} — ${
                               "Player is SWITCH: companions default to their own natural dynamic (giver/receiver) and the balance shifts organically scene by scene."
 }
 HP: ${g.hp}/${g.maxHp} | Mana: ${g.mana}/${g.maxMana} | Gold: ${g.gold} | Level: ${g.level} | XP: ${g.xp}/${g.xpToNext}
+Combat Wins: ${g.combatWins || 0} | Deaths: ${g.deathCount || 0}
 Location: ${loc.name}${locEnemies ? ` | Enemies here: ${locEnemies}` : ""}
 Skills: ${skillLine}
 ${lockedGates ? `Stat gates not yet met: ${lockedGates}` : "All stat gates cleared"}
-Active Quests: ${activeQs}
+${debuffLine ? debuffLine + "\n" : ""}${urgencyLine ? urgencyLine + "\n" : ""}Active Quests: ${activeQs}
 Active Character: ${charLine}
-Companions (first 4): ${scheduleSnip}
+Companions (first 5 with mood): ${scheduleSnip}
 World Setting: ${worldLabel} | Story Tone: ${toneLabel}
 ${g.gameOver ? `[GAME OVER — Ending: ${g.ending}. Only /ng+ is accepted.]` : ""}
+[GAME RAILS — MANDATORY] When the player asks "what do I do next?" or seems lost, direct them to use /objectives — do NOT improvise quest guidance or invent requirements. The /objectives command shows the authoritative, hard-coded checklist for each quest step. You must not invent ways around these requirements. Quest steps cannot be skipped or narrated around — the /advance command enforces hard preconditions.
+[CHARACTER MOOD — MANDATORY] Each companion has a current mood shown in their state. An ANGRY companion will refuse to talk or flirt — narrate this firmly. An UPSET companion responds coldly and gives minimal affection. A HAPPY companion is warm and receptive. You must reflect the companion's current mood accurately in their dialogue and behavior.
 [CHARACTER APPEARANCE — STANDING RULE] Every character in the scene who is not explicitly nude is dressed in varying degrees of scantily clad, provocative, and alluring attire — always sexy and visually appealing. Skimpy, revealing clothing is the default; more modest dress is the exception and must be story-justified. If a character is nude, omit all clothing descriptions entirely — do not mention garments, fabric, or undressing.
 Use /help for all commands. Narrate immersively in second person, consistent with the world setting and story tone.`;
 
@@ -776,24 +1217,33 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
   function updateShortcutButtons() {
     const g = cd.game;
-    const questLabel = g?.questNotification ? "\u26A1 Quests" : "\uD83D\uDCDC Quests";
+    const questLabel = g?.questNotification ? "⚡ Quests" : "📜 Quests";
+    const shadowBtn  = g?.shadowEndUnlocked && !g?.gameOver
+      ? [{ name: "🌑 Shadow End", message: "/advance shadow_end", insertionType: "replace", autoSend: true, clearAfterSend: false }]
+      : [];
+    const ngPlusBtn  = g?.gameOver
+      ? [{ name: "🔄 New Game+", message: "/ng+", insertionType: "replace", autoSend: true, clearAfterSend: false }]
+      : [];
     oc.thread.shortcutButtons = [
-      { name: "\uD83D\uDCCA Status",       message: "/status",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83C\uDF92 Inventory",    message: "/inventory",     insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\u2694\uFE0F Skills",       message: "/skills",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: questLabel,                  message: "/quests",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83D\uDDFA\uFE0F Explore",message: "/explore",       insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83C\uDFEA Shop",         message: "/shop",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83D\uDC65 Characters",   message: "/chars",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83D\uDD52 Time",         message: "/time",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83C\uDFCB\uFE0F Train",  message: "/train ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
-      { name: "\uD83D\uDDE1\uFE0F Fight",  message: "/fight ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
-      { name: "\uD83D\uDE34 Rest",         message: "/rest",          insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\u2697\uFE0F Craft",        message: "/craft ",        insertionType: "replace", autoSend: false, clearAfterSend: false },
-      { name: "\uD83C\uDFC6 Achievements", message: "/achievements",  insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "🖼️ Image",       message: "/image",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\uD83D\uDD1E Kinks",        message: "/kinks",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
-      { name: "\u2753 Help",               message: "/help",          insertionType: "replace", autoSend: true,  clearAfterSend: false }
+      { name: "📊 Status",        message: "/status",       insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🎒 Inventory",     message: "/inventory",    insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "⚔️ Skills",        message: "/skills",       insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: questLabel,          message: "/quests",       insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "📋 Objectives",    message: "/objectives",   insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🗺️ Explore",       message: "/explore",      insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🏪 Shop",          message: "/shop",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "👥 Characters",    message: "/chars",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🕒 Time",          message: "/time",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🏋️ Train",         message: "/train ",       insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "🗡️ Fight",         message: "/fight ",       insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "😴 Rest",          message: "/rest",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "⚗️ Craft",         message: "/craft ",       insertionType: "replace", autoSend: false, clearAfterSend: false },
+      { name: "🏆 Achievements",  message: "/achievements", insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🖼️ Image",         message: "/image",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "🔞 Kinks",         message: "/kinks",        insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      { name: "❓ Help",          message: "/help",         insertionType: "replace", autoSend: true,  clearAfterSend: false },
+      ...shadowBtn,
+      ...ngPlusBtn
     ];
   }
 
@@ -898,7 +1348,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         ? here.map(ch => {
             const cst  = g.characters[ch.id];
             const tier = getRelTier(cst?.affection || 0);
-            return `  ${ch.name} (${ch.archetype}) — ${tier.name} (❤️${cst?.affection || 0})`;
+            const mood = getMoodEmoji(cst?.mood || "neutral");
+            return `  ${ch.name} (${ch.archetype}) — ${tier.name} (❤️${cst?.affection || 0}) ${mood}`;
           }).join("\n")
         : "  Nobody you know is here right now.";
       const enemies  = (ENEMIES[g.location] || []).map(e => `  ${e.name} (use /fight ${e.id})`).join("\n") || "  No enemies here.";
@@ -958,9 +1409,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         const cst   = g.characters[ch.id];
         const tier  = getRelTier(cst?.affection || 0);
         const met   = cst?.met ? "" : " (not yet met)";
-        return `  **${ch.name}** (${ch.archetype}) — ${tier.name} ❤️${cst?.affection || 0}${met} @ ${cst?.currentLocation || ch.location}`;
+        const mood  = getMoodEmoji(cst?.mood || "neutral");
+        return `  **${ch.name}** (${ch.archetype}) — ${tier.name} ❤️${cst?.affection || 0} ${mood}${met} @ ${cst?.currentLocation || ch.location}`;
       });
-      oc.thread.messages.push({ author: "system", content: `**\uD83D\uDC65 Companions**\n${lines.join("\n")}` });
+      oc.thread.messages.push({ author: "system", content: `**👥 Companions**\n${lines.join("\n")}` });
       return;
     }
 
@@ -971,6 +1423,37 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         const list = Object.keys(LOCATIONS).join(", ");
         oc.thread.messages.push({ author: "system", content: `Unknown location. Options: ${list}` });
         return;
+      }
+      // ── Scene gates ────────────────────────────────────────────────────────
+      if (dest === "dungeon") {
+        const c      = MQ1_CONTACTS[g.gender] || MQ1_CONTACTS.female;
+        const dungeonGuide = g.characters[c.dungeon];
+        if (!dungeonGuide?.met) {
+          const guideName = getChar(c.dungeon)?.name || c.dungeon;
+          oc.thread.messages.push({ author: "system",
+            content: `🚫 The dungeon's entrance is shrouded in shadow — you sense you need a guide before going further. Find **${guideName}** and talk to them first.` });
+          return;
+        }
+      }
+      if (dest === "castle") {
+        if (g.time.day < 3) {
+          oc.thread.messages.push({ author: "system",
+            content: `🚫 The castle gates are sealed by royal order — Queen Elara's steward turned you away. Come back after the morning briefing (Day 3).` });
+          return;
+        }
+      }
+      if (dest === "night_market" || dest === "market") {
+        const hour = getGameHour(g);
+        const isNight = hour >= 20 || hour < 6;
+        if (dest === "night_market" && !isNight) {
+          oc.thread.messages.push({ author: "system", content: `🚫 The Night Market only opens after 20:00. Come back after dark.` });
+          return;
+        }
+        if (dest === "night_market" && !g.inventory.includes("Dungeon Key") && (g.combatWins || 0) < 3) {
+          oc.thread.messages.push({ author: "system",
+            content: `🚫 The Night Market's gatekeep stops you: *"We don't serve strangers without proof of grit. Win three fights or bring a Dungeon Key."* (Combat wins: ${g.combatWins || 0}/3)` });
+          return;
+        }
       }
       g.location = dest;
       advanceTime(g, 60);
@@ -1011,9 +1494,26 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       if (!cst.met) {
         cst.met = true;
         const sq = g.quests.find(q => q.id === `sq_${charId}` && !q.visible);
-        if (sq) { sq.visible = true; g.questNotification = true; oc.thread.messages.push({ author: "system", content: `\uD83D\uDCDC New side quest discovered: **${sq.title}**` }); }
+        if (sq) { sq.visible = true; g.questNotification = true; oc.thread.messages.push({ author: "system", content: `📜 New side quest discovered: **${sq.title}**` }); }
       }
-      cst.affection = (cst.affection || 0) + (isFestivalDay(g) ? 4 : 2);
+      // ── Mood gate ─────────────────────────────────────────────────────────
+      if (cst.mood === "angry") {
+        oc.thread.messages.push({ author: "system",
+          content: `😠 **${ch.name}** is too angry to talk right now. You've neglected them for too long — give them time, or bring a gift.` });
+        return;
+      }
+      // ── Mood-adjusted affection gain ──────────────────────────────────────
+      const moodBonus = cst.mood === "happy" ? 4 : cst.mood === "upset" ? 1 : 2;
+      const festival  = isFestivalDay(g) ? 2 : 0;
+      const gain      = moodBonus + festival;
+      cst.affection   = (cst.affection || 0) + gain;
+      // Update lastTalkedDay for neglect tracking
+      cst.lastTalkedDay = g.time.day;
+      // Reset mood to neutral after being talked to while upset
+      if (cst.mood === "upset") { cst.mood = "neutral"; delete cst.moodExpiresDay; }
+      // Clamp to skill-gate cap
+      const wasCapped = clampAffection(g, charId);
+      const capNote   = wasCapped ? `\n_Bond is at its limit — ${ch.name} needs more from you before it can deepen. (Raise the required skill.)_` : "";
       g.activeCharacterId = charId;
       advanceTime(g, 30);
       // Jealousy: if romantic with rival, decrement rival affection
@@ -1025,7 +1525,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         }
       }
       oc.thread.messages.push({ author: "system",
-        content: `\uD83D\uDCAC You spend time with **${ch.name}**. Affection +${isFestivalDay(g) ? 4 : 2} (now ${cst.affection}).` });
+        content: `💬 You spend time with **${ch.name}** ${getMoodEmoji(cst.mood)}. Affection +${gain} (now ${cst.affection}).${capNote}` });
       updateReminder();
       return;
     }
@@ -1049,20 +1549,46 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       const fav      = CHAR_META[charId]?.favoriteGift;
       const isFav    = fav && fav.toLowerCase() === itemName.toLowerCase();
       const baseBonus = getItemAffectionBonus(itemName);
-      const bonus    = isFav ? baseBonus * 2 : baseBonus;
+      // Festival Token gives +15 affection as a special gift
+      const isFestToken = itemName.toLowerCase() === "festival token";
+      const bonus    = isFestToken ? 15 : (isFav ? baseBonus * 2 : baseBonus);
       const festival  = isFestivalDay(g) ? 2 : 0;
       cst.affection   = (cst.affection || 0) + bonus + festival;
-      const favNote   = isFav ? ` \uD83D\uDC96 Favourite gift — double affection!` : "";
+      // Mood: giving favourite item sets mood to happy for 3 days
+      if (isFav || isFestToken) { cst.mood = "happy"; cst.moodExpiresDay = g.time.day + 3; }
+      const favNote   = isFestToken ? ` 🎫 Festival Token — special gift!` : isFav ? ` 💖 Favourite gift — double affection!` : "";
       const festNote  = festival ? ` +${festival} festival bonus` : "";
+      // Affection cap check
+      const wasCapped = clampAffection(g, charId);
+      const capNote   = wasCapped ? `\n_Bond capped — ${ch.name} needs more from you first. Raise the required skill._` : "";
+      // Rival favourite-item jealousy: giving rival's favourite to anyone while that rival is Romantic+
+      const rivalId   = CHAR_META[charId]?.rival;
+      let rivalJealNote = "";
+      if (rivalId && g.characters[rivalId]) {
+        const rivFav  = CHAR_META[rivalId]?.favoriteGift;
+        const rivTier = getRelTier(g.characters[rivalId].affection || 0);
+        if (rivFav && rivFav.toLowerCase() === itemName.toLowerCase() && rivTier.stage >= 3) {
+          g.characters[rivalId].affection = Math.max(0, (g.characters[rivalId].affection || 0) - 20);
+          g.characters[rivalId].mood = "upset";
+          rivalJealNote = `\n⚠️ **${getChar(rivalId)?.name || rivalId}** found out — that's their favourite. Affection −20, mood: upset.`;
+        }
+      }
       oc.thread.messages.push({ author: "system",
-        content: `\uD83C\uDF81 Gave **${itemName}** to **${ch.name}**. Affection +${bonus + festival} (now ${cst.affection}).${favNote}${festNote}` });
+        content: `🎁 Gave **${itemName}** to **${ch.name}** ${getMoodEmoji(cst.mood)}. Affection +${bonus + festival} (now ${cst.affection}).${favNote}${festNote}${capNote}${rivalJealNote}` });
       earnAchievement(g, "first_gift");
       checkAchievements(g);
+      cst.lastTalkedDay = g.time.day;
       // Handle consumable crafted item effects on self
       const crafted = CRAFTED_ITEMS[itemName];
       if (crafted?.heals)        { g.hp   = Math.min(g.maxHp,   g.hp   + crafted.heals); }
       if (crafted?.restoresMana) { g.mana = Math.min(g.maxMana, g.mana + crafted.restoresMana); }
       updateReminder();
+      return;
+    }
+
+    // ── /objectives ─────────────────────────────────────────────────────────────
+    if (cmd === "objectives") {
+      oc.thread.messages.push({ author: "system", content: getObjectivesText(g) });
       return;
     }
 
@@ -1073,6 +1599,26 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         oc.thread.messages.push({ author: "system", content: "Usage: /advance <questId> — e.g. /advance mq1 or /advance sq_yuki" });
         return;
       }
+
+      // Shadow Ending special route
+      if (questId === "shadow_end") {
+        if (!g.shadowEndUnlocked) {
+          oc.thread.messages.push({ author: "system", content: `🚫 The Shadow Ending is not yet unlocked. Three betrayals must brand you first.` });
+          return;
+        }
+        if (g.gameOver) {
+          oc.thread.messages.push({ author: "system", content: `The story has already ended. Type \`/ng+\` to start New Game+.` });
+          return;
+        }
+        g.gameOver   = true;
+        g.ending     = "🌑 Shadow Throne";
+        g.endingType = "shadow";
+        oc.thread.messages.push({ author: "system",
+          content: `🌑 **THE SHADOW ENDING — SHADOW THRONE**\n\nYou step forward and lay your hand on the Void King's seal — not to destroy it, but to claim it.\n\nMalachar does not fight. He *welcomes* you.\n\n*"I wondered when you would stop pretending,"* he says.\n\nThe realm of Eryndel does not end. It transforms. The ones who might have been your companions watch from a distance — some with grief, some with something colder — as the shadow crown settles on your brow.\n\nYou are not the hero of this story.\n\nYou are its *ending*.\n\n**🌑 ENDING: Shadow Throne**\n_Day ${g.time.day} | Level ${g.level} | ${g.betrayed?.length || 0} betrayals_\n\n_Type \`/ng+\` to begin a new timeline — perhaps one with different choices._` });
+        updateShortcutButtons();
+        return;
+      }
+
       const quest = g.quests.find(q => q.id === questId);
       if (!quest) {
         oc.thread.messages.push({ author: "system", content: `Quest "${questId}" not found. Use /quests to see your log.` });
@@ -1088,7 +1634,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       }
       const depErr = getQuestDepError(g, questId);
       if (depErr) {
-        oc.thread.messages.push({ author: "system", content: `\u26A0\uFE0F Cannot advance **${quest.title}**: ${depErr}` });
+        oc.thread.messages.push({ author: "system", content: `⚠️ Cannot advance **${quest.title}**: ${depErr}` });
         return;
       }
       quest.progress += 1;
@@ -1099,7 +1645,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         completeQuest(g, quest);
       } else {
         oc.thread.messages.push({ author: "system",
-          content: `\uD83D\uDD18 **Quest Progress: ${quest.title}** [${quest.progress}/${quest.goal}]\n+${stepXP} XP` });
+          content: `🔘 **Quest Progress: ${quest.title}** [${quest.progress}/${quest.goal}]\n+${stepXP} XP\n\nUse /objectives to see what's needed for the next step.` });
         updateShortcutButtons();
       }
       updateReminder();
@@ -1191,17 +1737,31 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         const lootDrop = enemy.loot.length && Math.random() < 0.6 ? enemy.loot[Math.floor(Math.random() * enemy.loot.length)] : null;
         if (lootDrop) g.inventory.push(lootDrop);
         g.gold += enemy.gold;
+        g.combatWins = (g.combatWins || 0) + 1;
         awardXP(enemy.xp);
         earnAchievement(g, "first_fight");
         oc.thread.messages.push({ author: "system",
-          content: `\u2694\uFE0F **Battle vs ${enemy.name}**\n${log.join("\n")}\n\n\u2705 **Victory!** +${enemy.xp} XP, +${enemy.gold}g${lootDrop ? `, found: ${lootDrop}` : ""}\nHP: ${g.hp}/${g.maxHp}` });
+          content: `⚔️ **Battle vs ${enemy.name}**\n${log.join("\n")}\n\n✅ **Victory!** +${enemy.xp} XP, +${enemy.gold}g${lootDrop ? `, found: ${lootDrop}` : ""}\nHP: ${g.hp}/${g.maxHp} | Combat Wins: ${g.combatWins}` });
       } else {
         const goldLost = Math.min(g.gold, Math.floor(enemy.gold / 2));
-        g.gold -= goldLost;
-        g.hp    = Math.max(1, Math.floor(g.maxHp / 2));
+        g.gold    -= goldLost;
+        g.hp       = 0; // actual death
         g.location = "inn";
+        g.deathCount = (g.deathCount || 0) + 1;
+        let deathNote = `💀 **Defeated!** Lost ${goldLost}g. You wake at the inn — HP restored to ${Math.floor(g.maxHp / 2)}.`;
+        // Death penalty at 3 deaths
+        if (g.deathCount >= 3 && !g.scarApplied) {
+          g.scarApplied = true;
+          getActiveChars().forEach(ch => {
+            const cst = g.characters[ch.id];
+            if (cst) cst.affection = Math.max(0, (cst.affection || 0) - 10);
+          });
+          g.playerDesc = (g.playerDesc || "") + " A pale scar runs from temple to jaw — a mark of repeated defeats.";
+          deathNote += `\n⚠️ **Scar earned** — you've fallen 3 times. All companions −10 affection (they are losing faith). A permanent scar marks your face.`;
+        }
+        g.hp = Math.max(1, Math.floor(g.maxHp / 2));
         oc.thread.messages.push({ author: "system",
-          content: `\u2694\uFE0F **Battle vs ${enemy.name}**\n${log.join("\n")}\n\n\uD83D\uDCA5 **Defeated!** Lost ${goldLost}g. You wake at the inn with ${g.hp} HP.` });
+          content: `⚔️ **Battle vs ${enemy.name}**\n${log.join("\n")}\n\n${deathNote}` });
       }
       checkAchievements(g);
       updateReminder();
@@ -1230,12 +1790,16 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         oc.thread.messages.push({ author: "system", content: `You have already trained ${cat} today. Rest to clear the cooldown.` });
         return;
       }
-      if (g.gold < 20) {
-        oc.thread.messages.push({ author: "system", content: `Training costs 20g (you have ${g.gold}g).` });
+      // Training cost: 40g on Crown Edict day; 50g when total skills >= 30
+      const totalSkills = Object.values(g.skills).reduce((sum, grp) => sum + Object.values(grp).reduce((s, v) => s + v, 0), 0);
+      const baseCost    = g.crownEdictActive ? 40 : (totalSkills >= 30 ? 50 : 20);
+      if (g.gold < baseCost) {
+        oc.thread.messages.push({ author: "system", content: `Training costs ${baseCost}g (you have ${g.gold}g).${g.crownEdictActive ? " (Crown Edict levy active.)" : ""}` });
         return;
       }
-      g.gold -= 20;
+      g.gold -= baseCost;
       g.lastTrained[cat] = true;
+      g.lastTrainedDay   = g.time.day;
       g.trainingCount = (g.trainingCount || 0) + 1;
       // Raise the lowest skill in category
       const skillGroup = g.skills[cat];
@@ -1244,7 +1808,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       advanceTime(g, 120);
       awardXP(40);
       oc.thread.messages.push({ author: "system",
-        content: `\uD83C\uDFCB\uFE0F **${cat.charAt(0).toUpperCase() + cat.slice(1)} Training**\nPaid 20g | ${lowest[0].charAt(0).toUpperCase() + lowest[0].slice(1)}: ${lowest[1]} \u2192 ${lowest[1]+1} | +40 XP` });
+        content: `🏋️ **${cat.charAt(0).toUpperCase() + cat.slice(1)} Training**\nPaid ${baseCost}g | ${lowest[0].charAt(0).toUpperCase() + lowest[0].slice(1)}: ${lowest[1]} → ${lowest[1]+1} | +40 XP` });
       checkAchievements(g);
       updateReminder();
       return;
@@ -1272,6 +1836,17 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           content: `Your charm (${charm}) is too low to flirt effectively. Reach Charm ${minCharm}+ via /train social.` });
         return;
       }
+      // ── Mood gate for flirt ────────────────────────────────────────────────
+      if (cst.mood === "angry") {
+        oc.thread.messages.push({ author: "system",
+          content: `😠 **${ch.name}** is too angry to respond to flirting. They turn away without a word. Address their mood first.` });
+        return;
+      }
+      if (cst.mood === "upset") {
+        oc.thread.messages.push({ author: "system",
+          content: `😟 **${ch.name}** is too upset — your attempt at flirting is met with a cold look. Bring a gift or talk to them sincerely first.` });
+        return;
+      }
       // Check relationship skill ceiling for Romantic
       const req = ROMANTIC_SKILL_REQ[charId];
       const tier = getRelTier(cst.affection || 0);
@@ -1285,10 +1860,15 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           return;
         }
       }
-      const success = charm >= 4 || Math.random() < 0.6;
+      const moodSuccessBonus = cst.mood === "happy" ? 0.2 : 0;
+      const success = charm >= 4 || Math.random() < (0.6 + moodSuccessBonus);
       const bonus   = success ? (isFestivalDay(g) ? 8 : 5) : 0;
       cst.affection = (cst.affection || 0) + bonus;
+      clampAffection(g, charId);
       advanceTime(g, 30);
+      cst.lastTalkedDay = g.time.day;
+      // Rival confrontation scripted event
+      fireRivalConfrontation(g, charId);
       // Jealousy
       const rival = CHAR_META[charId]?.rival;
       if (rival && g.characters[rival]) {
@@ -1297,10 +1877,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       }
       if (success) {
         oc.thread.messages.push({ author: "system",
-          content: `\uD83D\uDE18 You flirt with **${ch.name}** — and it lands! Affection +${bonus} (now ${cst.affection}).` });
+          content: `😘 You flirt with **${ch.name}** ${getMoodEmoji(cst.mood)} — and it lands! Affection +${bonus} (now ${cst.affection}).` });
       } else {
         oc.thread.messages.push({ author: "system",
-          content: `\uD83D\uDE05 Your attempt to flirt with **${ch.name}** falls flat. Try again when your charm is higher.` });
+          content: `😅 Your attempt to flirt with **${ch.name}** falls flat. Try again when your charm is higher.` });
       }
       checkAchievements(g);
       updateReminder();
@@ -1452,7 +2032,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     // ── /help ─────────────────────────────────────────────────────────────────
     if (cmd === "help") {
       oc.thread.messages.push({ author: "system",
-        content: `**\u2753 Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Visuals**\n/image — scene image\n/image_pov — what you see (player POV)\n/image_charpov — what active char sees\n/image_action — action climax (uses last 3 messages)\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}` });
+        content: `**❓ Commands**\n\n**World**\n/status — player stats\n/inventory — items\n/skills — skill levels\n/quests — quest log\n/objectives — current quest step checklist ⭐\n/explore — location info & enemies\n/chars — companion list\n/go <location> — travel\n/time — in-game clock\n\n**Visuals**\n/image — scene image\n/image_pov — what you see (player POV)\n/image_charpov — what active char sees\n/image_action — action climax (uses last 3 messages)\n\n**Social**\n/talk <charId> — spend time together\n/gift <charId> <itemName> — give an item\n/flirt <charId> — charm check (+affection)\n/betray <charId> — sever a bond (shadow path)\n\n**Combat**\n/fight <enemyId> [--spell] — battle an enemy\n/rest — sleep at the inn (heal + mana restore)\n\n**Economy**\n/shop — view shop\n/buy <itemId> — purchase item\n/craft <item1> <item2> — craft items\n/use <itemName> — use a consumable\n\n**Training**\n/train <combat|magic|social> — raise skills\n\n**Quests**\n/advance <questId> — progress a quest\n/advance shadow_end — claim the Shadow Throne (betrayer path)\n\n**Progression**\n/achievements — trophy list\n/kinks — manage consent settings\n/ng+ — New Game+ (after ending)\n\n**Locations:** ${Object.keys(LOCATIONS).join(", ")}\n\n💡 **Tip:** Use /objectives whenever you're unsure what to do next!` });
       return;
     }
 
@@ -2002,7 +2582,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
     const characters = {};
     chars.forEach(ch => {
-      characters[ch.id] = { affection: 0, met: false, currentLocation: ch.location, dialogueStage: 0, questProgress: 0 };
+      characters[ch.id] = { affection: 0, met: false, currentLocation: ch.location, dialogueStage: 0, questProgress: 0, mood: "neutral", lastTalkedDay: 0 };
     });
 
     cd.game = {
@@ -2025,8 +2605,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       characters, quests, activeCharacterId: null,
       time: { totalMinutes: 8 * 60, day: 1 }, lastTrained: {}, priceModifiers: {},
       achievements: [], trainingCount: 0, craftingCount: 0,
-      gameOver: false, ending: null, betrayed: [], questNotification: false,
-      ngPlusBonus: null, storyline: buildStoryline(chars, playerName)
+      gameOver: false, ending: null, endingType: null, betrayed: [], questNotification: false,
+      ngPlusBonus: null, storyline: buildStoryline(chars, playerName),
+      combatWins: 0, deathCount: 0,
+      firedEvents: [], rivalEvents: [], dailyEventLog: [],
+      lastTrainedDay: 1, manaMalCharDebuff: false, shadowEndUnlocked: false,
+      voidSightingTargets: [], voidSightingDay: 0, rivalClashTargets: [], rivalClashDay: 0,
+      crownEdictActive: false, mq3Locked: false, voidShardClue: false
     };
 
     regeneratePriceModifiers(cd.game);
@@ -2212,6 +2797,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (g.craftingCount === undefined) g.craftingCount = 0;
     if (g.gameOver    === undefined) g.gameOver   = false;
     if (g.ending      === undefined) g.ending     = null;
+    if (g.endingType  === undefined) g.endingType = null;
     if (!g.priceModifiers)          g.priceModifiers = {};
     if (g.questNotification === undefined) g.questNotification = false;
     if (!g.enabledKinks)            g.enabledKinks  = [];
@@ -2221,6 +2807,31 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (g.playerDesc  === undefined) g.playerDesc   = "";
     if (!g.ngPlusBonus)             g.ngPlusBonus   = null;
     if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName);
+    // New fields from game-rails patch
+    if (g.combatWins  === undefined)  g.combatWins  = 0;
+    if (g.deathCount  === undefined)  g.deathCount  = 0;
+    if (!g.firedEvents)               g.firedEvents = [];
+    if (!g.rivalEvents)               g.rivalEvents = [];
+    if (!g.dailyEventLog)             g.dailyEventLog = [];
+    if (g.lastTrainedDay === undefined) g.lastTrainedDay = g.time?.day || 1;
+    if (g.manaMalCharDebuff === undefined) g.manaMalCharDebuff = false;
+    if (g.shadowEndUnlocked === undefined) g.shadowEndUnlocked = false;
+    if (!g.voidSightingTargets)       g.voidSightingTargets = [];
+    if (g.voidSightingDay === undefined) g.voidSightingDay = 0;
+    if (!g.rivalClashTargets)         g.rivalClashTargets = [];
+    if (g.rivalClashDay === undefined) g.rivalClashDay = 0;
+    if (g.crownEdictActive === undefined) g.crownEdictActive = false;
+    if (g.marketCrashActive === undefined) g.marketCrashActive = false;
+    if (g.mq3Locked === undefined)    g.mq3Locked = false;
+    if (g.voidShardClue === undefined) g.voidShardClue = false;
+    // Per-character migration: add mood and lastTalkedDay
+    if (g.characters) {
+      Object.keys(g.characters).forEach(id => {
+        const cst = g.characters[id];
+        if (cst.mood === undefined)         cst.mood         = "neutral";
+        if (cst.lastTalkedDay === undefined) cst.lastTalkedDay = 0;
+      });
+    }
     // Ensure quests have a visible field
     if (g.quests) {
       g.quests.forEach(q => {
@@ -2320,6 +2931,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     }
 
     checkAchievements(g);
+    checkFiredEvents(g);
     updateReminder();
     updateShortcutButtons();
   });
