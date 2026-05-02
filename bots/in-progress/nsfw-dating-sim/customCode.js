@@ -2691,9 +2691,9 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     </style>
   `;
 
-  // Helper: render step-progress dots (1-indexed active, total = 4)
+  // Helper: render step-progress dots (1-indexed active, total = 5)
   function _stepBar(active) {
-    return `<div class="step-bar">${[1,2,3,4].map(i =>
+    return `<div class="step-bar">${[1,2,3,4,5].map(i =>
       `<div class="step-pip ${i < active ? 'done' : i === active ? 'active' : ''}" style="width:${i === active ? 36 : 26}px;"></div>`
     ).join('')}</div>`;
   }
@@ -2769,7 +2769,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           ${_stepBar(1)}
           <div class="wiz-icon">⚔️</div>
           <h2 class="wiz-title" style="color:var(--pink);">Chronicles of the Void King</h2>
-          <p class="wiz-sub">Step 1 of 4 — Your Character</p>
+          <p class="wiz-sub">Step 1 of 5 — Your Character</p>
 
           <div class="gender-row">
             <button type="button" id="gF" class="gender-btn female">♀<br><span style="font-size:12px;font-weight:500;">Female Companions</span></button>
@@ -2798,7 +2798,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
             <button type="button" id="rSub" class="role-btn sub">🌸<br>Submissive</button>
           </div>
 
-          <button type="button" id="goBtn" class="btn btn-green" style="margin-top:4px;">Next → Preferences</button>
+          <button type="button" id="goBtn" class="btn btn-green" style="margin-top:4px;">Next → Difficulty</button>
         </div>
       `;
 
@@ -2863,8 +2863,58 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       oc.window.show();
     }
 
-    // ── STEP 2: Body-type preferences ──
+    // ── STEP 2: Difficulty ──
     function step2(data) {
+      let _diff = data.difficulty || "normal";
+
+      document.body.innerHTML = `
+        ${UI_CSS}
+        <div class="wizard" style="max-height:100vh;overflow-y:auto;">
+          ${_stepBar(2)}
+          <div class="wiz-icon">⚔️</div>
+          <h2 class="wiz-title" style="color:var(--cyan);">Difficulty</h2>
+          <p class="wiz-sub">Step 2 of 5 — How challenging do you want the world to be?</p>
+
+          <div class="info-box" style="font-size:11px;">
+            Difficulty affects enemy stats, training costs, XP/gold rewards, and affection gains.<br>
+            You can think of <strong>Easy</strong> as Story Mode and <strong>Hard</strong> as a real challenge.
+          </div>
+
+          <div class="role-row" style="gap:10px;">
+            <button type="button" id="dEasy"   class="role-btn" style="min-width:90px;">😊<br><span style="font-size:12px;font-weight:600;">Easy</span><br><span style="font-size:10px;font-weight:400;">Generous rewards, weaker enemies</span></button>
+            <button type="button" id="dNormal" class="role-btn" style="min-width:90px;">⚔️<br><span style="font-size:12px;font-weight:600;">Normal</span><br><span style="font-size:10px;font-weight:400;">Balanced experience</span></button>
+            <button type="button" id="dHard"   class="role-btn" style="min-width:90px;">💀<br><span style="font-size:12px;font-weight:600;">Hard</span><br><span style="font-size:10px;font-weight:400;">Tough enemies, scarce rewards</span></button>
+          </div>
+
+          <button type="button" id="goBtn" class="btn btn-purple" style="margin-top:16px;">Next → Preferences</button>
+        </div>
+      `;
+
+      function selDiff(d) {
+        _diff = d;
+        [['easy','dEasy'],['normal','dNormal'],['hard','dHard']].forEach(([name,id]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle('dim', d !== name);
+          el.classList.toggle('selected', d === name);
+        });
+      }
+      selDiff(_diff);
+
+      document.getElementById('dEasy').addEventListener('click',   () => selDiff('easy'));
+      document.getElementById('dNormal').addEventListener('click', () => selDiff('normal'));
+      document.getElementById('dHard').addEventListener('click',   () => selDiff('hard'));
+      document.getElementById('goBtn').addEventListener('click', () => {
+        const d = { ...data, difficulty: _diff };
+        cd._pendingSetup = d;
+        step3(d);
+      });
+
+      oc.window.show();
+    }
+
+    // ── STEP 3: Body-type preferences ──
+    function step3(data) {
       const cards = Object.entries(BODY_TYPES).map(([id, bt]) => `
         <label class="check-card">
           <input type="checkbox" value="${id}" data-bt="${id}" />
@@ -2877,9 +2927,9 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       document.body.innerHTML = `
         ${UI_CSS}
         <div class="wizard" style="max-height:100vh;overflow-y:auto;">
-          ${_stepBar(2)}
+          ${_stepBar(3)}
           <h2 class="wiz-title" style="color:var(--pink);">Preferences</h2>
-          <p class="wiz-sub">Step 2 of 4 — Which body types attract you? (check all that apply)</p>
+          <p class="wiz-sub">Step 3 of 5 — Which body types attract you? (check all that apply)</p>
 
           <div class="check-grid">${cards}</div>
 
@@ -2903,14 +2953,14 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         document.querySelectorAll('[data-bt]').forEach(cb => { if (cb.checked) p.push(cb.value); });
         const d = { ...data, bodyTypePrefs: p };
         cd._pendingSetup = d;
-        step3(d);
+        step4(d);
       });
 
       oc.window.show();
     }
 
-    // ── STEP 3: World Setting + Story Tone ──
-    function step3(data) {
+    // ── STEP 4: World Setting + Story Tone ──
+    function step4(data) {
       const worldCards = WORLD_SETTINGS.map(w => `
         <label class="check-card">
           <input type="checkbox" data-ws="${w.id}" />
@@ -2931,9 +2981,9 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       document.body.innerHTML = `
         ${UI_CSS}
         <div class="wizard" style="max-height:100vh;overflow-y:auto;">
-          ${_stepBar(3)}
+          ${_stepBar(4)}
           <h2 class="wiz-title" style="color:var(--cyan);">World &amp; Tone</h2>
-          <p class="wiz-sub">Step 3 of 4 — Shape the stage of your story.</p>
+          <p class="wiz-sub">Step 4 of 5 — Shape the stage of your story.</p>
 
           <p class="section-label label-cyan">🌍 World Setting <span style="font-weight:400;font-size:10px;">(pick 1–2)</span></p>
           <div class="check-grid">${worldCards}</div>
@@ -2954,14 +3004,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         if (st.length < 1 || st.length > 3) { document.getElementById('err').textContent = '⚠️ Please select 1 to 3 story tones.'; return; }
         const d = { ...data, worldSettings: ws, storyTones: st };
         cd._pendingSetup = d;
-        step4(d);
-      });
-
-      oc.window.show();
-    }
-
-    // ── STEP 4: Kink / Consent ──
-    function step4(data) {
+        step5(d);
       const kinkCards = KINKS.map(k => `
         <label class="kink-card">
           <input type="checkbox" data-kink="${k.id}" />
