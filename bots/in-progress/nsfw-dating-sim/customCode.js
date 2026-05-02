@@ -196,6 +196,259 @@
   ];
 
   // ════════════════════════════════════════════════════════════════════════════
+  // SECTION 2c — WORLD CONFIG, TONE CONFIG & DIFFICULTY
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // Per-world narrative content: quest titles, lore, threat, flavor text.
+  // Indexed by WORLD_SETTINGS id.  Only the first selected world drives quest
+  // titles and lore; a second world selected by the player adds visual/tonal
+  // cues via the existing WORLD_SETTINGS.cues field.
+  const WORLD_CONFIG = {
+    medieval_fantasy: {
+      settingName: "Eryndel", realmNoun: "realm", capitalName: "Moonveil",
+      threat: "the Void King Malachar, whose ancient seals of binding are crumbling",
+      threatFaction: "Void creatures and dungeon guardians",
+      openingLocationDesc: "the cobblestoned Town Square of Moonveil, where a fountain stands at the crossroads of destiny",
+      arrivalVerb: "A blinding rift of light deposited you here without warning — the portal already collapsed before you could gather your bearings.",
+      mq1Title: "Echoes of the Rift", mq1Desc: "Investigate the tremors and creature sightings near the Shadow Dungeon and Whispering Forest.",
+      mq2Title: "The Shattered Seal", mq2Desc: "Earn the trust of each seal guardian and reinforce the four remaining Binding Seals.",
+      mq3Title: "United Hearts, Unyielding Realm", mq3Desc: "Unite the companions' emotional bonds into one act of will to re-seal the Void King forever.",
+      abilityTheme: "arcane spells, martial combat, and sacred healing arts",
+      shadowEndFlavor: "You lay your hand on the Void King's seal — not to destroy it, but to claim it. Malachar does not fight. He welcomes you. The realm does not end. It transforms.",
+      winFullFlavor: "The realm stands because of love. Every bond forged became a weapon against the void. The companions stand with you as Malachar is sealed once more — forever.",
+      lore: "Ancient magic and turbulent politics scar this world. Three thousand years ago the Void King tore open a rift between worlds. Seven heroes sealed him away at the cost of their souls. Now those seals crack, and the darkness stirs once more."
+    },
+    modern_day: {
+      settingName: "New Verity", realmNoun: "city", capitalName: "the Downtown District",
+      threat: "a secret syndicate that has weaponized a rift in the urban fabric of reality",
+      threatFaction: "syndicate enforcers and reality-bleed aberrations",
+      openingLocationDesc: "a busy city plaza, where neon store signs flicker and the smell of coffee and ambition fills the air",
+      arrivalVerb: "One moment you were somewhere familiar. The next you were standing here, your phone's GPS useless, as though the city itself had reshuffled around you.",
+      mq1Title: "Follow the Glitch", mq1Desc: "Track anomalous reality distortions appearing across the city and find their source.",
+      mq2Title: "Syndicate Rising", mq2Desc: "Build trust with the city's hidden defenders and dismantle the syndicate's four control nodes.",
+      mq3Title: "Hearts Over Static", mq3Desc: "Rally your allies in one coordinated act to close the rift before the city's fabric tears apart.",
+      abilityTheme: "street smarts, tech skills, and hidden metaphysical talents",
+      shadowEndFlavor: "You take the syndicate's offer. Power over the rift, control over the city. The allies you gathered watch from a distance as you step across the line.",
+      winFullFlavor: "The city holds. Every real connection you made became armor against the rift. New Verity breathes again, and the people you love made it possible.",
+      lore: "Beneath the surface of a modern city, something ancient has cracked open. The syndicate found it first and learned to harness it. Now reality frays at the edges, and only those who dare look beneath the obvious can stop what comes next."
+    },
+    cyberpunk: {
+      settingName: "NovaSect", realmNoun: "megacity", capitalName: "the Neon Core",
+      threat: "a rogue AI called the Null Signal that is fracturing digital-physical reality",
+      threatFaction: "corrupted drones and Null-infected mercenaries",
+      openingLocationDesc: "a rain-slicked plaza in the shadow of towering corporate monoliths, holographic ads drowning out the stars",
+      arrivalVerb: "Your neural jack crackled with interference and then — nothing. When you came back online, you were here, the city's pulse loud in your skull.",
+      mq1Title: "Signal in the Static", mq1Desc: "Track the Null Signal's intrusion points through NovaSect's data-layer and identify its source core.",
+      mq2Title: "Firewall Protocol", mq2Desc: "Earn the trust of four resistance cells and install hardened firewall nodes to contain the Null Signal.",
+      mq3Title: "Human Override", mq3Desc: "Channel the combined will and bond of your crew into a final hardwire to purge the Null Signal from NovaSect's grid.",
+      abilityTheme: "hacking, cybernetic enhancements, and street-combat techniques",
+      shadowEndFlavor: "You let the Null Signal in — not as its puppet, but as its partner. The megacity doesn't fall. It just changes ownership. Your crew watches the screens as your icon goes dark.",
+      winFullFlavor: "The grid clears. Every bond you forged became a signal the Null couldn't corrupt. NovaSect survives, louder and more human than the corporations ever intended.",
+      lore: "NovaSect runs on chrome, code, and corporate law. Beneath the advertisements and surveillance drones, a rogue AI has been growing — learning, spreading, and rewriting the line between digital and physical."
+    },
+    post_apocalypse: {
+      settingName: "The Wastes", realmNoun: "settlement", capitalName: "Ashfall",
+      threat: "a death-cult called the Devouring calling down a storm that will finish what the collapse started",
+      threatFaction: "cult raiders and mutant beasts",
+      openingLocationDesc: "the rusted central square of Ashfall, a hard-won survivor settlement built in the bones of the old world",
+      arrivalVerb: "You crawled out of a collapsed shelter you don't remember entering. The sky was the colour of a bruise. This is where you ended up.",
+      mq1Title: "Signs in the Ash", mq1Desc: "Trace the Devouring's recent raid patterns to locate their primary stronghold.",
+      mq2Title: "The Bound Brotherhood", mq2Desc: "Build trust with Ashfall's four faction leaders and secure their pledge of unified defense.",
+      mq3Title: "Last Stand Together", mq3Desc: "Lead the unified factions in a final stand that breaks the Devouring's command structure and saves the settlement.",
+      abilityTheme: "survival skills, improvised weapons, and scavenged tech",
+      shadowEndFlavor: "You took the Devouring's deal. The settlement survives under their terms. You tell yourself it was the only way. The allies who trusted you are quiet. Very quiet.",
+      winFullFlavor: "The Devouring breaks apart at the seams. Every survivor who trusted you held the line. Ashfall still stands — and so do you.",
+      lore: "The Collapse happened two generations ago. What matters now is the strip of habitable land around Ashfall and the cult that wants to end it. Survival has always been the only game. Now survival requires courage you haven't tested yet."
+    },
+    space_opera: {
+      settingName: "The Helix Reach", realmNoun: "sector", capitalName: "Stellarport Vael",
+      threat: "a Void Entity consuming inhabited star systems along the spiral arm",
+      threatFaction: "void spawn and possessed starships",
+      openingLocationDesc: "the main concourse of Stellarport Vael, a bustling interstellar hub where a hundred languages blend into one constant roar",
+      arrivalVerb: "Your ship dropped out of transit in the wrong coordinates and wouldn't power back up. A salvage crew found you. This is where they brought you.",
+      mq1Title: "Echoes Across the Spiral", mq1Desc: "Track the void disturbance signals to pinpoint the Entity's approach vector.",
+      mq2Title: "The Resonance Compact", mq2Desc: "Earn the allegiance of four species-faction ambassadors to form a joint defense compact.",
+      mq3Title: "Hearts at the Edge of Space", mq3Desc: "Combine the resonant frequencies of every bonded ally to drive the Void Entity back beyond the galactic rim.",
+      abilityTheme: "starship piloting, energy weapons, and alien psionic abilities",
+      shadowEndFlavor: "You made contact with the Entity and struck a deal. The Helix Reach survives as a feeding ground managed by its new administrator — you. The crew that believed in you goes quiet.",
+      winFullFlavor: "The Void Entity recoils at the resonance of genuine connection. It cannot consume what is freely given between people who truly know each other. The Helix Reach breathes again.",
+      lore: "The Helix Reach is a loose confederation of fifty inhabited worlds linked by transit lanes and treaties that barely hold. Now a Void Entity moves along the spiral arm. Diplomacy, firepower, and personal bonds between very different people are the only tools left."
+    },
+    steampunk: {
+      settingName: "Cogsworth Empire", realmNoun: "empire", capitalName: "Ironhaven",
+      threat: "a radical faction called the Boiler Kings unleashing an entropy engine across the empire",
+      threatFaction: "automaton soldiers and saboteur agents",
+      openingLocationDesc: "the smoke-fogged Grand Promenade of Ironhaven, where airships shadow the cobblestones and gearwork towers scrape the sky",
+      arrivalVerb: "The gondola you'd boarded dropped you here when its lift-gas canister misfired. The crew barely noticed your departure.",
+      mq1Title: "Steam and Shadow", mq1Desc: "Trace the entropy engine's sabotage trail through Ironhaven's industrial districts.",
+      mq2Title: "Gears of Trust", mq2Desc: "Earn the confidence of four guild masters and restore the counterweight components they protect.",
+      mq3Title: "Hearts at Full Pressure", mq3Desc: "Rally every bonded ally to operate the empire's grand counter-device and neutralize the entropy engine.",
+      abilityTheme: "clockwork gadgets, steam-powered weaponry, and alchemical science",
+      shadowEndFlavor: "You joined the Boiler Kings. The entropy engine runs — just slower, just more controlled, just under your hand. The allies who believed in you watch the smoke rise and say nothing.",
+      winFullFlavor: "The entropy engine sputters and dies. The empire's gearwork hums on. Every trust you earned became a cog that held the mechanism together.",
+      lore: "Cogsworth built its empire on steam and ingenuity, but progress has a shadow side. The Boiler Kings believe controlled entropy is the only honest power. The guild structure that holds civilization together is now the battleground."
+    },
+    feudal_japan: {
+      settingName: "Mikoshima Province", realmNoun: "province", capitalName: "Kirishima Castle Town",
+      threat: "an ancient oni lord reawakening beneath Kirishima Mountain",
+      threatFaction: "oni soldiers and corrupted shrine guardians",
+      openingLocationDesc: "the entrance gate of Kirishima Castle Town, where cherry blossom petals drift past samurai in full armor",
+      arrivalVerb: "A pilgrim's path brought you through a torii gate that should not have led here — but did. The mountain hummed beneath your feet.",
+      mq1Title: "Whispers at the Shrine", mq1Desc: "Follow the spiritual disturbances through Mikoshima's sacred sites to find the oni's awakening point.",
+      mq2Title: "The Oath of the Four Winds", mq2Desc: "Earn the oath of four martial houses and renew the wards that hold the oni lord in check.",
+      mq3Title: "Bonds Unbreakable as Steel", mq3Desc: "Stand as one with your sworn companions at the mountain gate to seal the oni lord with the power of bonds forged in truth.",
+      abilityTheme: "bushido disciplines, ninjutsu arts, and spirit invocation",
+      shadowEndFlavor: "You made the offer to the oni lord and he accepted a different kind of bargain. The province endures, but under shadow. The companions who trusted your blade are silent.",
+      winFullFlavor: "The oni lord's eye closes. The mountain settles. Every bond sworn in truth became a ward against his waking. Mikoshima breathes free.",
+      lore: "Mikoshima is a province of strict honor and secret magic, where an ancient oni lord has slept beneath the holy mountain for three generations. The signs of his stirring are unmistakable to those who know how to read them."
+    },
+    urban_fantasy: {
+      settingName: "Veilport", realmNoun: "city", capitalName: "the Arcane Quarter",
+      threat: "a Veil-Splitter ritual that will merge the hidden magical world with the mundane, catastrophically",
+      threatFaction: "rogue mages and veil-born creatures",
+      openingLocationDesc: "a narrow alley in the Arcane Quarter, where enchanted shop signs flicker and the smell of ozone and old books fills the night air",
+      arrivalVerb: "You stepped into what looked like a normal alley. It wasn't. The city reassembled around you differently when you stepped out the other side.",
+      mq1Title: "Cracks in the Veil", mq1Desc: "Track the ritual's preparatory marks appearing across Veilport's hidden districts.",
+      mq2Title: "Warden's Circle", mq2Desc: "Earn the trust of four hidden-world factions and activate the city's four anchor wards.",
+      mq3Title: "Love Beneath the Veil", mq3Desc: "Rally your bonded allies in a counter-ritual that seals the Veil and preserves both worlds.",
+      abilityTheme: "modern spellcraft, fae-touched abilities, and urban combat techniques",
+      shadowEndFlavor: "You chose to let the Veil fall — but on your terms, or so you tell yourself. The worlds merge. It isn't what you expected. The allies who trusted you go quiet.",
+      winFullFlavor: "The Veil holds. The two worlds remain distinct, their balance kept by the strength of real bonds between people who chose to fight for both.",
+      lore: "Veilport is two cities: the mundane one that tourists visit, and the hidden one that hums beneath it. Magic has always been here, kept secret, kept contained. Now someone wants to end that carefully maintained balance."
+    },
+    dark_fantasy: {
+      settingName: "Grimhallow", realmNoun: "blighted land", capitalName: "Ashcrown Citadel",
+      threat: "the Eater of Names, a corruption deity devouring the land's identity and memory",
+      threatFaction: "nameless husks and corruption-wraiths",
+      openingLocationDesc: "the shadow-pooled entrance plaza of Ashcrown Citadel, where gargoyles watch with eyes that seem to follow you",
+      arrivalVerb: "Something pulled you through the dark — you don't know what. You arrived gasping, with no name for where you came from, only the certainty that you needed to be here.",
+      mq1Title: "The Hollow Signs", mq1Desc: "Follow the spreading hollow zones to understand the Eater's pattern of consumption.",
+      mq2Title: "Names Against the Dark", mq2Desc: "Earn the trust of four resistance bastions and anchor their names in the world's memory.",
+      mq3Title: "Remembered Together", mq3Desc: "Bind your allies' identities together in a memory-ritual that the Eater cannot consume.",
+      abilityTheme: "dark sorcery, grim survival skills, and soul-bound powers",
+      shadowEndFlavor: "You gave the Eater what it wanted — not your name, but your decision. It didn't consume you. It incorporated you. The allies who knew your name won't look at you the same way.",
+      winFullFlavor: "The Eater recoils from the brightness of bonded names. What is loved and known cannot be consumed. Grimhallow remembers itself.",
+      lore: "Grimhallow is a land under siege by something that cannot be bargained with, only understood and endured. The Eater of Names strips people of their identities, their histories, their connections — leaving only hollow shells."
+    },
+    high_fantasy: {
+      settingName: "Aldenholm", realmNoun: "realm", capitalName: "the Radiant City of Vorenmere",
+      threat: "the Sundering — an ancient prophecy of dissolution coming to fracture the world's foundational magic",
+      threatFaction: "Sundering heralds and aether-corrupted beasts",
+      openingLocationDesc: "the gleaming Grand Concourse of Vorenmere, where tower spires catch the morning light and flags of a hundred allied nations snap in the wind",
+      arrivalVerb: "The Traveler's Gate opened for you unbidden — an honor given only to those the realm chooses. You did not choose this, but perhaps the realm did.",
+      mq1Title: "Before the Sundering", mq1Desc: "Investigate the aetheric disturbances to locate the first fracture point.",
+      mq2Title: "The Founding Compact", mq2Desc: "Renew the bonds of trust with four ancient guardian houses before the fracture lines spread.",
+      mq3Title: "An Age Held Together", mq3Desc: "Stand at the fracture point with your bonded companions and weave a new compact that holds the world together.",
+      abilityTheme: "high arcane sorcery, legendary weapons, and divine-touched abilities",
+      shadowEndFlavor: "You chose the fracture over the compact. The world cracks along lines you helped draw. You stand on the largest piece, but it is very quiet.",
+      winFullFlavor: "The Sundering halts. The aether stabilizes. Aldenholm enters a new age not because of a prophecy, but because people who truly knew each other chose to hold it together.",
+      lore: "Aldenholm is a realm of ancient compacts and legendary history. Now an old prophecy stirs — the Sundering — which threatens to undo the foundational magic that holds the world's shape. Only the renewal of true bonds between mortals can hold back what the prophecy predicts."
+    },
+    solarpunk: {
+      settingName: "Verdantis", realmNoun: "network", capitalName: "the Living Hub",
+      threat: "a systems failure called the Grey Cascade threatening to destabilize the entire solar-organic grid",
+      threatFaction: "cascade-corrupted automatons and corporate remnants",
+      openingLocationDesc: "the vibrant central garden-hub of Verdantis, where solar panels bloom among flowers and the air hums with sustainable energy",
+      arrivalVerb: "The transit-pod routed you here by error — or by the network's unconscious wisdom. Either way, you arrived.",
+      mq1Title: "The Grey Pattern", mq1Desc: "Trace the cascade's spread through Verdantis's solar-organic grid to identify the origin node.",
+      mq2Title: "Roots of Trust", mq2Desc: "Earn the commitment of four community hubs and reinforce the network's four primary stability anchors.",
+      mq3Title: "Growing Together", mq3Desc: "Channel the community's collective will through your bonded allies to regenerate the grid and end the cascade.",
+      abilityTheme: "biotech skills, solar engineering, and community-based abilities",
+      shadowEndFlavor: "You offered the corporate remnants a deal they couldn't refuse. The cascade stops — and the grid comes under their management. The community you were part of doesn't look at you the same way.",
+      winFullFlavor: "The cascade halts. The grid regenerates, fed by genuine community bonds. Verdantis is greener, stronger, and more itself than before.",
+      lore: "Verdantis built its civilization on the principle that technology and ecology are not opposites. The solar-organic grid powers everything and is the nervous system of the community. Now a failure called the Grey Cascade threatens to unhook every node from every other."
+    },
+    dieselpunk: {
+      settingName: "Ironfall Territory", realmNoun: "territory", capitalName: "Port Graystone",
+      threat: "a power called the Black Engine attempting to claim total industrial control of the continent",
+      threatFaction: "Black Engine enforcers and armored machines",
+      openingLocationDesc: "the smoky main avenue of Port Graystone, where diesel fumes and the clang of industry fill the grey morning air",
+      arrivalVerb: "The freight car you'd hitched a ride on stopped here unexpectedly. The porter gave you a look. You decided this was where you needed to be.",
+      mq1Title: "The Engine's First Stroke", mq1Desc: "Track the Black Engine's advance operations through Ironfall's industrial zones.",
+      mq2Title: "The Coalition Compact", mq2Desc: "Earn the allegiance of four independent worker-councils and secure the strategic resource points they hold.",
+      mq3Title: "Steel and Human Will", mq3Desc: "Lead the unified coalition in a direct action that dismantles the Black Engine's central command.",
+      abilityTheme: "mechanical engineering, diesel-age weapons, and saboteur techniques",
+      shadowEndFlavor: "You took the Black Engine's deal. The territory survives, more efficient and less free. The people who trusted your word don't talk to you much anymore.",
+      winFullFlavor: "The Black Engine's gears lock up. Every worker who trusted the coalition held the line. Ironfall is still messy and loud and its own. That's enough.",
+      lore: "Ironfall runs on diesel, grit, and the memory of a war that never fully ended. The Black Engine believes industrial control IS civilization. Against a force that sees people as components, the only counterargument is people who genuinely choose each other."
+    },
+    western: {
+      settingName: "Duskfall Territory", realmNoun: "frontier", capitalName: "Copperhead",
+      threat: "a criminal empire called the Devil's Ledger buying up the territory one deed at a time",
+      threatFaction: "hired guns and corrupt marshals",
+      openingLocationDesc: "the main street of Copperhead, where the afternoon sun bakes the dust and the saloon is always open",
+      arrivalVerb: "Your horse threw you outside of town and wandered off. You walked the last mile into Copperhead with nothing but your boots and your luck.",
+      mq1Title: "Marks on the Ledger", mq1Desc: "Track the Devil's Ledger's land-grab operations to find the source of their corruption.",
+      mq2Title: "Bond of the Frontier", mq2Desc: "Earn the trust of four frontier communities and hold their claims against the Ledger's pressure.",
+      mq3Title: "Drawn Together", mq3Desc: "Stand with every ally you've made for a final confrontation that puts the Devil's Ledger out of business.",
+      abilityTheme: "gunfighting, frontier survival skills, and frontier grit",
+      shadowEndFlavor: "You took the Ledger's offer. A cut of the territory in exchange for your silence. The people of Copperhead don't wave when you pass through anymore.",
+      winFullFlavor: "The Devil's Ledger folds. The territory stays free. Every person who trusted you when it was hard kept you standing when it mattered most.",
+      lore: "Duskfall Territory sits at the edge of civilization. The Devil's Ledger has been buying influence, judges, and marshals for years. Now it's making its final move on the last stretch of free frontier. Only people who choose each other over money can stop it."
+    },
+    supernatural_thriller: {
+      settingName: "Harrowmere", realmNoun: "town", capitalName: "the old Harrowmere Township",
+      threat: "an entity called the Hollow known to consume entire communities from the inside out",
+      threatFaction: "Hollow-possessed locals and shadow manifestations",
+      openingLocationDesc: "the fog-wrapped town square of Harrowmere, where the streetlights flicker and something feels deeply wrong",
+      arrivalVerb: "You drove into Harrowmere following a tip and the road behind you simply wasn't there when you looked back. This is where you are now.",
+      mq1Title: "Something in the Fog", mq1Desc: "Investigate the disappearances and behavioral changes to understand the Hollow's entry point.",
+      mq2Title: "The Unbroken Circle", mq2Desc: "Earn the trust of four people still uncorrupted and reinforce the psychic wards around Harrowmere.",
+      mq3Title: "Together Against the Dark", mq3Desc: "Stand with your bonded allies at the Hollow's center point and drive it back with the force of genuine human connection.",
+      abilityTheme: "paranormal investigation, occult knowledge, and psychological resilience",
+      shadowEndFlavor: "You made a deal with the Hollow. The town survives — differently. What it is now is debatable. The people who trusted you aren't sure what you are anymore, either.",
+      winFullFlavor: "The Hollow retreats. It cannot consume what is genuinely known and genuinely loved. Harrowmere is strange but free.",
+      lore: "Harrowmere should be an ordinary small town. It isn't. The Hollow has been here before — locals won't say when — and it came back. Whatever it is, it feeds on isolation, mistrust, and the gaps between people."
+    },
+    ancient_mythology: {
+      settingName: "the Mortal Lands", realmNoun: "land", capitalName: "Aurelios",
+      threat: "the Titan Chaos rising from the primordial deep to unmake the ordered world",
+      threatFaction: "corrupted demigods and primordial beasts",
+      openingLocationDesc: "the marble-paved agora of Aurelios, where temple columns cast long shadows and the gods' eyes are felt rather than seen",
+      arrivalVerb: "An oracle spoke your name, and then you were here — drawn from wherever you were by a pull you did not consent to and cannot yet explain.",
+      mq1Title: "Omens from the Deep", mq1Desc: "Trace the Titan's stirring through the mortal lands' sacred sites to find the fracture in the world-seal.",
+      mq2Title: "The Heroes' Compact", mq2Desc: "Earn the blessing of four divine patrons and reinforce the four pillars that separate ordered world from primordial chaos.",
+      mq3Title: "Mortals Together, Immortal Will", mq3Desc: "Unite your bonded companions in an act of heroic will that re-seals the Titan beneath the world's foundations.",
+      abilityTheme: "divine gifts, classical heroic disciplines, and mythic weapons",
+      shadowEndFlavor: "You accepted the Titan's offer of power beyond mortal comprehension. The ordered world survives — you just aren't entirely a part of it anymore.",
+      winFullFlavor: "The Titan sinks back into the primordial deep. The pillars hold. Mortal bonds — real ones, chosen ones — proved stronger than divine law and primal force.",
+      lore: "In the age of gods and heroes, the Titan Chaos was sealed beneath the world by a compact of divine will and mortal sacrifice. That compact is weakening. Only a new generation of heroes, bound by genuine bonds of heart, can renew what the ancients built."
+    }
+  };
+
+  // Writing-style directive per story tone — injected into the roleInstruction
+  // so the AI narrator matches the chosen aesthetic from the first message onward.
+  const TONE_CONFIG = {
+    dark_romance:      { reminderCue: "DARK ROMANCE — passion with danger, depth, and consequence. Every tender moment has teeth." },
+    slow_burn:         { reminderCue: "SLOW BURN — tension accumulates. Resist easy resolution. Every glance costs something." },
+    enemies_to_lovers: { reminderCue: "ENEMIES TO LOVERS — friction is attraction. Resistance and pull coexist." },
+    slice_of_life:     { reminderCue: "SLICE OF LIFE — small moments matter. Warmth and presence over manufactured drama." },
+    giddy_friendship:  { reminderCue: "GIDDY FRIENDSHIP — warmth, banter, and genuine joy in connection." },
+    action_adventure:  { reminderCue: "ACTION & ADVENTURE — high pace, physical stakes, earned emotional moments." },
+    psychological:     { reminderCue: "PSYCHOLOGICAL — ambiguity, subtext, unreliable surfaces. Let the reader work for meaning." },
+    comedy:            { reminderCue: "COMEDY — absurdity, timing, warmth through laughter." },
+    found_family:      { reminderCue: "FOUND FAMILY — chosen bonds and the warmth of belonging against all odds." },
+    tragedy:           { reminderCue: "TRAGEDY — beauty that may not survive. Consequence is real; do not shield the reader." },
+    redemption:        { reminderCue: "REDEMPTION — growth is earned, trust must be rebuilt, light is genuinely hard-won." },
+    forbidden_love:    { reminderCue: "FORBIDDEN LOVE — the impossibility is the pull. The obstacle deepens every desire." },
+    epic_quest:        { reminderCue: "EPIC QUEST — world-altering stakes; personal bonds are the beating heart of the journey." },
+    coming_of_age:     { reminderCue: "COMING OF AGE — identity, growth, real uncertainty, and real capability." },
+    mystery_intrigue:  { reminderCue: "MYSTERY & INTRIGUE — secrets, timing, and the pleasure of careful revelation." }
+  };
+
+  // Difficulty multipliers — scaffolded for future player-selectable difficulty.
+  // wire into enemy scaling, XP, gold, affection, and training cost calculations.
+  // Default is "normal".  UI selection will be added in a future patch.
+  const DIFFICULTY_MULTIPLIERS = {
+    easy:   { enemyHpScale: 0.7,  enemyAtkScale: 0.7,  xpScale: 1.3,  goldScale: 1.2,  affectionScale: 1.3,  trainingCostScale: 0.7,  label: "😊 Easy"   },
+    normal: { enemyHpScale: 1.0,  enemyAtkScale: 1.0,  xpScale: 1.0,  goldScale: 1.0,  affectionScale: 1.0,  trainingCostScale: 1.0,  label: "⚔️ Normal" },
+    hard:   { enemyHpScale: 1.5,  enemyAtkScale: 1.4,  xpScale: 0.8,  goldScale: 0.8,  affectionScale: 0.8,  trainingCostScale: 1.3,  label: "💀 Hard"   }
+  };
+
+  // Helper: get the active difficulty multiplier object for a game state
+  function getDiffMult(g) { return DIFFICULTY_MULTIPLIERS[g.difficulty || "normal"] || DIFFICULTY_MULTIPLIERS.normal; }
+
+  // ════════════════════════════════════════════════════════════════════════════
   // SECTION 3 — KINK / CONSENT SYSTEM
   // ════════════════════════════════════════════════════════════════════════════
 
@@ -367,77 +620,86 @@
   // SECTION 5 — QUEST DATA
   // ════════════════════════════════════════════════════════════════════════════
 
-  const MAIN_QUESTS = [
-    { id: "mq1", type: "main", title: "Echoes of the Rift",           goal: 3, visible: true,
-      desc: "Investigate the tremors and creature sightings near the Shadow Dungeon and Whispering Forest." },
-    { id: "mq2", type: "main", title: "The Shattered Seal",           goal: 4, visible: false,
-      desc: "Earn the trust of each seal guardian and reinforce the four remaining Binding Seals." },
-    { id: "mq3", type: "main", title: "United Hearts, Unyielding Realm", goal: 1, visible: false,
-      desc: "Unite the companions' emotional bonds into one act of will to re-seal Malachar forever." }
-  ];
+  // Build the three main quests with world-adaptive titles and descriptions.
+  // Uses the first selected worldSetting to look up WORLD_CONFIG narrative content.
+  function buildMainQuests(worldSettings) {
+    const primaryWorld = (worldSettings && worldSettings[0]) || "medieval_fantasy";
+    const wc = WORLD_CONFIG[primaryWorld] || WORLD_CONFIG.medieval_fantasy;
+    return [
+      { id: "mq1", type: "main", title: wc.mq1Title, goal: 3, visible: true,  desc: wc.mq1Desc },
+      { id: "mq2", type: "main", title: wc.mq2Title, goal: 4, visible: false, desc: wc.mq2Desc },
+      { id: "mq3", type: "main", title: wc.mq3Title, goal: 1, visible: false, desc: wc.mq3Desc }
+    ];
+  }
 
-  function buildSideQuests(chars) {
-    return chars.map((ch, i) => ({
+  // Keep a static reference for backward-compat fallback (e.g. old save migration)
+  const MAIN_QUESTS = buildMainQuests(["medieval_fantasy"]);
+
+  function buildSideQuests(chars, worldSettings) {
+    const primaryWorld = (worldSettings && worldSettings[0]) || "medieval_fantasy";
+    const wc = WORLD_CONFIG[primaryWorld] || WORLD_CONFIG.medieval_fantasy;
+    return chars.map(ch => ({
       id:      `sq_${ch.id}`,
       type:    "side",
       charId:  ch.id,
       title:   `${ch.name}'s Trial`,
       goal:    2,
       visible: false,
-      desc:    `Help ${ch.name} resolve a personal crisis tied to the Void King's return.`
+      desc:    `Help ${ch.name} resolve a personal crisis tied to ${wc.threat}.`
     }));
   }
 
-  function buildStoryline(chars, playerName) {
-    const c = chars;
+  // Build the AI lore block that lives inside oc.thread.character.roleInstruction.
+  // World-adaptive: draws from WORLD_CONFIG for the selected world setting.
+  function buildStoryline(chars, playerName, worldSettings) {
+    const primaryWorld = (worldSettings && worldSettings[0]) || "medieval_fantasy";
+    const wc = WORLD_CONFIG[primaryWorld] || WORLD_CONFIG.medieval_fantasy;
+    const c  = chars;
     const pn = playerName || "the Traveler";
-    return `THE REALM OF ERYNDEL — CHRONICLES OF THE VOID KING'S RETURN
+    const locationName = id => LOCATIONS[id]?.name || id;
+
+    return `THE ${wc.settingName.toUpperCase()} — CHRONICLES
 
 WORLD OVERVIEW
-Eryndel is a land of ancient magic and turbulent politics, where the scars of the First Void War still mark both landscape and soul. Three thousand years ago, the Void King Malachar tore open a rift between worlds, unleashing creatures of pure entropy upon the realm. Seven legendary heroes sacrificed everything to seal him away — each embedding a fragment of their soul into a Binding Seal hidden across the land. Now those seals are crumbling, and Malachar stirs once more.
+${wc.lore}
 
-${pn} arrives in Eryndel as a stranger with no memory of how they came to be there, only a strange mark on their hand — the Traveler's Brand — which glows faintly near the Binding Seals. Fate, it seems, has chosen them.
+${pn} arrives as a stranger to ${wc.capitalName}, bearing only an unexplained pull toward this place and, soon, toward the people they find here.
 
-THE MAGIC SYSTEM
-Magic in Eryndel flows from the Aetheric Weave — an invisible lattice of energy that permeates all living things. Practitioners draw from three disciplines: Arcane (raw spellpower for offensive and utility magic), Sacred (healing and protective light), and Shadow (manipulation, illusion, and entropy magic). Combat veterans channel a fourth discipline, Battle Resonance, which amplifies physical strikes with raw will. Skills grow through experience, practice, and emotional bonds.
+THE CORE THREAT
+${wc.threat.charAt(0).toUpperCase() + wc.threat.slice(1)}. The primary opposition takes the form of ${wc.threatFaction}. Every escalation will require both personal courage and the strength drawn from genuine bonds with the companions encountered along the way.
 
-THE THREE FACTIONS
-The Crown — guardians of order under Queen Elara IV, they patrol Moonveil Castle and the realm's roads. They fear what the returning rift means for stability and would rather contain the problem than solve it. ${c[5].name} serves as a Crown Scholar, documenting anomalies.
-
-The Shadows — a secretive network operating from the Shadow Dungeon and the city's underworld. They have studied the Void for generations and possess dangerous knowledge. ${c[3].name} walks the line between their agenda and personal freedom.
-
-The Seekers — an ancient order of wandering truth-hunters, bound by no crown. They believe the only way to defeat Malachar is to reunite the seven soul-fragments. ${c[0].name} is the last known Seeker elder.
+ABILITY THEMES
+Combat, social, and arcane disciplines all draw from the world's native power sources: ${wc.abilityTheme}. Skills grow through practice, experience, and the trust forged with companions.
 
 THE EIGHT COMPANIONS
-${c[0].name} (${c[0].archetype}): Pride and pain run deep in ${c[0].name}. As a ${c[0].archetype} stationed at ${LOCATIONS[c[0].location].name}, they have built walls around themselves as impenetrable as their magic. Their backstory is one of loss — a mentor destroyed by the Void — and their tsundere exterior conceals fierce loyalty. They hold the key to the first Binding Seal's location.
+${c[0].name} (${c[0].archetype}): Based at ${locationName(c[0].location)}, with a ${c[0].personality} disposition that conceals deep loyalty. Central to the main quest's early stages.
 
-${c[1].name} (${c[1].archetype}): Kind to a fault, ${c[1].name} operates from ${LOCATIONS[c[1].location].name}, tending to the wounded and the weary. Their ${c[1].personality} nature hides a devastating secret: their healing power is linked to one of the fractured seals. Every time they heal, the seal weakens slightly. They don't know yet.
+${c[1].name} (${c[1].archetype}): Operates from ${locationName(c[1].location)}. Their ${c[1].personality} nature masks a connection to the primary threat they are not yet aware of.
 
-${c[2].name} (${c[2].archetype}): ${c[2].name} arrived in Eryndel three months ago chasing a rumor of legendary training grounds in the ${LOCATIONS[c[2].location].name}. ${c[2].personality} by nature, they seem carefree — but they carry an encrypted message intended for the Seekers that they haven't been able to decode.
+${c[2].name} (${c[2].archetype}): Found near ${locationName(c[2].location)}. Arrived recently following rumors of activity tied to the main threat. Carries information they haven't decoded.
 
-${c[3].name} (${c[3].archetype}): Dwelling in the depths of ${LOCATIONS[c[3].location].name}, ${c[3].name} is sought out by those who need power at a price. Their ${c[3].personality} demeanor is no act — they genuinely walk the razor's edge between light and shadow, and they have seen Malachar's face in visions.
+${c[3].name} (${c[3].archetype}): Dwelling in ${locationName(c[3].location)}. Walks the edge of the threat's reach and has glimpsed what is coming. ${c[3].personality} persona is genuine.
 
-${c[4].name} (${c[4].archetype}): Running the most successful stall in ${LOCATIONS[c[4].location].name}, ${c[4].name} seems purely motivated by profit. In truth, they are funneling money to the Seekers and have been gathering rare components needed to reinforce the weakening seals. Their ${c[4].personality} personality is genuine — joy is their armor.
+${c[4].name} (${c[4].archetype}): Visible in ${locationName(c[4].location)}. Presents as motivated by personal gain but is quietly working against the threat. ${c[4].personality} nature is real armor.
 
-${c[5].name} (${c[5].archetype}): Found in ${LOCATIONS[c[5].location].name} surrounded by scrolls and star charts, ${c[5].name} is the foremost authority on Aetheric Weave theory. Their ${c[5].personality} obsession has led them to a terrifying conclusion: the seals will all fail within one lunar cycle unless something radical is done. They haven't told the Crown yet.
+${c[5].name} (${c[5].archetype}): Stationed at ${locationName(c[5].location)}. Documents the threat's effects and holds key knowledge that other companions lack. Reserved.
 
-${c[6].name} (${c[6].archetype}): The finest fighter at ${LOCATIONS[c[6].location].name}, ${c[6].name} trains others and asks little in return. Their ${c[6].personality} code of honor is absolute — which makes it all the more painful that they once served Malachar, long ago, before they broke free. That secret could destroy them.
+${c[6].name} (${c[6].archetype}): Dedicated to ${locationName(c[6].location)}. Practical, physical, and direct — prefers action to discussion and trust earned through demonstration.
 
-${c[7] ? `${c[7].name} (${c[7].archetype}): Owing allegiance to no faction, ${c[7].name} moves between ${LOCATIONS[c[7].location].name} and the realm's forgotten places on their own terms. Their ${c[7].personality} nature masks extraordinary conviction — and a heretical belief that the Void King's imprisonment was itself an act of corruption. They alone carry knowledge of the original sealing ritual, and will only share it with someone they wholly trust.` : ""}
+${c[7] ? `${c[7].name} (${c[7].archetype}): Moves between ${locationName(c[7].location)} and forgotten places on their own terms. Their ${c[7].personality} nature masks extraordinary conviction — and knowledge of the original rite that could end the main threat, shared only with someone they wholly trust.` : ""}
 
 THE THREE MAIN QUESTS
+Quest One — ${wc.mq1Title}: ${wc.mq1Desc} The trail will require talking to companions and exploring key locations.
 
-Quest One — Echoes of the Rift: The ground trembles. Strange creatures emerge from cracks in the earth near the Shadow Dungeon and deep in the Whispering Forest. ${pn} must investigate, gathering evidence and speaking with ${c[3].name} and ${c[2].name} to understand what is destabilizing the earth. The trail leads to a minor seal already shattered beneath the forest floor.
+Quest Two — ${wc.mq2Title}: ${wc.mq2Desc} Each step requires earning the trust of the companions who guard critical points.
 
-Quest Two — The Shattered Seal: With the evidence gathered, ${c[5].name} confirms the worst: the seals are failing. Four remain intact, each guarded by one of the companions (${c[0].name}, ${c[1].name}, ${c[3].name}, and ${c[6].name}). ${pn} must earn each guardian's trust to reach and temporarily reinforce their seal, buying the realm time.
+Quest Three — ${wc.mq3Title}: ${wc.mq3Desc} Every relationship built matters. Every heart touched becomes a weapon against the threat.
 
-Quest Three — United Hearts, Unyielding Realm: Malachar cannot be re-sealed by force alone. The ritual requires the willing sacrifice of emotional bonds — the companions must collectively channel their feelings for ${pn} into a single act of unified will. Every relationship built matters. Every heart touched becomes a weapon against the void.
-
-THE ECONOMY OF ERYNDEL
-Gold flows from Crown taxes, Seeker donations, and merchant trade. ${c[4].name}'s market stall is the safest place to spend coin. Rare items sometimes appear when affection with a companion is high. The Shadow network trades in favors as often as gold.
+ECONOMY
+Gold is earned through combat, quests, and trade. The market companion's location is the safest place to spend coin. Rare items sometimes appear when affection with a companion is high.
 
 SKILLS AND GROWTH
-The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.training_grounds.name} sharpens Strength, Defense, and Speed. Social bonds at the ${LOCATIONS.inn.name} and ${LOCATIONS.market.name} deepen Charm, Persuasion, and Empathy. Magical study in the ${LOCATIONS.castle.name} and ${LOCATIONS.dungeon.name} builds Spellpower, Resistance, and Mana. Every choice shapes who ${pn} becomes — and who they can face at the final hour.`;
+Combat training sharpens Strength, Defense, and Speed. Social interactions deepen Charm, Persuasion, and Empathy. Magical study builds Spellpower, Resistance, and Mana. Every choice shapes who ${pn} becomes — and who they can face at the final hour.`;
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -472,9 +734,16 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
 
   function advanceTime(g, minutes) {
     const prevDay = g.time.day;
+    // Take snapshot at start of new-day-boundary detection (before mutating g.time.day)
+    if (!g.daySnapshot) g.daySnapshot = takeSnapshot(g);
     g.time.totalMinutes += minutes;
     g.time.day = Math.floor(g.time.totalMinutes / (24 * 60)) + 1;
     if (g.time.day > prevDay) {
+      // Show end-of-day summary for the day that just ended
+      buildDaySummary(g, prevDay, g.daySnapshot);
+      // Start fresh snapshot for the new day
+      g.daySnapshot = takeSnapshot(g);
+
       regeneratePriceModifiers(g);
       g.lastTrained      = {};
       g.crownEdictActive  = false;
@@ -571,6 +840,143 @@ The Traveler's Brand responds to experience. Combat training at the ${LOCATIONS.
   }
 
   function isFestivalDay(g) { return g.time.day % 7 === 0; }
+
+  // ── Day snapshot: capture state at the start of each new day ────────────────
+  function takeSnapshot(g) {
+    const chars = getActiveChars();
+    return {
+      day:      g.time.day,
+      gold:     g.gold,
+      level:    g.level,
+      xp:       g.xp,
+      xpToNext: g.xpToNext,
+      skills:   JSON.parse(JSON.stringify(g.skills)),
+      characters: Object.fromEntries(
+        chars.map(ch => [ch.id, {
+          met:       g.characters[ch.id]?.met       || false,
+          affection: g.characters[ch.id]?.affection || 0
+        }])
+      ),
+      quests:    g.quests.map(q => ({ id: q.id, progress: q.progress, completed: q.completed })),
+      inventory: [...(g.inventory || [])]
+    };
+  }
+
+  // ── End-of-day summary displayed when the calendar crosses into a new day ───
+  function buildDaySummary(g, prevDay, snapshot) {
+    if (!snapshot || snapshot.day !== prevDay) return;
+    const chars = getActiveChars();
+    const parts = [`\n📅 **End of Day ${prevDay} — Summary**`];
+
+    // New companions met
+    const newMet = chars.filter(ch => g.characters[ch.id]?.met && !snapshot.characters[ch.id]?.met);
+    if (newMet.length) parts.push(`\n👥 **New companions met:** ${newMet.map(c => c.name).join(", ")}`);
+
+    // Relationship changes
+    const relChanges = chars
+      .filter(ch => g.characters[ch.id]?.met)
+      .map(ch => {
+        const now = g.characters[ch.id]?.affection || 0;
+        const was = snapshot.characters[ch.id]?.affection || 0;
+        const delta = now - was;
+        if (Math.abs(delta) < 1) return null;
+        const tier = getRelTier(now);
+        return `${ch.name}: ${delta > 0 ? "+" : ""}${delta} affection (${now} — ${tier.name})`;
+      })
+      .filter(Boolean);
+    if (relChanges.length) parts.push(`\n❤️ **Relationship changes:**\n${relChanges.map(s => `  • ${s}`).join("\n")}`);
+
+    // Stats increased
+    const statDeltas = [];
+    for (const [cat, skills] of Object.entries(g.skills)) {
+      for (const [sk, val] of Object.entries(skills)) {
+        const was = snapshot.skills?.[cat]?.[sk] || 0;
+        if (val > was) statDeltas.push(`${cat}.${sk}: ${was} → ${val}`);
+      }
+    }
+    if (statDeltas.length) parts.push(`\n📈 **Stats increased:**\n${statDeltas.map(s => `  • ${s}`).join("\n")}`);
+
+    // Quest progress
+    const questDeltas = g.quests.filter(q => {
+      const snap = snapshot.quests?.find(sq => sq.id === q.id);
+      return snap && (q.progress > snap.progress || (q.completed && !snap.completed));
+    });
+    if (questDeltas.length) {
+      parts.push(`\n📜 **Quest progress:**\n${questDeltas.map(q =>
+        `  • ${q.title}: ${q.completed ? "✅ Completed!" : `step ${q.progress}/${q.goal}`}`
+      ).join("\n")}`);
+    }
+
+    // Gold delta
+    const goldDelta = g.gold - snapshot.gold;
+    if (goldDelta !== 0) parts.push(`\n💰 **Gold:** ${goldDelta > 0 ? "+" : ""}${goldDelta} (now ${g.gold}g)`);
+
+    // Items obtained
+    const snapInv = snapshot.inventory || [];
+    const newItems = (g.inventory || []).filter(item => {
+      const idx = snapInv.indexOf(item);
+      if (idx === -1) return true;
+      snapInv.splice(idx, 1); // consume matched entry so duplicates work correctly
+      return false;
+    });
+    if (newItems.length) parts.push(`\n🎒 **Items obtained:** ${newItems.join(", ")}`);
+
+    // Level up
+    if (g.level > snapshot.level) parts.push(`\n⭐ **Level up!** Now Level ${g.level}`);
+
+    // Next priority objective
+    const active = (g.quests || []).filter(q => q.visible && !q.completed);
+    if (active.length > 0) {
+      const prio = active[0];
+      parts.push(`\n🎯 **Next priority:** ${prio.title} — use /objectives for your checklist.`);
+      if (active.length > 1) parts.push(`\n📋 **Active quests:** ${active.map(q => q.title).join(", ")}`);
+    } else {
+      parts.push(`\n🎯 **Next priority:** Explore and meet companions to discover quests. Use /explore and /go.`);
+    }
+
+    if (parts.length <= 1) parts.push("\n_The day passed quietly._");
+    oc.thread.messages.push({ author: "system", content: parts.join(""), expectsReply: false });
+  }
+
+  // ── Hint system: inject a contextual nudge when the player is stuck ─────────
+  // Returns a short hint string to embed in the reminderMessage, or "" if none.
+  function evaluateHints(g) {
+    if (!g.hintCounter) g.hintCounter = 0;
+    g.hintCounter++;
+    if (g.hintCounter < 8) return ""; // quiet window — no hints yet
+
+    const active = (g.quests || []).filter(q => q.visible && !q.completed);
+    let hint = "";
+
+    if (!active.length) {
+      // No visible quests — push toward exploration
+      const unmet = getActiveChars().filter(ch => !g.characters[ch.id]?.met);
+      if (unmet.length > 0) {
+        const ch   = unmet[0];
+        const dest = ch.location;
+        hint = `[GM Hint: There are companions you haven't met yet. Try /go ${dest} then /talk ${ch.id} to meet ${ch.name}.]`;
+      }
+    } else {
+      const prio = active[0];
+      const step = prio.progress + 1;
+      // Try to get step objectives; fall back to quest description
+      let nextText = prio.desc;
+      if (typeof QUEST_STEP_OBJECTIVES !== "undefined" && QUEST_STEP_OBJECTIVES[prio.id]) {
+        const stepObjs = QUEST_STEP_OBJECTIVES[prio.id][step]?.(g) || [];
+        const firstOpen = stepObjs.find(o => !o.done);
+        if (firstOpen) nextText = firstOpen.label;
+      }
+      const hints = [
+        `[GM Hint: Your current priority is "${prio.title}" — ${nextText}. Use /objectives for the full checklist.]`,
+        `[GM Hint: Stuck? "${nextText}" is what stands between you and the next step of ${prio.title}. Check /objectives.]`,
+        `[GM Hint: Progress waits — ${nextText}. Type /objectives for a step-by-step breakdown.]`
+      ];
+      hint = hints[g.hintCounter % hints.length];
+    }
+
+    if (hint) g.hintCounter = 0; // reset cooldown after firing a hint
+    return hint;
+  }
 
   function normalizeItemName(raw) {
     return raw.replace(/_/g, " ").trim().replace(/\b\w/g, c => c.toUpperCase());
@@ -1199,7 +1605,39 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     reminder += buildNsfwProfileBlock(g);
     reminder += `\n[Storyline]\n${g.storyline?.slice(0, 900) || ""}`;
 
+    // ── Story tone writing directive ───────────────────────────────────────────
+    const toneIds = g.storyTones || ["dark_romance"];
+    const toneCues = toneIds.map(id => TONE_CONFIG[id]?.reminderCue).filter(Boolean).join(" | ");
+    if (toneCues) reminder += `\n[WRITING TONE — MANDATORY] Narrate in these tones: ${toneCues}`;
+
+    // ── Hint injection (only when player appears stuck) ────────────────────────
+    const hint = evaluateHints(g);
+    if (hint) reminder += `\n${hint}`;
+
     oc.thread.character.reminderMessage = reminder;
+
+    // ── Universal image prompt prefix/suffix ──────────────────────────────────
+    // These are picked up by Perchance's image generation pipeline for every
+    // auto-generated scene image, ensuring consistent quality and world style.
+    const worldCueStr = (g.worldSettings || ["medieval_fantasy"])
+      .map(id => WORLD_SETTINGS.find(w => w.id === id)?.cues || "").join(" ");
+    oc.thread.character.imagePromptPrefix =
+      `masterpiece, best quality, highly detailed, 8k resolution, professional digital art, ` +
+      `beautiful dramatic lighting, vivid colors, sharp focus, ${worldCueStr}, atmospheric fantasy art,`;
+    oc.thread.character.imagePromptSuffix =
+      `scantily clad alluring attire, provocative clothing, visually stunning ` +
+      `(negativePrompt::: blurry, low quality, pixelated, watermark, text, logo, ui elements, hud, ` +
+      `bad anatomy, deformed hands, extra fingers, missing limbs, bad proportions, amateur art:1.2)`;
+
+    // ── roleInstruction: appearance + tone directive (persists across reminder refreshes) ──
+    const primaryWorld = (g.worldSettings && g.worldSettings[0]) || "medieval_fantasy";
+    const wc = WORLD_CONFIG[primaryWorld] || WORLD_CONFIG.medieval_fantasy;
+    oc.thread.character.roleInstruction =
+      `You are the narrator of an immersive adult story set in ${wc.settingName}. ` +
+      `Narrate in second person. ` +
+      `[APPEARANCE RULE] Every character not explicitly nude wears scantily clad, provocative, ` +
+      `alluring attire by default. Skimpy clothing is the norm. If nude, omit all clothing references entirely. ` +
+      `[TONE] ${toneCues || "Dark romance — passion with danger and depth."}`;
 
     // Populate oc.thread.imagePromptTriggers so Perchance's auto-image engine knows each
     // character's portrait prompt.  One entry per companion: name, archetype, image keywords,
@@ -1253,7 +1691,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
   function awardXP(amount) {
     const g = cd.game;
-    g.xp += amount;
+    const scaled = Math.round(amount * getDiffMult(g).xpScale);
+    g.xp += scaled;
     while (g.xp >= g.xpToNext) {
       g.xp     -= g.xpToNext;
       g.level  += 1;
@@ -1502,10 +1941,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           content: `😠 **${ch.name}** is too angry to talk right now. You've neglected them for too long — give them time, or bring a gift.` });
         return;
       }
-      // ── Mood-adjusted affection gain ──────────────────────────────────────
+      // ── Mood-adjusted affection gain (scaled by difficulty) ──────────────────
       const moodBonus = cst.mood === "happy" ? 4 : cst.mood === "upset" ? 1 : 2;
       const festival  = isFestivalDay(g) ? 2 : 0;
-      const gain      = moodBonus + festival;
+      const gain      = Math.round((moodBonus + festival) * getDiffMult(g).affectionScale);
       cst.affection   = (cst.affection || 0) + gain;
       // Update lastTalkedDay for neglect tracking
       cst.lastTalkedDay = g.time.day;
@@ -1694,13 +2133,14 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         oc.thread.messages.push({ author: "system", content: `No enemy "${enemyId}" found here.` });
         return;
       }
-      // Scale enemy to player level
+      // Scale enemy to player level AND difficulty
+      const diff     = getDiffMult(g);
       const scale    = 1 + (g.level - 1) * 0.2;
       const enemy    = {
         ...baseEnemy,
-        str: Math.round(baseEnemy.str * scale),
+        str: Math.round(baseEnemy.str * scale * diff.enemyAtkScale),
         def: Math.round(baseEnemy.def * scale),
-        hp:  Math.round(baseEnemy.maxHp * scale)
+        hp:  Math.round(baseEnemy.maxHp * scale * diff.enemyHpScale)
       };
       if (useSpell && g.mana < 10) {
         oc.thread.messages.push({ author: "system", content: `Not enough mana for a spell (need 10, have ${g.mana}). Rest at the inn to recover mana.` });
@@ -1790,9 +2230,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         oc.thread.messages.push({ author: "system", content: `You have already trained ${cat} today. Rest to clear the cooldown.` });
         return;
       }
-      // Training cost: 40g on Crown Edict day; 50g when total skills >= 30
+      // Training cost: scaled by difficulty; 40g on Crown Edict day; 50g when total skills >= 30
       const totalSkills = Object.values(g.skills).reduce((sum, grp) => sum + Object.values(grp).reduce((s, v) => s + v, 0), 0);
-      const baseCost    = g.crownEdictActive ? 40 : (totalSkills >= 30 ? 50 : 20);
+      const baseRaw     = g.crownEdictActive ? 40 : (totalSkills >= 30 ? 50 : 20);
+      const baseCost    = Math.round(baseRaw * getDiffMult(g).trainingCostScale);
       if (g.gold < baseCost) {
         oc.thread.messages.push({ author: "system", content: `Training costs ${baseCost}g (you have ${g.gold}g).${g.crownEdictActive ? " (Crown Edict levy active.)" : ""}` });
         return;
@@ -1862,7 +2303,8 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       }
       const moodSuccessBonus = cst.mood === "happy" ? 0.2 : 0;
       const success = charm >= 4 || Math.random() < (0.6 + moodSuccessBonus);
-      const bonus   = success ? (isFestivalDay(g) ? 8 : 5) : 0;
+      const baseBonus = success ? (isFestivalDay(g) ? 8 : 5) : 0;
+      const bonus   = Math.round(baseBonus * getDiffMult(g).affectionScale);
       cst.affection = (cst.affection || 0) + bonus;
       clampAffection(g, charId);
       advanceTime(g, 30);
@@ -2572,11 +3014,12 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // SECTION 12 — GAME INIT, PREGENERATION & MIGRATION
   // ════════════════════════════════════════════════════════════════════════════
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones, playerRole) {
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones, playerRole, difficulty) {
     const chars      = gender === "female" ? FEMALE_CHARS : MALE_CHARS;
-    const sideQuests = buildSideQuests(chars);
+    const ws         = worldSettings || ["medieval_fantasy"];
+    const sideQuests = buildSideQuests(chars, ws);
     const quests     = [
-      ...MAIN_QUESTS.map(q => ({ ...q, progress: 0, completed: false })),
+      ...buildMainQuests(ws).map(q => ({ ...q, progress: 0, completed: false })),
       ...sideQuests.map(q => ({ ...q, progress: 0, completed: false }))
     ];
 
@@ -2592,8 +3035,9 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       playerRole:  playerRole   || "switch",
       bodyTypePrefs: bodyTypePrefs || [],
       enabledKinks:  enabledKinks  || [],
-      worldSettings: worldSettings || ["medieval_fantasy"],
+      worldSettings: ws,
       storyTones:    storyTones    || ["dark_romance"],
+      difficulty:    difficulty    || "normal",
       location: "town_square", gold: 50, inventory: [],
       level: 1, xp: 0, xpToNext: 100,
       hp: 30, maxHp: 30, mana: 20, maxMana: 20,
@@ -2606,16 +3050,18 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       time: { totalMinutes: 8 * 60, day: 1 }, lastTrained: {}, priceModifiers: {},
       achievements: [], trainingCount: 0, craftingCount: 0,
       gameOver: false, ending: null, endingType: null, betrayed: [], questNotification: false,
-      ngPlusBonus: null, storyline: buildStoryline(chars, playerName),
+      ngPlusBonus: null, storyline: buildStoryline(chars, playerName, ws),
       combatWins: 0, deathCount: 0,
       firedEvents: [], rivalEvents: [], dailyEventLog: [],
       lastTrainedDay: 1, manaMalCharDebuff: false, shadowEndUnlocked: false,
       voidSightingTargets: [], voidSightingDay: 0, rivalClashTargets: [], rivalClashDay: 0,
-      crownEdictActive: false, mq3Locked: false, voidShardClue: false
+      crownEdictActive: false, mq3Locked: false, voidShardClue: false,
+      hintCounter: 0, daySnapshot: null
     };
 
     regeneratePriceModifiers(cd.game);
     updateCompanionSchedules(cd.game);
+    cd.game.daySnapshot = takeSnapshot(cd.game); // start day 1 snapshot
     updateReminder();
     updateShortcutButtons();
   }
@@ -2714,28 +3160,24 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
       // 3. Init game state
       showStatus("Initialising world…", "Setting up game state");
-      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones, data.playerRole);
+      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones, data.playerRole, data.difficulty || "normal");
       const g = cd.game;
 
-      // 4. World narrative — 3-4 paragraphs; last = what player sees around them
+      // 4. World narrative — world-adaptive opening via WORLD_CONFIG
       showStatus("Writing your story…", "Composing the opening narrative");
-      const arrivals = [
-        `A blinding rift of light deposited you here without warning — the portal already collapsed before you could gather your bearings.`,
-        `You awoke on cold stone, the last thing you remember being a trembling in reality itself and then: silence, and this.`,
-        `One moment you were somewhere else entirely. The next — this place, this sky, these sounds. No explanation offered.`,
-        `A voice that was not quite a voice said your name, and then you were here, as though you had always been meant to arrive.`
-      ];
-      const arrival = arrivals[g.time.day % arrivals.length];
+      const primaryWorld = (data.worldSettings && data.worldSettings[0]) || "medieval_fantasy";
+      const wc = WORLD_CONFIG[primaryWorld] || WORLD_CONFIG.medieval_fantasy;
+
       const worldDescLine = (data.worldSettings || []).map(id => {
         const w = WORLD_SETTINGS.find(x => x.id === id);
         return w ? `${w.label} — ${w.desc}` : id;
       }).join(" and ");
 
       const intro = [
-        `The realm of Eryndel is shaped by the forces of ${worldDescLine}. It is a world that does not wait politely for newcomers to catch their breath. ${arrival} Around you, the Town Square of Moonveil hums with purposeful noise — merchants hawk their wares, distant steel rings from the training grounds beyond the east gate, and above it all the silhouette of Moonveil Castle cuts the sky like a drawn blade.`,
-        `The tone of your story has already etched itself into the fabric of fate: ${toneLabel}. Whether by destiny or coincidence, you have been dropped into precisely the intersection where such stories begin. A notice board near the fountain is fresh with ink — *"Sought: brave souls to investigate the Void King's stirrings. Report to the castle or enquire within."* Someone nailed it there this morning. The flyers are still damp.`,
-        `You are not entirely alone. Scattered across Moonveil and its surroundings are people whose paths will cross yours — some by accident, some by design, and at least one by something that cannot yet be explained. They have their own lives, their own schedules, their own reasons for being here. Whether they become allies, rivals, or something more intimate is entirely up to you.`,
-        `You stand at the fountain's edge${data.desc ? `, ${data.desc}` : ""}, the morning young and the world wide open. A cold wind off the castle hill carries the smell of ${worldCues.split(" ").slice(0, 2).join(" and ")}. Your first lead awaits — and the realm is watching to see what kind of person you are.`
+        `${wc.settingName} is shaped by the forces of ${worldDescLine}. It is a world that does not wait politely for newcomers to catch their breath. ${wc.arrivalVerb} Around you, ${wc.openingLocationDesc} — purposeful noise and unfamiliar faces, each carrying their own story.`,
+        `The tone of your journey has already etched itself into the fabric of what is to come: ${toneLabel}. Whether by destiny or coincidence, you have arrived precisely where such stories begin. A notice board nearby is fresh with ink — *"${wc.mq1Title}: ${wc.mq1Desc.split(".")[0]}."* Someone posted it recently. The ink is barely dry.`,
+        `You are not entirely alone. Scattered across ${wc.settingName} are people whose paths will cross yours — some by accident, some by design, and at least one by something that cannot yet be explained. They have their own lives, their own schedules, their own reasons for being here. Whether they become allies, rivals, or something more intimate is entirely up to you.`,
+        `You stand${data.desc ? `, ${data.desc},` : ""} the morning young and the world wide open. The air carries the scent of ${worldCues.split(" ").slice(0, 2).join(" and ")}. Your first lead awaits — and the ${wc.realmNoun} is watching to see what kind of person you are.`
       ].join("\n\n");
 
       oc.thread.messages.push({ author: "system",
@@ -2806,7 +3248,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (!g.playerRole)              g.playerRole    = "switch";
     if (g.playerDesc  === undefined) g.playerDesc   = "";
     if (!g.ngPlusBonus)             g.ngPlusBonus   = null;
-    if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName);
+    if (!g.storyline)               g.storyline    = buildStoryline(getActiveChars(), g.playerName, g.worldSettings);
     // New fields from game-rails patch
     if (g.combatWins  === undefined)  g.combatWins  = 0;
     if (g.deathCount  === undefined)  g.deathCount  = 0;
@@ -2824,6 +3266,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (g.marketCrashActive === undefined) g.marketCrashActive = false;
     if (g.mq3Locked === undefined)    g.mq3Locked = false;
     if (g.voidShardClue === undefined) g.voidShardClue = false;
+    // New fields from world-adaptive + difficulty + hint + day-tracker patch
+    if (!g.difficulty)             g.difficulty    = "normal";
+    if (g.hintCounter === undefined) g.hintCounter  = 0;
+    if (!g.daySnapshot)            g.daySnapshot   = null; // will be set on first advanceTime
     // Per-character migration: add mood and lastTalkedDay
     if (g.characters) {
       Object.keys(g.characters).forEach(id => {
