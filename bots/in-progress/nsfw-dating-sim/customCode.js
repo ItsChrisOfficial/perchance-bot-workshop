@@ -3005,6 +3005,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         const d = { ...data, worldSettings: ws, storyTones: st };
         cd._pendingSetup = d;
         step5(d);
+      });
+
+      oc.window.show();
+    }
+
+    // ── STEP 5: Consent & Kinks ──────────────────────────────────────────────
+    function step5(data) {
       const kinkCards = KINKS.map(k => `
         <label class="kink-card">
           <input type="checkbox" data-kink="${k.id}" />
@@ -3014,10 +3021,10 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       document.body.innerHTML = `
         ${UI_CSS}
         <div class="wizard" style="max-height:100vh;overflow-y:auto;">
-          ${_stepBar(4)}
+          ${_stepBar(5)}
           <div class="wiz-icon">🔞</div>
           <h2 class="wiz-title" style="color:var(--pink);">Consent &amp; Kinks</h2>
-          <p class="wiz-sub">Step 4 of 4 — Define your boundaries. Change anytime with /kinks.</p>
+          <p class="wiz-sub">Step 5 of 5 — Define your boundaries. Change anytime with /kinks.</p>
 
           <div class="info-box">
             <strong>✅ Checked</strong> — consented, <strong>may appear</strong> in the story.<br>
