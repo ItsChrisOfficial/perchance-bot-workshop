@@ -1178,8 +1178,16 @@ Combat training sharpens Strength, Defense, and Speed. Social interactions deepe
       training_grounds: isDark ? { bg: "#1a0d00", text: "#f0c8a0" } : { bg: "#fce4ec", text: "#4a0000" }
     };
     const p = palettes[location] || palettes.town_square;
-    // oc.thread.messageWrapperStyle is the documented thread-level message style API
-    oc.thread.messageWrapperStyle = `background: ${p.bg}; color: ${p.text};`;
+    // oc.thread.messageWrapperStyle is the documented thread-level message style API.
+    // padding + border-radius give each message a visible bubble shape; backdrop-filter
+    // blurs the scene background behind the bubble for legibility.
+    oc.thread.messageWrapperStyle = [
+      `background: ${p.bg}`,
+      `color: ${p.text}`,
+      "padding: 8px 14px",
+      "border-radius: 10px",
+      "backdrop-filter: blur(4px)"
+    ].join("; ");
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -3241,7 +3249,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         oc.thread.messages.push({
           author: "system",
           content: `[Character context: ${ch.name} | ${ch.archetype}] In a ${worldLabel} world with ${toneLabel} tone: ${ch.nsfwPersonality}`,
-          hiddenFrom: [], expectsReply: false
+          hiddenFrom: ["user"], expectsReply: false
         });
       }
 
@@ -3319,7 +3327,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           content: portraitUrl
             ? `[Image trigger: ${ch.name} | ${ch.archetype}] Portrait ready. ${ch.imageKeywords}. Image: ![${ch.name}](${portraitUrl})`
             : `[Image trigger: ${ch.name} | ${ch.archetype}] Portrait unavailable — use description: ${ch.imageKeywords}`,
-          hiddenFrom: [],
+          hiddenFrom: ["user"],
           expectsReply: false
         };
         oc.thread.messages.push(trigMsg);
@@ -3426,6 +3434,17 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // The in-memory guard inside pregenerate() is sufficient to prevent double-runs
   // within a single page session.
   cd._pregenerating = false;
+
+  // Apply a default bubble style immediately on every load so messages are readable
+  // even before the game sets a location-specific palette (covers the "no bubble on
+  // initial load / existing save reload" case).
+  oc.thread.messageWrapperStyle = [
+    "background: light-dark(rgba(240,233,222,0.93), rgba(18,12,26,0.91))",
+    "color: light-dark(#2c1810, #e8d0f8)",
+    "padding: 8px 14px",
+    "border-radius: 10px",
+    "backdrop-filter: blur(4px)"
+  ].join("; ");
 
   // Register the MessageAdded handler FIRST, before showOpeningUI() / migrateGame()
   // so that wizard navigation works even if the init block throws.
