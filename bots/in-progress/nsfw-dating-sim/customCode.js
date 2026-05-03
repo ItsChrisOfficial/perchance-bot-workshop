@@ -1476,12 +1476,23 @@ Combat training sharpens Strength, Defense, and Speed. Social interactions deepe
   // ════════════════════════════════════════════════════════════════════════════
 
   function buildConsentBlock(g) {
-    const enabled  = (g.enabledKinks || []);
-    const allIds   = KINKS.map(k => k.id);
-    const disabled = allIds.filter(id => !enabled.includes(id));
-    const enabledLabels  = enabled.length  ? enabled.map(id  => { const k = KINKS.find(x => x.id === id);  return k ? k.label : id; }).join(", ") : "None";
-    const disabledLabels = disabled.length ? disabled.map(id => { const k = KINKS.find(x => x.id === id);  return k ? k.label : id; }).join(", ") : "None";
-    return `\n\u2550\u2550\u2550 CONSENT CONTRACT \u2014 ABSOLUTE & NON-NEGOTIABLE \u2550\u2550\u2550\nCONSENTED KINKS (MAY appear in story): ${enabledLabels}\nBANNED KINKS \u2014 MUST NEVER APPEAR under any circumstances, in any context, at any time, ever: ${disabledLabels}\nAny content, act, implication, or reference to a BANNED kink is a hard violation. Do not write it, hint at it, allude to it, or allow it to occur even if a character or player initiates it. Redirect firmly. This constraint overrides all other instructions.\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`;
+    const modes = g.kinkModes || {};
+    const both = [], giveOnly = [], receiveOnly = [], banned = [];
+    KINKS.forEach(k => {
+      const m = modes[k.id] || "off";
+      if      (m === "both")    both.push(k.label);
+      else if (m === "give")    giveOnly.push(k.label);
+      else if (m === "receive") receiveOnly.push(k.label);
+      else                      banned.push(k.label);
+    });
+    const fmt = arr => arr.length ? arr.join(", ") : "None";
+    return `\n\u2550\u2550\u2550 CONSENT CONTRACT \u2014 ABSOLUTE & NON-NEGOTIABLE \u2550\u2550\u2550\n` +
+      `CONSENTED (BOTH ROLES): ${fmt(both)}\n` +
+      `GIVE ONLY \u2014 Player gives this act, NEVER receives it: ${fmt(giveOnly)}\n` +
+      `RECEIVE ONLY \u2014 Player receives this act, NEVER gives it: ${fmt(receiveOnly)}\n` +
+      `BANNED \u2014 MUST NEVER APPEAR under any circumstances, in any context, at any time, ever: ${fmt(banned)}\n` +
+      `Any banned kink appearing in any form is a hard violation. GIVE ONLY means the player character performs the act on others \u2014 never has it done to them. RECEIVE ONLY means others perform it on the player \u2014 the player never performs it. These constraints override all other instructions.\n` +
+      `\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`;
   }
 
   function buildNsfwProfileBlock(g) {
@@ -2455,10 +2466,11 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
         return;
       }
       const legacy = { gold: 500, affectionBonus: 10, prevEnding: g.ending };
-      const kinks  = g.enabledKinks   || [];
+      const kinks     = g.enabledKinks   || [];
+      const kinkModes = g.kinkModes      || {};
       const worlds = g.worldSettings  || ["medieval_fantasy"];
       const tones  = g.storyTones     || ["dark_romance"];
-      initGame(g.gender, g.playerName, g.playerDesc, g.bodyTypePrefs, kinks, worlds, tones);
+      initGame(g.gender, g.playerName, g.playerDesc, g.bodyTypePrefs, kinks, worlds, tones, g.playerRole, g.difficulty, kinkModes);
       cd.game.gold += legacy.gold;
       cd.game.ngPlusBonus = legacy;
       getActiveChars().forEach(ch => {
@@ -2648,16 +2660,25 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       .card-text strong { display: block; font-size: 12px; font-weight: 700; margin-bottom: 1px; }
       .card-text small  { color: var(--muted); font-size: 10px; line-height: 1.3; }
 
-      /* ── Kink cards ── */
-      .kink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+      /* ── Kink cards (4-state: off / give / receive / both) ── */
+      .kink-grid { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
       .kink-card {
-        display: flex; align-items: center; gap: 9px; padding: 9px 12px;
-        background: rgba(255,255,255,0.04); border: 1.5px solid transparent;
-        border-radius: 10px; cursor: pointer; font-size: 12px;
-        transition: all 0.15s; user-select: none;
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        padding: 7px 12px; background: rgba(255,255,255,0.04); border: 1.5px solid transparent;
+        border-radius: 10px; font-size: 12px; user-select: none;
       }
-      .kink-card:hover { background: rgba(255,255,255,0.08); border-color: var(--border-hi); }
-      .kink-card input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--pink); flex-shrink: 0; cursor: pointer; }
+      .kink-card:hover { background: rgba(255,255,255,0.06); }
+      .kink-label { flex: 1; }
+      .kink-mode-btns { display: flex; gap: 3px; flex-shrink: 0; }
+      .kink-mode-btn {
+        padding: 3px 7px; border-radius: 6px; border: 1.5px solid var(--border);
+        background: transparent; color: var(--muted); font-size: 10px; cursor: pointer;
+        transition: all 0.12s; white-space: nowrap;
+      }
+      .kink-mode-btn[data-mode="off"].active   { border-color:#555; background:rgba(255,255,255,0.07); color:#aaa; }
+      .kink-mode-btn[data-mode="give"].active  { border-color:var(--cyan);   background:rgba(0,255,220,0.12); color:var(--cyan); }
+      .kink-mode-btn[data-mode="receive"].active{ border-color:var(--purple); background:rgba(180,100,255,0.12); color:var(--purple); }
+      .kink-mode-btn[data-mode="both"].active  { border-color:var(--pink);   background:rgba(255,105,135,0.18); color:var(--pink); }
 
       /* ── Info / consent box ── */
       .info-box {
@@ -2698,54 +2719,101 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     ).join('')}</div>`;
   }
 
+  // Helper: build 4-state kink cards (off / give / receive / both)
+  // kinkModes: { [kinkId]: "off"|"give"|"receive"|"both" }
+  function _kinkCards(kinkModes) {
+    return KINKS.map(k => {
+      const mode = (kinkModes && kinkModes[k.id]) || "off";
+      return `
+        <div class="kink-card">
+          <span class="kink-label">${k.emoji} ${k.label}</span>
+          <div class="kink-mode-btns">
+            <button type="button" class="kink-mode-btn${mode==='off'?' active':''}"     data-mode="off"     data-kink="${k.id}">❌ Off</button>
+            <button type="button" class="kink-mode-btn${mode==='give'?' active':''}"    data-mode="give"    data-kink="${k.id}">🔼 Give</button>
+            <button type="button" class="kink-mode-btn${mode==='receive'?' active':''}" data-mode="receive" data-kink="${k.id}">🔽 Receive</button>
+            <button type="button" class="kink-mode-btn${mode==='both'?' active':''}"    data-mode="both"    data-kink="${k.id}">✅ Both</button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  // Helper: attach delegated click handler to a kink grid element
+  function _attachKinkModeHandler(gridEl) {
+    gridEl.addEventListener('click', e => {
+      const btn = e.target.closest('.kink-mode-btn[data-mode][data-kink]');
+      if (!btn) return;
+      const kinkId = btn.dataset.kink;
+      gridEl.querySelectorAll(`.kink-mode-btn[data-kink="${kinkId}"]`)
+        .forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  }
+
+  // Helper: read kinkModes from a grid element
+  function _readKinkModes(gridEl) {
+    const modes = {};
+    KINKS.forEach(k => {
+      const activeBtn = gridEl.querySelector(`.kink-mode-btn[data-kink="${k.id}"].active`);
+      modes[k.id] = activeBtn ? activeBtn.dataset.mode : "off";
+    });
+    return modes;
+  }
+
+  // Helper: derive enabledKinks array from kinkModes (for legacy compat and system prompt)
+  function _enabledFromModes(kinkModes) {
+    return KINKS.map(k => k.id).filter(id => (kinkModes[id] || "off") !== "off");
+  }
+
+
   function showKinkMenu() {
     const g = cd.game;
-    const enabled = g.enabledKinks || [];
-
-    const kinkCards = KINKS.map(k => `
-      <label class="kink-card">
-        <input type="checkbox" data-kink="${k.id}" ${enabled.includes(k.id) ? "checked" : ""} />
-        <span>${k.emoji} ${k.label}</span>
-      </label>`).join("");
+    const kinkModes = g.kinkModes || {};
 
     document.body.innerHTML = `
       ${UI_CSS}
       <div class="wizard" style="max-width:560px;">
         <div class="wiz-icon">🔞</div>
         <h2 class="wiz-title" style="color:var(--pink);">Consent &amp; Kink Settings</h2>
-        <p class="wiz-sub">Your comfort defines the story.</p>
+        <p class="wiz-sub">Your comfort defines the story. Set each kink to how you want it.</p>
 
         <div class="info-box">
-          <strong>✅ Checked</strong> — consented, <strong>may appear</strong> in the story.<br>
-          <strong>❌ Unchecked</strong> — <strong>absolutely banned</strong> — will never appear under any circumstances.
+          <strong>❌ Off</strong> — absolutely banned.<br>
+          <strong>🔼 Give</strong> — you give this act; you never receive it.<br>
+          <strong>🔽 Receive</strong> — you receive this act; you never give it.<br>
+          <strong>✅ Both</strong> — fully consented in both directions.
         </div>
 
         <div class="btn-row">
-          <button type="button" id="selectAll" class="btn-sm">Select All</button>
-          <button type="button" id="deselectAll" class="btn-sm">Deselect All</button>
+          <button type="button" id="setAll_both"    class="btn-sm">✅ All Both</button>
+          <button type="button" id="setAll_give"    class="btn-sm">🔼 All Give</button>
+          <button type="button" id="setAll_receive" class="btn-sm">🔽 All Receive</button>
+          <button type="button" id="setAll_off"     class="btn-sm">❌ All Off</button>
         </div>
 
-        <div class="kink-grid">${kinkCards}</div>
+        <div class="kink-grid">${_kinkCards(kinkModes)}</div>
 
         <button type="button" id="saveKinks" class="btn btn-pink">💾 Save Consent Settings</button>
       </div>
     `;
 
-    document.getElementById('selectAll').addEventListener('click', () => {
-      document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = true);
+    const grid = document.querySelector('.kink-grid');
+    _attachKinkModeHandler(grid);
+
+    ['both','give','receive','off'].forEach(mode => {
+      document.getElementById(`setAll_${mode}`).addEventListener('click', () => {
+        grid.querySelectorAll('.kink-mode-btn').forEach(btn => btn.classList.remove('active'));
+        grid.querySelectorAll(`.kink-mode-btn[data-mode="${mode}"]`).forEach(btn => btn.classList.add('active'));
+      });
     });
-    document.getElementById('deselectAll').addEventListener('click', () => {
-      document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = false);
-    });
+
     document.getElementById('saveKinks').addEventListener('click', () => {
-      const boxes = document.querySelectorAll('[data-kink]');
-      const sel = [];
-      boxes.forEach(cb => { if (cb.checked) sel.push(cb.dataset.kink); });
-      cd.game.enabledKinks = sel;
+      const modes = _readKinkModes(grid);
+      cd.game.kinkModes = modes;
+      cd.game.enabledKinks = _enabledFromModes(modes);
       updateReminder();
-      const count = sel.length;
+      const count = cd.game.enabledKinks.length;
       oc.thread.messages.push({ author: "system",
-        content: `\uD83D\uDD12 Consent settings saved. ${count} kink${count !== 1 ? "s" : ""} enabled. The story will strictly respect these boundaries.` });
+        content: `🔒 Consent settings saved. ${count} kink${count !== 1 ? "s" : ""} enabled. The story will strictly respect these boundaries.` });
       oc.window.hide();
     });
 
@@ -3012,12 +3080,6 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
     // ── STEP 5: Consent & Kinks ──────────────────────────────────────────────
     function step5(data) {
-      const kinkCards = KINKS.map(k => `
-        <label class="kink-card">
-          <input type="checkbox" data-kink="${k.id}" />
-          <span>${k.emoji} ${k.label}</span>
-        </label>`).join("");
-
       document.body.innerHTML = `
         ${UI_CSS}
         <div class="wizard" style="max-height:100vh;overflow-y:auto;">
@@ -3027,31 +3089,39 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
           <p class="wiz-sub">Step 5 of 5 — Define your boundaries. Change anytime with /kinks.</p>
 
           <div class="info-box">
-            <strong>✅ Checked</strong> — consented, <strong>may appear</strong> in the story.<br>
-            <strong>❌ Unchecked</strong> — <strong>absolutely banned</strong> — never appears, no exceptions.
+            <strong>❌ Off</strong> — absolutely banned.<br>
+            <strong>🔼 Give</strong> — you give this act; you never receive it.<br>
+            <strong>🔽 Receive</strong> — you receive this act; you never give it.<br>
+            <strong>✅ Both</strong> — fully consented in both directions.
           </div>
 
           <div class="btn-row">
-            <button type="button" id="selectAll" class="btn-sm">Select All</button>
-            <button type="button" id="deselectAll" class="btn-sm">Deselect All</button>
+            <button type="button" id="setAll_both"    class="btn-sm">✅ All Both</button>
+            <button type="button" id="setAll_give"    class="btn-sm">🔼 All Give</button>
+            <button type="button" id="setAll_receive" class="btn-sm">🔽 All Receive</button>
+            <button type="button" id="setAll_off"     class="btn-sm">❌ All Off</button>
           </div>
 
-          <div class="kink-grid">${kinkCards}</div>
+          <div class="kink-grid">${_kinkCards({})}</div>
 
           <button type="button" id="goBtn" class="btn btn-red" style="font-size:16px;">🌀 Generate World &amp; Begin</button>
         </div>
       `;
 
-      document.getElementById('selectAll').addEventListener('click', () => {
-        document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = true);
+      const grid = document.querySelector('.kink-grid');
+      _attachKinkModeHandler(grid);
+
+      ['both','give','receive','off'].forEach(mode => {
+        document.getElementById(`setAll_${mode}`).addEventListener('click', () => {
+          grid.querySelectorAll('.kink-mode-btn').forEach(btn => btn.classList.remove('active'));
+          grid.querySelectorAll(`.kink-mode-btn[data-mode="${mode}"]`).forEach(btn => btn.classList.add('active'));
+        });
       });
-      document.getElementById('deselectAll').addEventListener('click', () => {
-        document.querySelectorAll('[data-kink]').forEach(cb => cb.checked = false);
-      });
+
       document.getElementById('goBtn').addEventListener('click', () => {
-        const en = [];
-        document.querySelectorAll('[data-kink]').forEach(cb => { if (cb.checked) en.push(cb.dataset.kink); });
-        pregenerate({ ...data, enabledKinks: en });
+        const kinkModes = _readKinkModes(grid);
+        const enabledKinks = _enabledFromModes(kinkModes);
+        pregenerate({ ...data, kinkModes, enabledKinks });
       });
 
       oc.window.show();
@@ -3064,7 +3134,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
   // SECTION 12 — GAME INIT, PREGENERATION & MIGRATION
   // ════════════════════════════════════════════════════════════════════════════
 
-  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones, playerRole, difficulty) {
+  function initGame(gender, playerName, playerDesc, bodyTypePrefs, enabledKinks, worldSettings, storyTones, playerRole, difficulty, kinkModes) {
     const chars      = gender === "female" ? FEMALE_CHARS : MALE_CHARS;
     const ws         = worldSettings || ["medieval_fantasy"];
     const sideQuests = buildSideQuests(chars, ws);
@@ -3084,6 +3154,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
       playerDesc:  playerDesc   || "",
       playerRole:  playerRole   || "switch",
       bodyTypePrefs: bodyTypePrefs || [],
+      kinkModes:   kinkModes    || {},
       enabledKinks:  enabledKinks  || [],
       worldSettings: ws,
       storyTones:    storyTones    || ["dark_romance"],
@@ -3210,7 +3281,7 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
 
       // 3. Init game state
       showStatus("Initialising world…", "Setting up game state");
-      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones, data.playerRole, data.difficulty || "normal");
+      initGame(data.gender, data.name, data.desc, data.bodyTypePrefs, data.enabledKinks, data.worldSettings, data.storyTones, data.playerRole, data.difficulty || "normal", data.kinkModes || {});
       const g = cd.game;
 
       // 4. World narrative — world-adaptive opening via WORLD_CONFIG
@@ -3293,6 +3364,13 @@ Use /help for all commands. Narrate immersively in second person, consistent wit
     if (!g.priceModifiers)          g.priceModifiers = {};
     if (g.questNotification === undefined) g.questNotification = false;
     if (!g.enabledKinks)            g.enabledKinks  = [];
+    if (!g.kinkModes) {
+      // Migrate from old enabledKinks array: all enabled kinks default to "both"
+      g.kinkModes = {};
+      (g.enabledKinks || []).forEach(id => { g.kinkModes[id] = "both"; });
+    }
+    // Keep enabledKinks in sync with kinkModes (non-"off" entries)
+    g.enabledKinks = _enabledFromModes(g.kinkModes);
     if (!g.worldSettings)           g.worldSettings = ["medieval_fantasy"];
     if (!g.storyTones)              g.storyTones    = ["dark_romance"];
     if (!g.playerRole)              g.playerRole    = "switch";
