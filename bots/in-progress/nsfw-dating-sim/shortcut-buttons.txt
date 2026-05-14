@@ -1,0 +1,99 @@
+# Shortcut buttons — all 16 entries, all 5 required fields present
+# Dynamic source of truth: updateShortcutButtons() in customCode.js
+# Static initial set embedded in nsfw-dating-sim.export.json
+
+@name=📊 Status
+@message=/status
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=🎒 Inventory
+@message=/inventory
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=⚔️ Skills
+@message=/skills
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=📜 Quests
+@message=/quests
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=🗺️ Explore
+@message=/explore
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=🏪 Shop
+@message=/shop
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=👥 Characters
+@message=/chars
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=🕒 Time
+@message=/time
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=🏋️ Train
+@message=/train 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
+
+@name=🗡️ Fight
+@message=/fight 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
+
+@name=😴 Rest
+@message=/rest
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=⚗️ Craft
+@message=/craft 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
+
+@name=🏆 Achievements
+@message=/achievements
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=🖼️ Image
+@message=/image 
+@insertionType=replace
+@autoSend=false
+@clearAfterSend=false
+
+@name=🔞 Kinks
+@message=/kinks
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false
+
+@name=❓ Help
+@message=/help
+@insertionType=replace
+@autoSend=true
+@clearAfterSend=false

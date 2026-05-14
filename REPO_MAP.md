@@ -61,6 +61,10 @@ Current repository layout and quick reference.
 - `PROJECT_RULES.md` - hard placement/convention rules
 - `CONTRIBUTING.md` - human contribution workflow and PR checklist
 
+## In-progress bots (notable)
+
+- `bots/in-progress/nsfw-dating-sim/` - Adult NSFW hentai dating sim RPG; 4 files: customCode.js, shortcut-buttons.txt, BRIEF.md, nsfw-dating-sim.export.json
+
 ## Keep this file current
 
 Update this file whenever top-level structure changes or when major folders/files are added, moved, or retired.
